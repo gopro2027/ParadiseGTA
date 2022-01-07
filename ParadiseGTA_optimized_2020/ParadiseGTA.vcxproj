@@ -1,0 +1,127 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <VCTargetsPath>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0</VCTargetsPath>
+    <!--fix for laptop vs 2019-->
+  </PropertyGroup>
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|PS3">
+      <Configuration>Debug</Configuration>
+      <Platform>PS3</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|PS3">
+      <Configuration>Release</Configuration>
+      <Platform>PS3</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{8CEB8300-6374-4078-BF29-1C9A0744C7E5}</ProjectGuid>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|PS3'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>SNC</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|PS3'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>SNC</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|PS3'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|PS3'">
+    <IgnoreImportLibrary>false</IgnoreImportLibrary>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|PS3'">
+    <ClCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <OptimizationLevel>Levels</OptimizationLevel>
+      <RelaxAlias>RelaxAlias3</RelaxAlias>
+      <Warnings>GenerateWarnings</Warnings>
+      <AssumeCorrectAlignment>No</AssumeCorrectAlignment>
+      <InlineFunctionDebug>false</InlineFunctionDebug>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>$(SCE_PS3_ROOT)\target\ppu\lib\libadec_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libatrac3multi_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libatrac3plus_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libaudio_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libc.a;$(SCE_PS3_ROOT)\target\ppu\lib\libcamera_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libcelp8enc_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libcelpenc_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libcgb.a;$(SCE_PS3_ROOT)\target\ppu\lib\libcgc.a;$(SCE_PS3_ROOT)\target\ppu\lib\libcontrol_console_ppu.a;$(SCE_PS3_ROOT)\target\ppu\lib\libcs.a;$(SCE_PS3_ROOT)\target\ppu\lib\libc_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libdaisy_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libdbg.a;$(SCE_PS3_ROOT)\target\ppu\lib\libdbgfont.a;$(SCE_PS3_ROOT)\target\ppu\lib\libdbgfont_gcm.a;$(SCE_PS3_ROOT)\target\ppu\lib\libdbgrsx.a;$(SCE_PS3_ROOT)\target\ppu\lib\libdbg_gcm_method_check.a;$(SCE_PS3_ROOT)\target\ppu\lib\libdbg_libio_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libdmux_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libface.a;$(SCE_PS3_ROOT)\target\ppu\lib\libface_tracker.a;$(SCE_PS3_ROOT)\target\ppu\lib\libfiber_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libfios.a;$(SCE_PS3_ROOT)\target\ppu\lib\libflash.a;$(SCE_PS3_ROOT)\target\ppu\lib\libfontFT_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libfontGcm.a;$(SCE_PS3_ROOT)\target\ppu\lib\libfont_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libfreetypeTT_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libfreetype_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libfs_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libftp.a;$(SCE_PS3_ROOT)\target\ppu\lib\libgcm_cmd.a;$(SCE_PS3_ROOT)\target\ppu\lib\libgcm_cmdasm.a;$(SCE_PS3_ROOT)\target\ppu\lib\libgcm_cmddbg.a;$(SCE_PS3_ROOT)\target\ppu\lib\libgcm_gpad_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libgcm_pm.a;$(SCE_PS3_ROOT)\target\ppu\lib\libgcm_sys_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libgem_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libgifdec_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libhead_tracker.a;$(SCE_PS3_ROOT)\target\ppu\lib\libhttp_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libhttp_util_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libio_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libjpgdec_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libjpgenc_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libkey2char_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libl10n_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\liblv2dbg_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\liblv2_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libm.a;$(SCE_PS3_ROOT)\target\ppu\lib\libmedi_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libmic_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libmixer.a;$(SCE_PS3_ROOT)\target\ppu\lib\libmsmp3dec_ppu.a;$(SCE_PS3_ROOT)\target\ppu\lib\libmsmp3dec_SPURS.a;$(SCE_PS3_ROOT)\target\ppu\lib\libmstreamSPURSAT3.a;$(SCE_PS3_ROOT)\target\ppu\lib\libmstreamSPURSMP3.a;$(SCE_PS3_ROOT)\target\ppu\lib\libmstreamThreadAT3.a;$(SCE_PS3_ROOT)\target\ppu\lib\libmstreamThreadMP3.a;$(SCE_PS3_ROOT)\target\ppu\lib\libmt19937.a;$(SCE_PS3_ROOT)\target\ppu\lib\libm_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libnetctl_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libnet_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libovis_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libpadfilter.a;$(SCE_PS3_ROOT)\target\ppu\lib\libpamf_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libperf.a;$(SCE_PS3_ROOT)\target\ppu\lib\libpngdec_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libpngenc_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libprof_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libpthread.a;$(SCE_PS3_ROOT)\target\ppu\lib\libresc_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\librtc_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\librudp_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libsail_rec_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libsail_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libscream.a;$(SCE_PS3_ROOT)\target\ppu\lib\libsheap_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libsnc.a;$(SCE_PS3_ROOT)\target\ppu\lib\libsnd3.a;$(SCE_PS3_ROOT)\target\ppu\lib\libspudll_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libspurs_jq_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libspurs_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libssc.a;$(SCE_PS3_ROOT)\target\ppu\lib\libsscgpu.a;$(SCE_PS3_ROOT)\target\ppu\lib\libssl_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libstdc++.a;$(SCE_PS3_ROOT)\target\ppu\lib\libstdc++_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libsync2_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libsync_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libsynth2.a;$(SCE_PS3_ROOT)\target\ppu\lib\libsyscall.a;$(SCE_PS3_ROOT)\target\ppu\lib\libsysmodule_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libsysutil_ap_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libsysutil_avc2_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libsysutil_avconf_ext_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libsysutil_bgdl_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libsysutil_game_exec_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libsysutil_game_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libsysutil_imejp_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libsysutil_licensearea_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libsysutil_music_decode_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libsysutil_music_export_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libsysutil_music_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libsysutil_np2_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libsysutil_np_clans_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libsysutil_np_commerce2_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libsysutil_np_sns_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libsysutil_np_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libsysutil_np_trophy_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libsysutil_np_tus_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libsysutil_np_util_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libsysutil_oskdialog_ext_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libsysutil_photo_decode_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libsysutil_photo_export_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libsysutil_photo_import_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libsysutil_photo_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libsysutil_print_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libsysutil_rec_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libsysutil_remoteplay_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libsysutil_savedata_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libsysutil_screenshot_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libsysutil_search_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libsysutil_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libsysutil_subdisplay_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libsysutil_sysconf_ext_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libsysutil_userinfo_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libsysutil_video_export_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libsysutil_video_upload_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libusbd_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libusbpspcm_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libvdec_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libvoice_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libvpost_stub.a;%(AdditionalDependencies)</AdditionalDependencies>
+      <InfoStripping>StripSymsAndDebug</InfoStripping>
+      <DataStripping>StripFuncsAndData</DataStripping>
+      <GenerateSnMapFile>FullMapFile</GenerateSnMapFile>
+    </Link>
+    <PostBuildEvent>
+      <Command>cd /d $(OutDir)\utils\
+encryptit.bat</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>encrypt</Message>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">
+    <ClCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions);</PreprocessorDefinitions>
+      <OptimizationLevel>Level2</OptimizationLevel>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>$(SCE_PS3_ROOT)\target\ppu\lib\libstdc++.a;$(SCE_PS3_ROOT)\target\ppu\lib\libstdc++_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libc.a;$(SCE_PS3_ROOT)\target\ppu\lib\libc_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libhttp_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libnet_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libsysutil_stub.a;$(SN_PS3_PATH)\ppu\lib\sn\libsn.a;$(SCE_PS3_ROOT)\target\ppu\lib\libm.a;$(SCE_PS3_ROOT)\target\ppu\lib\libio_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libsysmodule_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libsyscall.a;$(SCE_PS3_ROOT)\target\ppu\lib\fno-exceptions\libstdc++_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\fno-exceptions\fno-rtti\libstdc++_stub.a;$(SCE_PS3_ROOT)\target\ppu\lib\libsysutil_np_stub.a;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <Link>
+      <InfoStripping>StripSymsAndDebug</InfoStripping>
+    </Link>
+    <Link>
+      <DataStripping>StripFuncsAndData</DataStripping>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="atof.h" />
+    <ClInclude Include="base64.h" />
+    <ClInclude Include="BitmapLoader.h" />
+    <ClInclude Include="Buttons.h" />
+    <ClInclude Include="crypto.h" />
+    <ClInclude Include="Enums.h" />
+    <ClInclude Include="GTAStructs.h" />
+    <ClInclude Include="jump.h" />
+    <ClInclude Include="Mods.h" />
+    <ClInclude Include="MyMath.h" />
+    <ClInclude Include="nativeCaller.h" />
+    <ClInclude Include="Natives.h" />
+    <ClInclude Include="Networking.h" />
+    <ClInclude Include="GlobalStuff.h" />
+    <ClInclude Include="OtherPlayerStats.h" />
+    <ClInclude Include="padutil.h" />
+    <ClInclude Include="PSC.h" />
+    <ClInclude Include="rce.h" />
+    <ClInclude Include="RTMCommands.h" />
+    <ClInclude Include="RTMTool.h" />
+    <ClInclude Include="Scaleforms.h" />
+    <ClInclude Include="security.h" />
+    <ClInclude Include="Stats.h" />
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="STDLib.h" />
+    <ClInclude Include="types.h" />
+    <ClInclude Include="XML.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="padutil.cpp" />
+    <ClCompile Include="printf.cpp" />
+    <ClCompile Include="prx.cpp">
+      <GenerateDebugInformation Condition="'$(Configuration)|$(Platform)'=='Debug|PS3'">false</GenerateDebugInformation>
+    </ClCompile>
+    <ClCompile Include="stdafx.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|PS3'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">Create</PrecompiledHeader>
+    </ClCompile>
+  </ItemGroup>
+  <Import Condition="'$(ConfigurationType)' == 'Makefile' and Exists('$(VCTargetsPath)\Platforms\$(Platform)\SCE.Makefile.$(Platform).targets')" Project="$(VCTargetsPath)\Platforms\$(Platform)\SCE.Makefile.$(Platform).targets" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

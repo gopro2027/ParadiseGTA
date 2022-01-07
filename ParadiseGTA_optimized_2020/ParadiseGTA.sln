@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ParadiseGTA", "ParadiseGTA.vcxproj", "{8CEB8300-6374-4078-BF29-1C9A0744C7E5}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|PS3 = Debug|PS3
+		Release|PS3 = Release|PS3
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8CEB8300-6374-4078-BF29-1C9A0744C7E5}.Debug|PS3.ActiveCfg = Debug|PS3
+		{8CEB8300-6374-4078-BF29-1C9A0744C7E5}.Debug|PS3.Build.0 = Debug|PS3
+		{8CEB8300-6374-4078-BF29-1C9A0744C7E5}.Release|PS3.ActiveCfg = Release|PS3
+		{8CEB8300-6374-4078-BF29-1C9A0744C7E5}.Release|PS3.Build.0 = Release|PS3
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
