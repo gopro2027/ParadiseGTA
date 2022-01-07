@@ -10,3 +10,5 @@ A lot of the code in this is very very messy... Please keep in mind that I was t
 
 I also do not take responsibility for what anybody else does with this code. This is all written for GTA V Online PS3 edition which is not available anymore. If any of this stuff causes havoc at the hands of other dev's then that's not my fault because in it's current state as posted here, it does nothing.
 
+#### More Info
+You can find other repo's related to this project posted on my github.
