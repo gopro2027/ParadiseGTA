@@ -1,2 +1,2 @@
 # ParadiseSPRX
-This is the base Paradise SPRX Repository Source Code
+This is the visual studio project for Paradise SPRX
