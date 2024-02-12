@@ -1,0 +1,14 @@
+#
+#  Mon Oct 09 14:25:50 2023
+#  cellPrx_ParadiseGTA: attr=0x1, nvar=0, nfunc=1, ntls=0 levels=0x1 stubfilename=cellPrx_ParadiseGTA_stub
+#      generate by ppu-lv2-prx-libgen.exe (1.14.4.7 2010-07-06 21:08:16, 2008-04-01 20:38:42)
+#  target_version_check on,  removed_entry_check on,  logging on
+#  log_version_update on
+#
+version 0x0001
+#
+log_version_update on
+logging on
+removed_entry_check on
+target_version_check on
+  0x2d68e794 F/0 8 645c68e38cf6185590dbd510f88e56c0de0738e9 .text _ParadiseMC_export_function

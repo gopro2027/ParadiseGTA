@@ -1,0 +1,33 @@
+﻿  ParadiseGTA.vcxproj -> C:\Users\Ty\source\repos\GTA112SPRX\ParadiseGTA\ParadiseGTA_optimized_2020\PS3_Debug\ParadiseGTA.sprx
+  Moving Stub Library cellPrx_ParadiseGTA_stub.a -> C:\Users\Ty\source\repos\GTA112SPRX\ParadiseGTA\ParadiseGTA_optimized_2020\PS3_Debug\
+  Parameter format not correct - "ParadiseGTA.sprx".
+  C:\Users\Ty\source\repos\GTA112SPRX\ParadiseGTA\ParadiseGTA_optimized_2020\PS3_Debug\utils\*, Are you sure (Y/N)? 
+  scetool path is C:\Users\Ty\ps3tools\ps3tools\tools\scetool\
+  rel path is C:\Users\Ty\source\repos\GTA112SPRX\ParadiseGTA\ParadiseGTA_optimized_2020\PS3_Debug\utils\HEN\
+EXEC : cygwin warning : 
+    MS-DOS style path detected: C:\Users\Ty\source\repos\GTA112SPRX\ParadiseGTA\ParadiseGTA_optimized_2020\PS3_Debug\utils\HEN\ParadiseGTA.prx
+    Preferred POSIX equivalent is: /cygdrive/c/Users/Ty/source/repos/GTA112SPRX/ParadiseGTA/ParadiseGTA_optimized_2020/PS3_Debug/utils/HEN/ParadiseGTA.prx
+    CYGWIN environment variable option "nodosfilewarning" turns off this warning.
+    Consult the user's guide for more details about POSIX paths:
+      http://cygwin.com/cygwin-ug-net/using.html#using-pathnames
+  scetool 0.2.9 <PRIVATE BUILD:naehrwert> (C) 2011-2013 by naehrwert
+  NP local license handling (C) 2012 by flatz
+  
+  [*] SELF built.
+  [*] Data compressed.
+  [*] Data encrypted.
+  [*] C:\Users\Ty\source\repos\GTA112SPRX\ParadiseGTA\ParadiseGTA_optimized_2020\PS3_Debug\utils\HEN\ParadiseGTA.sprx written.
+  > ftp: connect :Connection timed out
+  user anonymous
+  Not connected.
+  anonymous
+  Invalid command.
+  bin
+  Not connected.
+  cd /dev_hdd0/tmp/
+  Not connected.
+  put ParadiseGTA.sprx
+  Not connected.
+  quit
+  **COMPLETED** DEX/CEX/HEX sprx is located at C:\Users\Ty\source\repos\GTA112SPRX\ParadiseGTA\ParadiseGTA_optimized_2020\PS3_Debug\utils\HEN\ParadiseGTA.sprx
+  Press any key to continue . . . 

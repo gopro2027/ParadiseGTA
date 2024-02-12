@@ -16,10 +16,6 @@ static void disable_syscall(int syscallNum) {
 #endif
 
 
-#define endEncryptFunc() \
-	__asm("lis %r3, 0xFFEE");\
-	__asm("ori %r3, %r3, 0xDDCD");
+#define endEncryptFunc() {}
 
-#define startEncryptFunc() \
-	__asm("lis %r3, 0xFFEE");\
-	__asm("ori %r3, %r3, 0xDDCC");
+#define startEncryptFunc() {}
