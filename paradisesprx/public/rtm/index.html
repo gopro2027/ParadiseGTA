@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RTM - Paradise SPRX</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23e74c3c'/%3E%3Ctext x='16' y='23' font-size='20' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'%3EP%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    .card .btn { width: 100%; margin-bottom: 8px; }
+    hr { border: 0; border-top: 1px solid var(--border); margin: 16px 0; }
+  </style>
+</head>
+<body>
+  <header>
+    <a class="brand" href="/">Paradise <span>SPRX</span></a>
+    <nav>
+      <a href="/">Home</a>
+      <a href="/key">Free Key</a>
+      <a href="/rtm" aria-current="page">RTM</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero" style="padding-bottom:8px">
+      <h1>RTM</h1>
+      <p>Control a lobby through someone's Paradise menu. They turn on the RTM option in the menu and give you the 4 character RTM key it shows.</p>
+      <p class="msg" id="response" role="status"></p>
+    </section>
+
+    <div class="grid">
+      <section class="card">
+        <h3>RTM key</h3>
+        <input id="RTMKey" type="text" placeholder="4 characters, from the modder" maxlength="4" autocomplete="off">
+        <button class="btn" type="button" onclick="connect()">Connect</button>
+        <hr>
+        <h3>Message the host</h3>
+        <input id="dialog-msg" type="text" placeholder="Message" maxlength="100">
+        <button class="btn secondary" type="button" onclick="dialog(getValue('dialog-msg'))">Send message</button>
+        <hr>
+        <h3>Players</h3>
+        <input id="player1" type="text" placeholder="Player 1 name ('ALL' for everyone)" maxlength="32">
+        <input id="player2" type="text" placeholder="Player 2 name ('ALL' for everyone)" maxlength="32">
+      </section>
+
+      <section class="card">
+        <h3>Mods</h3>
+        <button class="btn secondary" type="button" onclick="teleportPlayerToPlayer(player1(), player2())">Teleport player 1 to player 2</button>
+        <button class="btn secondary" type="button" onclick="killPlayerAnonymous(player1())">Kill player 1 anonymously</button>
+        <button class="btn secondary" type="button" onclick="killPlayer(player1(), player2())">Make player 2 kill player 1</button>
+        <button class="btn secondary" type="button" onclick="moneyDrop(player1(), 1)">Player 1 money drop on</button>
+        <button class="btn secondary" type="button" onclick="moneyDrop(player1(), 0)">Player 1 money drop off</button>
+        <button class="btn secondary" type="button" onclick="moneyDrop(player1(), 2)">Toggle player 1 money drop</button>
+        <button class="btn secondary" type="button" onclick="removeWantedLevel(player1())">Remove player 1 wanted level</button>
+        <button class="btn secondary" type="button" onclick="kickPlayer(player1())">Kick player 1</button>
+        <hr>
+        <input type="number" id="XCOORD" placeholder="X">
+        <input type="number" id="YCOORD" placeholder="Y">
+        <input type="number" id="ZCOORD" placeholder="Z">
+        <button class="btn secondary" type="button" onclick="teleportPlayer(player1(), getValue('XCOORD'), getValue('YCOORD'), getValue('ZCOORD'))">Teleport player 1 to coordinate</button>
+      </section>
+
+      <section class="card">
+        <h3>More</h3>
+        <input type="number" id="RANK" placeholder="Rank 0 to 8000">
+        <button class="btn secondary" type="button" onclick="setRank()">Set player 1 rank</button>
+        <button class="btn secondary" type="button" onclick="giveMoney()">Give player 1 100 million</button>
+        <hr>
+        <input id="OBJECT_NAME" type="text" placeholder="Object name" maxlength="100">
+        <button class="btn secondary" type="button" onclick="spawnObjectOnPlayerWithOffset(getValue('OBJECT_NAME'), 0, 0, 0, player1())">Spawn object on player 1</button>
+        <hr>
+        <input id="VEHICLE_NAME" type="text" placeholder="Vehicle name" maxlength="100">
+        <button class="btn secondary" type="button" onclick="spawnVehicle(player1(), getValue('VEHICLE_NAME'))">Spawn vehicle on player 1</button>
+        <hr>
+        <input id="ANIM_DICT" type="text" placeholder="Animation dictionary" maxlength="100">
+        <input id="ANIM_NAME" type="text" placeholder="Animation name" maxlength="100">
+        <button class="btn secondary" type="button" onclick="playerAnimation(player1(), getValue('ANIM_DICT'), getValue('ANIM_NAME'))">Start animation on player 1</button>
+        <button class="btn secondary" type="button" onclick="clearTask(player1())">Stop player 1 animation</button>
+      </section>
+    </div>
+  </main>
+
+  <footer>Paradise SPRX by gopro_2027. Open source, no payments, no warranty.</footer>
+
+  <script src="/rtm/rtmlib.js"></script>
+  <script>
+    const responseEl = document.getElementById('response');
+    setResponseHandler((text) => {
+      responseEl.textContent = text === 'Not valid Key!' ? 'Not connected: check the RTM key and make sure the menu has RTM turned on.' : text;
+      responseEl.className = 'msg ' + (text === 'Sent!' ? 'ok' : 'error');
+    });
+
+    function getValue(id) {
+      return document.getElementById(id).value;
+    }
+
+    function playerName(id, label) {
+      const name = getValue(id);
+      if (name.length < 1) {
+        responseEl.textContent = label + ' name not set. Type a name in the ' + label + ' box.';
+        responseEl.className = 'msg error';
+      }
+      return name;
+    }
+    const player1 = () => playerName('player1', 'Player 1');
+    const player2 = () => playerName('player2', 'Player 2');
+
+    function connect() {
+      setRTMKey(getValue('RTMKey').trim());
+      nullFunction();
+    }
+
+    function setRank() {
+      setPlayerRank(player1(), getValue('RANK'));
+    }
+
+    function giveMoney() {
+      setStat(player1(), 'CASH_GIFT', 100000000);
+      sendText(player1(), 'Join a new lobby for $');
+    }
+  </script>
+</body>
+</html>

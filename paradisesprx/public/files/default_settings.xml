@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+Lines without a 'greater than' symbol are ingored.
+Delete this file to have a default one generated.
+
+true means on, false means off
+
+This feature is for a very cool 3d mode effect, default value is off
+<3DMode>false</3DMode>
+
+Godmode overrules UndetectableGodmode
+<Godmode>false</Godmode>
+<UndetectableGodmode>false</UndetectableGodmode>
+
+<NoclipSpeed>2</NoclipSpeed>
+
+Enable paradise chat by default or not
+<ParadiseChat>true</ParadiseChat>
+
+Values go from 0 to 255
+Old blue color was 0, 168, 255
+blue color for years was 21 101 192
+<ColorRed>231</ColorRed>
+<ColorGreen>76</ColorGreen>
+<ColorBlue>60</ColorBlue>
+
+<NoCops>false</NoCops>
+
+<MenuScale>0.48</MenuScale>
+
+<ObjectAttachmentProtection>true</ObjectAttachmentProtection>
+
+<BlockAllObjectSpawning>false</BlockAllObjectSpawning>
+
+<BlockClonesAndPeds>true</BlockClonesAndPeds>
+
+<ShowTalkingPlayers>false</ShowTalkingPlayers>
+
+<RainbowMode>false</RainbowMode>
+
+<TextRed>255</TextRed>
+<TextGreen>255</TextGreen>
+<TextBlue>255</TextBlue>
+
+<BackgroundOpacity>120</BackgroundOpacity>
+
+<RainbowMode>false</RainbowMode>
+
+Setting this to true will make the text that says "using Paradise SPRX" no longer show up on your psn profile
+<NoAdvertise>false</NoAdvertise>
+
+<ParadiseChatUsePSNName>false</ParadiseChatUsePSNName>
+

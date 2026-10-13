@@ -1,0 +1,842 @@
+1   DO NOT CHANGE THIS LINE
+
+STR1:Self Options
+STR2:Weapon Options
+STR3:Players
+STR4:Lobby Options
+STR5:Traffic Options
+STR6:Vehicle Options
+STR7:Teleport Options
+STR8:Weather and Time
+STR9:Forge Menu
+STR10:Ped Options
+STR11:Modder Protection
+STR12:Rockstar Admin Options
+STR13:Website RTM & Chat
+STR14:FPS Manager
+STR15:Settings
+STR16:Debugger
+STR17:Regular Resolution
+STR18:Medium Resolution
+STR19:Lowest Resolution
+STR20:Render Entities
+STR21:Timecycles
+STR22:Delete Every Entity
+STR23:Vehicle Limit
+STR24:Parked Vehicle Density
+STR25:Ambient Vehicle Density
+STR26:Default
+STR27:LODmult_global_reduce_NOHD
+STR28:LODmult_HD_orphan_LOD
+STR29:LODmult_HD_orphan_LOD_reduce
+STR30:LODmult_HD_orphan_reduce
+STR31:LODmult_Lod_reduce
+STR32:Refit
+STR33:ReduceDrawDistanceMission
+STR34:V_Solomons
+STR35:V_RockClub
+STR36:V_Recycle
+STR37:Lobby Size Bypass
+STR38:Remove Yourself From Lobby Count
+STR39:Developer Mode
+STR40:Old Developer Mode
+STR41:Rockstar Admin Kick
+STR42:Rockstar Admin Messages
+STR43:Rockstar Admin Give Money
+STR44:Rockstar Admin Give XP
+STR45:Test send message
+STR46:Amount
+STR47:Mode
+STR48:Send To Player
+STR49:Send To Lobby
+STR50:XP
+STR51:Mode
+STR52:Send To Player
+STR53:Send To Lobby
+STR54:Select Message
+STR55:Send To Player
+STR56:Send To Lobby
+STR57:Custom Message
+STR58:Enable
+STR59:Disable
+STR60:Generate New RTM Key
+STR61:Send RTM Modmenu Instructions To Player
+STR62:Allow Stat Options
+STR63:Allow Advanced Options
+STR64:Enable Chat
+STR65:Send Message
+STR66:Run Function At 0x3EAC24
+STR67:Actual Address: 
+STR68:Global Mode
+STR69:Test Player
+STR70:Player Ped Address
+STR71:My Vehicle Address
+STR72:Model Address
+STR73:Player Data Address
+STR74:Player Data Address (network)
+STR75:Load webm.sprx
+STR76:Entity Aimed At (Ghetto style)
+STR77:Entity Aimed At (Test)
+STR78:Show Talking Players
+STR79:Send Text Message
+STR80:Clear All Tasks
+STR81:Spam Text Message
+STR82:Spam Type
+STR83:Remove All Weapons
+STR84:Stop Animation/Detach Player
+STR85:All Stripper Dance
+STR86:Teleport All To Me
+STR87:Attach All To Me
+STR88:Totem Pole
+STR89:Explode Lobby
+STR90:Force Players Visible
+STR91:Rank Spoofer
+STR92:Take away weapons and give stun gun
+STR93:Toggle Give Money All On
+STR94:Toggle Give Money All Off
+STR95:Remove Mini-Menu Sounds
+STR96:Lobby size
+STR97:Unrestrict Chat
+STR98:Restrict Chat
+STR101:Give All Armour
+STR102:Remove Player From Badsport
+STR103:Give All Camos
+STR104:Clear Player Reports
+STR105:Give Fireworks
+STR106:Set Legit KD Ratio For Player
+STR107:Set Free Rims In LSC For Player
+STR108:Unlock All Hair Types
+STR109:Unlock Heist Rewards
+STR110:Unlock All Purchases In LSC
+STR111:Set High Mental State
+STR112:Resset Mental State
+STR113:Give Modded Combat Roll
+STR114:Give 999999 RP
+STR115:Unlock All Shirts
+STR116:Set Max Skills
+STR117:Give Infinite Snacks
+STR118:Unlock All Tatoos
+STR119:Unlock All Trophies
+STR120:Unlock All Weapons
+STR121:Rank 8000 Stable
+STR122:Give $1 Billion
+STR123:Teleport Options
+STR124:Troll Options
+STR125:Weapon Options
+STR126:Vehicle Options
+STR127:Animations
+STR128:Stats/Recovery
+STR129:Modder Kill
+STR130:Money Drop
+STR131:Give Money Type
+STR132:Set Money Drop Prop
+STR133:Set Rank
+STR134:Send Text Message
+STR135:Advanced Text Message Options
+STR136:Kick Player (Host Only)
+STR137:Kick Player (Non-Host)
+STR138:Attachables
+STR139:Bodyguards
+STR140:Attach To Player's Back
+STR141:Rape On Player Attach
+STR142:Spectate
+STR143:'Co-Host' Options
+STR144:Demi-Godmode
+STR145:Request Location Info
+STR146:Message them their IP + Location
+STR147:Fake Leave Lobby
+STR148:Detach All Attached Objects
+STR149:Force Into Job
+STR150:Remove Wanted Level
+STR151:Change Radio
+STR152:Disable Account
+STR153:Set Into Badsport Lobby
+STR154:Set Into Cheater Lobby
+STR155:Test Event From File
+STR156:Choose player name
+STR157:Send event from file to that player
+STR158:Admin hi!
+STR159:Set Rank 1
+STR160:Set High Snacks
+STR161:Set Mental State Red
+STR162:Set In Bad Sport
+STR163:Give rp v2
+STR164:add 1 to kills
+STR165:add 100 to kills
+STR166:commend
+STR167:Set in bad sport
+STR168:Remove from bad sport v2
+STR169:Set in bad sport v2
+STR170:Set Stat Using Data Below
+STR171:Stat Index
+STR172:Stat Type
+STR173:Int Value
+STR174:Bool Value
+STR175:Float Value
+STR176:Give 10K RP
+STR177:Give 100K RP
+STR178:Give 1MIL RP
+STR179:Set Rank
+STR180:Enable Mini Menu
+STR181:Enable CMD Menu
+STR182:Send Descriptive Mini Menu Instructions Text
+STR183:Resend CMD Menu Instructions Text
+STR184:
+STR185:~g~INSTRUCTIONS:
+STR186:~b~Mini Menu:
+STR187:**Menu shows up as a text message**
+STR188:Has a max of 4 options per page.
+STR189:Shows a '>' next to the current option.
+STR190:Controls (Spend some time to teach them these for best use):
+STR191:Start Button (Pause Button) to open. Then press start again to close the pause menu.
+STR192:Shoot 1 bullet of a gun to make it select. Wait 1 sec between each shot.
+STR193:Open interaction menu and change 'player mood' to scroll
+STR194:Flip Off Animation (R3+L3) to scroll up. Must be set within the interaction menu to 'The Bird'.
+STR195:~b~CMD Menu:
+STR196:Features - More options and relatively more stable
+STR197:Downside - Text Message wait time
+STR198:Command List: HTTP://paradisesprx.net/CMD
+STR199:Teleport To Them
+STR200:Teleport Into Players Vehicle
+STR201:Teleport Player To Me
+STR202:Teleport Player To Player
+STR203:Spam Text Message
+STR204:Clone Player
+STR205:Screw With Their Car
+STR206:Clear Task Loop
+STR207:Kill Player
+STR208:Radgoll Player
+STR209:Blame Player
+STR210:Kill Them Too When Blaming Them
+STR211:Make Kill
+STR212:Michelin Man Outfit
+STR213:Peeing
+STR214:Forcefield
+STR215:Dance On
+STR216:Teleport To Space
+STR217:Spazz Mode
+STR218:Clear Animations/Detach Player
+STR219:PANTO SMASH
+STR220:Spawn House
+STR221:Teleport Into Golf
+STR222:Attach Random Object To Player
+STR223:Attach All Objects To Player
+STR224:Reset View Loop
+STR225:Send To Jail
+STR226:Release From Jail
+STR227:Box Troll
+STR228:Freeze Console
+STR231:Clear Animations
+STR232:Celebrate
+STR233:Pole Dance
+STR234:Push-Ups
+STR235:Suicide
+STR236:Stripper Dance
+STR237:Sit-Ups
+STR238:Electrocution
+STR239:Monkey Dance
+STR240:Air Guitar
+STR241:Fishing
+STR242:Dance
+STR243:Sex Recieve
+STR244:Sex Give
+STR245:Freak Out
+STR246:Poo
+STR247:Shower
+STR248:Infinite Ammo
+STR249:Aimbot
+STR250:Give Weapon
+STR251:Give All Weapons
+STR252:Remove All Weapons
+STR253:Fix And Wash
+STR254:Paint Random
+STR255:Boost Forwards
+STR256:Jump Into Air
+STR257:Gayify
+STR258:Explode
+STR259:Gravity
+STR260:Raise Suspension
+STR261:Lower Suspension
+STR262:Delete Vehicle
+STR263:Kick Out Of Vehicle
+STR264:Monkey
+STR265:Deer
+STR266:Cow
+STR267:Marine
+STR268:Hipster
+STR269:Set Hours
+STR270:Set Minutes
+STR271:Set Seconds
+STR272:Set Time
+STR273:Freeze Time
+STR274:Clear
+STR275:Sunny
+STR276:Clouds
+STR277:Overcast
+STR278:Rain
+STR279:Clearing
+STR280:Thunder
+STR281:Smog
+STR282:Foggy
+STR283:Christmas
+STR284:Light Snow
+STR285:Blizzard
+STR286:Alien Weather
+STR287:Snow
+STR288:Visions
+STR289:Stop Vision
+STR290:Clear Vision On Select
+STR291:Select Prop
+STR292:Attach Prop
+STR293:Set Prop ID
+STR294:UFO
+STR295:Giant Orange
+STR296:Big Blue Ball
+STR297:Big Jet
+STR298:White Box
+STR299:Katana
+STR300:Strobe Light
+STR301:Tree Log
+STR302:Future Gun
+STR303:Bong
+STR304:Dildo
+STR305:Poop
+STR306:Large TV
+STR307:Lightsaber
+STR308:Ferris Wheel
+STR309:Alien Egg
+STR310:Elevator
+STR311:Boulder
+STR312:Sculpture
+STR313:Stomach
+STR314:Chest
+STR315:Gentils
+STR316:Head
+STR317:Left Arm
+STR318:Left Hand
+STR319:Left Knee
+STR320:Left Shoe
+STR321:Left Shoulder
+STR322:Left Wrist
+STR323:Mouth
+STR324:Right Arm
+STR325:Right Hand
+STR326:Right Knee
+STR327:Right Shoe
+STR328:Right Shoulder
+STR329:Right Wrist
+STR330:Umbilical
+STR331:Ped 1
+STR332:Ped 2
+STR333:Ped 3
+STR334:Ped 4
+STR335:Ped 5
+STR336:Spawn
+STR337:Remove
+STR338:Set As Bodyguard
+STR339:Remove Bodyguard
+STR340:Set Invincible
+STR341:Set Not Invincible
+STR342:Give Minigun
+STR343:Remove Minigun
+STR344:Attach To Player
+STR345:Detach
+STR346:Attack Player
+STR347:Teleport To Ped
+STR348:Teleport To Me
+STR349:Texture ID
+STR350:Animations
+STR351:Stop Animations
+STR352:Play Music
+STR353:Take Photo
+STR354:Binoculars
+STR355:Drink
+STR356:Play Golf
+STR357:Lift Weights
+STR358:Smoke
+STR359:Handyman
+STR360:Yoga
+STR361:Flex Muscles
+STR362:Celebrate
+STR363:Pole Dance
+STR364:Push-Ups
+STR365:Suicide
+STR366:Stripper Dance
+STR367:Sit-Ups
+STR368:Electrocution
+STR369:Teleport To Waypoint
+STR370:Multiplayer Locations
+STR371:Singleplayer Locations
+STR372:Landmarks
+STR373:My Favorites
+STR374:Vehicle Spawner
+STR375:Vehicle Part Shop
+STR376:Regular Vehicle Mods
+STR377:Default
+STR378:Parts
+STR379:Colors
+STR380:More Colors
+STR381:Extras
+STR382:Set License Plate Text
+STR383:There Are No Extras For This Car
+STR384:Spoilers
+STR385:Front Bumper
+STR386:Rear Bumper
+STR387:Side Skirt
+STR388:Exhaust
+STR389:Frame
+STR390:Grille
+STR391:Hood
+STR392:Fender
+STR393:Right Fender
+STR394:Roof
+STR395:Engine
+STR396:Brakes
+STR397:Transmission
+STR398:Horns
+STR399:Suspension
+STR400:Armor
+STR401:Front Wheels
+STR402:Back Wheels
+STR403:Max Out Car
+STR404:Godmode
+STR405:Fix And Wash Vehicle
+STR406:Stick To Ground
+STR407:Need For Speed
+STR408:Need For Speed Mode
+STR409:Paradise Style Rainbow Car
+STR410:Raise Suspension
+STR411:Lower Suspension
+STR412:Gravity
+STR413:Wheel To Modify
+STR414:Wheel Rotation Multiplier
+STR415:Negative Camber
+STR416:Positive Camber
+STR417:No Camber
+STR418:Square To Drift
+STR419:Open All Doors
+STR420:Close All Doors
+STR421:Matrix Plate
+STR422:Vehicle Light Intensity
+STR423:Vehicle Collision
+STR424:Vehicle Visibility
+STR425:Eject Seat
+STR426:Special cargobob 3 and submarine
+STR427:Wheelie
+STR428:Low Rider Mode
+STR429:Hydraulics Power
+STR430:Hydraulics Lowness
+STR431:Disable Horn
+STR432:Enable Horn
+STR433:Primary Color
+STR434:Secondary Color
+STR435:Pearlescent Color
+STR436:Wheel Color
+STR437:Red
+STR438:Green
+STR439:Blue
+STR440:Set Colors
+STR441:Set Tire Smoke
+STR442:Set Patriot Smoke
+STR443:Animations
+STR444:Superheros
+STR445:Name Changer
+STR446:Model Changer
+STR447:Detach All Objects From You
+STR448:Godmode
+STR449:Undetectable Godmode
+STR450:Invisibility
+STR451:Noclip
+STR452:Noclip Speed
+STR453:No Cops
+STR454:Remove Lights
+STR455:Funny Screen
+STR456:First Person
+STR457:Portal Gun
+STR458:Minecraft
+STR459:Minecraft Reach Distance
+STR460:Player Opacity
+STR461:Revenge
+STR462:Shrink
+STR463:Forcefield
+STR464:2D Mode
+STR465:Super Speed
+STR466:Reset Super Speed
+STR467:No Water
+STR468:'Fake' Water
+STR469:No Ragdoll ON
+STR470:No Ragdoll OFF
+STR471:Bypass Prologue Distance Check
+STR472:Teleport To Jail Cells
+STR473:Spoof Into Badsport Lobbies
+STR474:Spoof Out Of Badsport Lobbies
+STR475:Spoof Into Cheater Lobbies
+STR476:Spoof Out Of Cheater Lobbies
+STR477:GTA Online Tutorial Bypass
+STR478:Force Session Update
+STR479:Remove Account From Badsport
+STR480:Spoof To JP Servers
+STR481:Spoof To English/Normal Servers
+STR482:Start Finding
+STR483:Stop Finding
+STR484:Add Text
+STR485:Add ~~
+STR486:Bold
+STR487:Tiny Name
+STR488:Add Red
+STR489:Add Green
+STR490:Add Blue
+STR491:Add Yellow
+STR492:Add Purple
+STR493:Add Orange
+STR494:Add Grey
+STR495:Add Dark Grey
+STR496:Add Black
+STR497:Add White
+STR498:Replace All '-' with '~~'
+STR499:Add Stars (PSN Only)
+STR500:Add Fire (PSN Only)
+STR501:Add Explosion (PSN Only)
+STR502:Clear Name
+STR503:Save Changes (GTA)
+STR504:Save Changes (PSN)
+STR505:Add Text
+STR506:Add ~~
+STR507:Bold
+STR508:Big Text
+STR509:Add New Line
+STR510:Add Red
+STR511:Add Green
+STR512:Add Blue
+STR513:Add Yellow
+STR514:Add Purple
+STR515:Add Orange
+STR516:Add Grey
+STR517:Add Dark Grey
+STR518:Add Black
+STR519:Add White
+STR520:Add <
+STR521:Add >
+STR522:Add /
+STR523:Add '
+STR524:Add "
+STR525:Add =
+STR526:Add $
+STR527:Add _
+STR528:Add ¦
+STR529:Add ÷
+STR530:Add ∑
+STR531:Replace All '-' with '~~'
+STR532:Add Star Of Size
+STR533:Clear Text
+STR534:Send Text
+STR535:Send Text Spoofed As Them
+STR536:Send Text Spoofed As Player
+STR537:Send To Lobby Spoofed As Player
+STR538:Hulk
+STR539:Spiderman
+STR540:One Shot One Kill
+STR541:Vehicle Gun
+STR542:Infinite Ammo
+STR543:Aimbot
+STR544:Remove All Weapons
+STR545:Give All Weapons
+STR546:Stealth Aimbot
+STR547:Ped Mode
+STR548:Require Aiming
+STR549:Shooting Type: No Damage
+STR550:Shooting Type: Melee
+STR551:Shooting Type: Bullet
+STR552:Shooting Type: Explosive
+STR553:Shooting Type: Fire
+STR554:Shooting Type: Fall
+STR555:Shooting Type: Electric
+STR556:Shooting Type: Barbed Wire
+STR557:Shooting Type: Extinguisher
+STR558:Shooting Type: Gas
+STR559:Shooting Type: Water Cannon
+STR560:Alien
+STR561:Police
+STR562:Marine
+STR563:Jesus
+STR564:Hacker
+STR565:Gross Dude
+STR566:Body Builder
+STR567:Fat Lady
+STR568:Skinny Lady
+STR569:Male Character
+STR570:Female Character
+STR571:Custom Input
+STR572:Texture + 1
+STR573:Texture - 1
+STR574:Drawable + 1
+STR575:Drawable - 1
+STR576:Save Component Set
+STR577:Load Component Set
+STR578:Vehicle List
+STR579:Spawn Custom Vehicle
+STR580:Spawn Inside Of Car
+STR581:Spawn Maxed
+STR582:Spawn Gravity
+STR583:Spawn Suspension
+STR584:Spawn Modified Vehicle
+STR585:Super
+STR586:Sports Cars
+STR587:Sports Classic Cars
+STR588:Muscle Cars
+STR589:Sedans
+STR590:Coupes
+STR591:Compacts
+STR592:SUVs and Trucks
+STR593:Offroad Vehicles
+STR594:Vans
+STR595:Emergency Vehicles
+STR596:Service Vehicles
+STR597:Military Vehicles
+STR598:Motorcycles
+STR599:Bicycles
+STR600:Commercial Vehicles
+STR601:Helicopters
+STR602:Planes
+STR603:Boats
+STR604:Trailers
+STR605:Clear Reports
+STR606:Clear Badsport
+STR607:100% Skills
+STR608:All Tattos
+STR609:Unlimited Snacks
+STR610:Max Armor
+STR611:Free Fireworks
+STR612:Unlock All Camos
+STR613:Free Rims
+STR614:Buy All Shirts
+STR615:Finish All LSC Challenges
+STR616:Unlock All Trophies
+STR617:All Hair Unlocked
+STR618:All Weapons Unlocked
+STR619:Reset Mental State
+STR620:Legit KD
+STR621:Give Money
+STR622:Deduct Money
+STR623:Rank 120
+STR624:Set Into Badsport
+STR625:Remove From Badsport
+STR626:Remove From Cheater
+STR627:Spawn List
+STR628:Pre-Built Structures
+STR629:Object And Vehicle Spooner
+STR630:Forge Mode
+STR631:Dynamic Movement
+STR632:Dynamic Distance
+STR633:Placement
+STR634:Variables
+STR635:Attach To Player
+STR636:Delete Gun
+STR637:Attach To Player On Selection
+STR638:Enable Collision On Player Attach
+STR639:Set Invisible On Player Attach
+STR640:Spawn As Money
+STR641:Spawn Gun
+STR642:Release Object
+STR643:Clone Object
+STR644:Map Spooner List
+STR645:Vehicle Spooner List
+STR646:Stop Spawning
+STR647:Add Current Object To Creation
+STR648:~r~Clear Current Creation
+STR649:Save Creation As Relative To Player
+STR650:Save Creation As Relative To World
+STR651:Save Creation As Relative To Vehicle
+STR652:Load Creation
+STR653:Spawn Creation
+STR654:Sky Base 1
+STR655:Sky Base 2
+STR656:Big Land Base
+STR657:Car Parkour
+STR658:Maze Bank Megaramp
+STR659:Hidden Base Under Map
+STR660:Skyscraper 1
+STR661:Skyscraper 2
+STR662:Skyscraper 3
+STR663:Skyscraper 4
+STR664:Skyscraper 5
+STR665:Skyscraper 6
+STR666:Black UFO From Military Base
+STR667:Downtown
+STR668:Industrial 1
+STR669:Industrial 2
+STR670:Hollywood
+STR671:Port
+STR672:Central
+STR673:Sunset
+STR674:Airport
+STR675:Koreatown
+STR676:Beverly Hills
+STR677:San Pedro
+STR678:Santa Monica
+STR679:Venice Beach
+STR680:Delete Object
+STR681:Detach Object
+STR682:Enable Collision
+STR683:Disable Collision
+STR684:Set Visible
+STR685:Set Invisible
+STR686:Enable Gravity
+STR687:Disable Gravity
+STR688:Freeze
+STR689:Unfreeze
+STR690:Increment
+STR691:X Pos
+STR692:Y Pos
+STR693:Z Pos
+STR694:Object X Rot
+STR695:Object Y Rot
+STR696:Object Z Rot
+STR697:Axis Pitch
+STR698:Axis Roll
+STR699:Axis Yaw
+STR700:Place Object
+STR701:Get Object Dif
+STR702:Attach To Car
+STR703:Flip Pitch
+STR704:Flip Roll
+STR705:Flip Yaw
+STR706:Use 90 degrees instead
+STR707:Fun Box
+STR708:Half Pipe
+STR709:Kicker
+STR710:Quarter Pipe
+STR711:Rail
+STR712:Spiner
+STR713:TV With Video Transmission
+STR714:TV With Video Transmission v2
+STR715:TV With Video Transmission v3
+STR716:Add A Favorite
+STR717:Choose From Short List
+STR718:Choose From Favorites
+STR719:Custom Input
+STR720:Stomach
+STR721:Chest
+STR722:Gentils
+STR723:Head
+STR724:Left Arm
+STR725:Left Hand
+STR726:Left Knee
+STR727:Left Shoe
+STR728:Left Shoulder
+STR729:Left Wrist
+STR730:Month
+STR731:Right Arm
+STR732:Right Hand
+STR733:Right Knee
+STR734:Right Shoe
+STR735:Right Shoulder
+STR736:Right Wrist
+STR737:Umbilical
+STR738:Stop Animations
+STR739:Play Music
+STR740:Take Photo
+STR741:Binoculars
+STR742:Drink
+STR743:Play Golf
+STR744:Lift Weights
+STR745:Smoke
+STR746:Handyman
+STR747:Yoga
+STR748:Flex Muscles
+STR749:Celebrate
+STR750:Pole Dance
+STR751:Push-Ups
+STR752:Suicide
+STR753:Stripper Dance
+STR754:Sit-Ups
+STR755:Electrocution
+STR756:Yankton
+STR757:Aircraft Carrier
+STR758:Yacht
+STR759:Mini Cave
+STR760:Private Beach
+STR761:Hidden Garage
+STR762:FBI Building
+STR763:Private Island
+STR764:House
+STR765:Chiliad
+STR766:Fix And Wash
+STR767:Paint Random
+STR768:Boost Forwards
+STR769:Jump Into Air
+STR770:Gayify
+STR771:Explode
+STR772:Carmageddon
+STR773:Gravity
+STR774:Raise Suspension
+STR775:Lower Suspension
+STR776:Object Attachment Protection
+STR777:Disable Blame Player On You
+STR778:Enable Blame Player On You
+STR779:[ESP] Draw Line To All Entities
+STR780:Block All Script Events
+STR781:Event List
+STR782:Block Admin Give XP/Money
+STR783:Entity Blocker
+STR784:Block clones and spawned peds
+STR785:Vehicle Anti-Freeze protections enabled automatically too!
+STR787:Current Generator
+STR788:Reset
+STR789:Enabled
+STR790:Speed
+STR791:Bags To Drop
+STR792:Radius
+STR793:Attach To Player
+STR794:Take Off Player
+STR795:Arg Count
+STR796:Edit Arg
+STR797:Run Event
+STR798:Edit As Int
+STR799:Edit As Int
+STR800:Edit As Float
+STR801:Edit As String
+STR802:Menu Scale
+STR803:Text Font
+STR804:Sounds
+STR805:Instructions
+STR806:Max Options
+STR807:Fast Scroll Speed
+STR808:All Menu Option Rememberence
+STR809:Minimum Menu Width
+STR810:Minimalist Mode
+STR811:Text Red
+STR812:Text Green
+STR813:Text Blue
+STR814:Text Opacity
+STR815:Text Font
+STR816:Rect Red
+STR817:Rect Green
+STR818:Rect Blue
+STR819:Rect Opacity
+STR820:Text Red
+STR821:Text Green
+STR822:Text Blue
+STR823:Text Opacity
+STR824:Text Font
+STR825:Rect Red
+STR826:Rect Green
+STR827:Rect Blue
+STR828:Rect Opacity
+STR829:Red
+STR830:Green
+STR831:Blue
+STR832:Opacity
+STR833:Red
+STR834:Green
+STR835:Blue
+STR836:Opacity
+STR837:Need For Speed Speed
+STR838:Skateboard Mode
+STR839:Attempt PS3 Shutdown
+STR840:Script Menu Loader
+STR841:[ESP] Draw Object Hash Name On All Entities
+STR842:[ESP] Draw Distance
+STR843:Flag Player As Modder To Rockstar
+STR844:Zombie Outbreak
+STR845:Fix Disable Account

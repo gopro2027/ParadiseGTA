@@ -1,0 +1,17 @@
+{
+  "name": "paradisesprx",
+  "private": true,
+  "description": "Open source backend for the Paradise SPRX (GTA V PS3) with free key generation",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "node scripts/dev-server.mjs",
+    "sim": "node scripts/ps3-sim.mjs",
+    "test": "node --test test/api.test.mjs"
+  },
+  "dependencies": {
+    "@upstash/redis": "1.39.0"
+  }
+}
