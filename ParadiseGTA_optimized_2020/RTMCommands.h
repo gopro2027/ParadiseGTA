@@ -143,7 +143,7 @@ namespace RTMCommands {
 		printf("Running command:\n");
 		if (strlen(command) <= 0) {
 			printf("Not a valid command!\n");
-			print2("Error with paradisesprx.net connection!",2000);
+			print2("Error with " PARADISE_WEBSITE " connection!",2000);
 			return;
 		}
 		int functionID = getRTMFunctionID(command);

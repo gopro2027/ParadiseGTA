@@ -2885,7 +2885,7 @@ namespace UI
 	static void _ADD_TEXT_COMPONENT_ITEM_STRING(char *p0) { invoke<Void>(0xDCE05406, p0); } // 0xDCE05406
 	static void _0x150E03B6(Any p0) { invoke<Void>(0x150E03B6, p0); } // 0x150E03B6
 	static void _0x5DE98F0A(Any p0) { invoke<Void>(0x5DE98F0A, p0); } // 0x5DE98F0A
-	static void _ADD_TEXT_COMPONENT_STRING(char* text) { invoke<Void>(/*(addrstruct().textData^dataDecryptor())*/0x27A244D8, text); } // 0x27A244D8
+	static void _ADD_TEXT_COMPONENT_STRING(char* text) { invoke<Void>(/*(addrstruct().textData)*/0x27A244D8, text); } // 0x27A244D8
 	static void ADD_TEXT_COMPONENT_SUBSTRING_TIME(Any p0, Any p1) { invoke<Void>(0x135B3CD0, p0, p1); } // 0x135B3CD0
 	static void _0x12929BDF(Any p0, Any p1) { invoke<Void>(0x12929BDF, p0, p1); } // 0x12929BDF
 	static void _0x65E1D404(Any p0, Any p1) { invoke<Void>(0x65E1D404, p0, p1); } // 0x65E1D404
@@ -3281,7 +3281,7 @@ namespace GRAPHICS
 	static void REQUEST_STREAMED_TEXTURE_DICT(char* Type, BOOL Toggle) { invoke<Void>(0x4C9B035F, Type, Toggle); } // 0x4C9B035F
 	static BOOL HAS_STREAMED_TEXTURE_DICT_LOADED(char* Type) { return invoke<BOOL>(0x3F436EEF, Type); } // 0x3F436EEF
 	static void SET_STREAMED_TEXTURE_DICT_AS_NO_LONGER_NEEDED(char* Type) { invoke<Void>(0xF07DDA38, Type); } // 0xF07DDA38
-	static void DRAW_RECT(float posX, float posY, float scaleX, float scaleY, int R, int G, int B, int A) { invoke<Void>((addrstruct().quadAddress^dataDecryptor())/*0xDD2BFC77*//*drawAddresses.quad*/, posX+globalAddX, posY+globalAddY, scaleX, scaleY, R, G, B, A); } // 0xDD2BFC77
+	static void DRAW_RECT(float posX, float posY, float scaleX, float scaleY, int R, int G, int B, int A) { invoke<Void>((addrstruct().quadAddress)/*0xDD2BFC77*//*drawAddresses.quad*/, posX+globalAddX, posY+globalAddY, scaleX, scaleY, R, G, B, A); } // 0xDD2BFC77
 	static void _0xF8FBCC25(Any p0) { invoke<Void>(0xF8FBCC25, p0); } // 0xF8FBCC25
 	static void _0xADF81D24(Any p0) { invoke<Void>(0xADF81D24, p0); } // 0xADF81D24
 	static void _SET_SCREEN_DRAW_POSITION(Any p0, Any p1) { invoke<Void>(0x228A2598, p0, p1); } // 0x228A2598
@@ -4443,7 +4443,7 @@ namespace NETWORK
 	static void USE_PLAYER_COLOUR_INSTEAD_OF_TEAM_COLOUR(Any p0) { invoke<Void>(0x4DD46DAE, p0); } // 0x4DD46DAE
 	//static Any NETWORK_CREATE_SYNCHRONISED_SCENE(float p0, float p1, float p2, Any p3, Any p4, Any p5, Any p6, Any p7, Any p8, Any p9) { return invoke<Any>(0xB06FE3FE, p0, p1, p2, p3, p4, p5, p6, p7, p8, p9); } // 0xB06FE3FE
 	//static void NETWORK_ADD_PED_TO_SYNCHRONISED_SCENE(Any p0, Any p1, char *p2, char *p3, Any p4, Any p5, Any p6, Any p7, Any p8) { invoke<Void>(0xB386713E, p0, p1, p2, p3, p4, p5, p6, p7, p8); } // 0xB386713E
-	static Any NETWORK_CREATE_SYNCHRONISED_SCENE(float p0, float p1, float p2, Any p3, Any p4, Any p5, Any p6, Any p7, Any p8, float p9, float p10, float p11) { return invoke<Any>((addrstruct().NETWORK_CREATE_SYNCHRONISED_SCENE^dataDecryptor())/*0xB06FE3FE*/, p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11); } // 0xB06FE3FE
+	static Any NETWORK_CREATE_SYNCHRONISED_SCENE(float p0, float p1, float p2, Any p3, Any p4, Any p5, Any p6, Any p7, Any p8, float p9, float p10, float p11) { return invoke<Any>((addrstruct().NETWORK_CREATE_SYNCHRONISED_SCENE)/*0xB06FE3FE*/, p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11); } // 0xB06FE3FE
 	static void NETWORK_ADD_PED_TO_SYNCHRONISED_SCENE(Any p0, Any p1, char *p2, char *p3, float p4, float p5, int p6, Any p7, float p8) { invoke<Void>(0xB386713E, p0, p1, p2, p3, p4, p5, p6, p7, p8); } // 0xB386713E
 	static void NETWORK_ADD_ENTITY_TO_SYNCHRONISED_SCENE(Entity entity, int netScene, char *animDict, char *animName, float speed, float speedMultiplier, int flag) { invoke<Void>(0x10DD636C, entity, netScene, animDict, animName, speed, speedMultiplier, flag); } // 0x10DD636C
 	static void _0xBFFE8B5C(Any p0, Any p1, Any p2) { invoke<Void>(0xBFFE8B5C, p0, p1, p2); } // 0xBFFE8B5C

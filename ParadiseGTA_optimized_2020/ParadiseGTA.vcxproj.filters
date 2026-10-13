@@ -26,9 +26,6 @@
     <ClInclude Include="Buttons.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="crypto.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Enums.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -75,9 +72,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="XML.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="security.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="STDLib.h">

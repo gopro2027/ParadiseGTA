@@ -56,13 +56,6 @@
       <DataStripping>StripFuncsAndData</DataStripping>
       <GenerateSnMapFile>FullMapFile</GenerateSnMapFile>
     </Link>
-    <PostBuildEvent>
-      <Command>cd /d $(OutDir)\utils\
-encryptit.bat</Command>
-    </PostBuildEvent>
-    <PostBuildEvent>
-      <Message>encrypt</Message>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">
     <ClCompile>
@@ -85,7 +78,6 @@ encryptit.bat</Command>
     <ClInclude Include="base64.h" />
     <ClInclude Include="BitmapLoader.h" />
     <ClInclude Include="Buttons.h" />
-    <ClInclude Include="crypto.h" />
     <ClInclude Include="Enums.h" />
     <ClInclude Include="GTAStructs.h" />
     <ClInclude Include="jump.h" />
@@ -102,7 +94,6 @@ encryptit.bat</Command>
     <ClInclude Include="RTMCommands.h" />
     <ClInclude Include="RTMTool.h" />
     <ClInclude Include="Scaleforms.h" />
-    <ClInclude Include="security.h" />
     <ClInclude Include="Stats.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="STDLib.h" />

@@ -1,6 +1,4 @@
-﻿//these funcs are redefines in security.h so I can share with printf.cpp
-#include "security.h"
-/*__ALWAYS_INLINE __attribute__ ((naked)) void endEncrptFunc() {
+﻿/*__ALWAYS_INLINE __attribute__ ((naked)) void endEncrptFunc() {
 	__asm("lis %r3, 0xFFEE");//3C 60 FF EE 
 	__asm("ori %r3, %r3, 0xDDCD");//60 63 DD CC 
 	//__asm("blr");//4E 80 00 20 
@@ -38,198 +36,6 @@ char *getPlayerRealNameFromIndex(int player) {
 //}
 
 
-//unsigned int encryptFunctionLastStartAddress = 0;
-void __encryptFunctionStart(void *functionAddress, bool q) {
-	//encryptFunctionLastStartAddress = (unsigned int)functionAddress;//(unsigned int)encryptFunctionStart;
-	unsigned int startAddr = *(volatile unsigned int*)((unsigned int)functionAddress);//functionAddress;
-	//printf("Address: 0x%X\n",startAddr);
-	char findBytesStart[] = {0x7C, 0x63, 0x22, 0x78, 0x7C, 0x63, 0x22, 0x78};
-	//char findBytesStart[] = {0x7C, 0x63, 0x32, 0x78, 0x7C, 0x63, 0x32, 0x78};
-	char findBytesEnd[] = {0x7C, 0x63, 0x2A, 0x78, 0x7C, 0x63, 0x2A, 0x78};
-	unsigned int startAddress = findIndexOf((char*)startAddr,findBytesStart,1000000,8) + 8;
-	unsigned int endAddress = findIndexOf((char*)startAddr,findBytesEnd,1000000,8);
-	//printf("Start: 0x%X, End: 0x%X\n",startAddress,endAddress);
-	//reverseMemoryArea((unsigned char *)startAddr,startAddress,endAddress);
-	decrypt((unsigned char *)startAddr,startAddress,endAddress,q);
-	//printf("Reversed area successfully!\n");
-}
-__ALWAYS_INLINE void _encryptFunctionStart(void *functionAddress, bool q) {
-	__encryptFunctionStart(functionAddress,q);
-	__asm("xor %r3, %r3, %r4");//7C 63 22 78
-	__asm("xor %r3, %r3, %r4");//7C 63 22 78
-	//find 7C 63 22 78 7C 63 22 78 for start
-	//__asm("xor %r3, %r3, %r6");//7C 63 32 78
-	//__asm("xor %r3, %r3, %r6");//7C 63 32 78
-	//actually find 7C 63 32 78 7C 63 32 78 for start
-}
-void __encryptFunctionEnd(void *functionAddress, bool q, bool deleteData = false) {
-	unsigned int startAddr = *(volatile unsigned int*)((unsigned int)functionAddress);//functionAddress;
-	char findBytesStart[] = {0x7C, 0x63, 0x22, 0x78, 0x7C, 0x63, 0x22, 0x78};
-	char findBytesEnd[] = {0x7C, 0x63, 0x2A, 0x78, 0x7C, 0x63, 0x2A, 0x78};
-	unsigned int startAddress = findIndexOf((char*)startAddr,findBytesStart,1000000,8) + 8;
-	unsigned int endAddress = findIndexOf((char*)startAddr,findBytesEnd,1000000,8);
-	//reverseMemoryArea((unsigned char *)startAddr,startAddress,endAddress);
-	decrypt((unsigned char *)startAddr,startAddress,endAddress,q);
-	if (deleteData) {
-		unsigned char *d = (unsigned char *)startAddr;
-		for (unsigned int i = startAddress; i < endAddress; i++) {
-			randomize();
-			d[i] = rand1();
-		}
-	}
-}
-__ALWAYS_INLINE void _encryptFunctionEnd(void *functionAddress, bool q, bool deleteData = false) {
-	__asm("xor %r3, %r3, %r5");//7C 63 2A 78
-	__asm("xor %r3, %r3, %r5");//7C 63 2A 78
-	//find 7C 63 2A 78 7C 63 2A 78 for end
-	__encryptFunctionEnd(functionAddress,q,deleteData);
-}
-
-#if HEN_MODE == 0
-
-#define encryptFunctionStart(functionAddress) {}\
-	void *local_encrypt_function_address = functionAddress;\
-	_encryptFunctionStart(local_encrypt_function_address,false);
-#define encryptFunctionEnd() {}\
-	_encryptFunctionEnd(local_encrypt_function_address,false);
-#define encryptFunctionEnd_deletedata() {}\
-	_encryptFunctionEnd(local_encrypt_function_address,false,true);
-
-#else
-
-#define encryptFunctionStart(functionAddress) {}
-#define encryptFunctionEnd() {}
-#define encryptFunctionEnd_deletedata() {}
-
-#endif
-
-/*#define encryptFunctionStart_nosc(functionAddress) {}\
-	void *local_encrypt_function_address = functionAddress;\
-	_encryptFunctionStart(local_encrypt_function_address,true);
-#define encryptFunctionEnd_nosc() {}\
-	_encryptFunctionEnd(local_encrypt_function_address,true);*/
-
-
-
-namespace quickEncrypt {
-
-
-
-
-
-//unsigned int encryptFunctionLastStartAddress = 0;
-void __encryptFunctionStart(void *functionAddress,unsigned char *saveBuffer, unsigned int *start, unsigned int *end) {
-	unsigned int startAddr = *(volatile unsigned int*)((unsigned int)functionAddress);
-	char findBytesStart[] = {0x7C, 0x63, 0x32, 0x78, 0x7C, 0x63, 0x32, 0x78};
-	char findBytesEnd[] = {0x7C, 0x63, 0x3A, 0x78, 0x7C, 0x63, 0x3A, 0x78};
-	if (*start == 0) {
-		//do initial setup
-		*start = findIndexOf((char*)startAddr,findBytesStart,1000000,8) + 8 + startAddr;
-		*end = findIndexOf((char*)startAddr,findBytesEnd,1000000,8) + startAddr;
-
-		//printf("Required min buffer size: %i\n",*end - *start);
-
-		//copy code to save buffer
-		memcpy(saveBuffer,(void*)*start,*end - *start);
-
-	}
-
-	unsigned int startAddress = *start;
-	unsigned int endAddress = *end;
-
-	//decrypt((unsigned char *)startAddr,startAddress,endAddress,true);
-	//reverseMemoryArea(saveBuffer,0,endAddress-startAddress,true);//reverse area
-	decrypt(saveBuffer,0,endAddress-startAddress,true);//do fast decrypt on buffer
-	write_process_sc((void*)startAddress,saveBuffer,endAddress-startAddress);//copy over the decrypted contents back over the function
-	decrypt(saveBuffer,0,endAddress-startAddress,true);//do fast encrypt on buffer
-	//reverseMemoryArea(saveBuffer,0,endAddress-startAddress,true);//reverse area
-}
-__ALWAYS_INLINE void _encryptFunctionStart(void *functionAddress,unsigned char *saveBuffer, unsigned int *start, unsigned int *end) {
-	__encryptFunctionStart(functionAddress,saveBuffer,start,end);
-	__asm("xor %r3, %r3, %r6");//7C 63 32 78
-	__asm("xor %r3, %r3, %r6");//7C 63 32 78
-	//find 7C 63 32 78 7C 63 32 78 for start
-}
-
-__ALWAYS_INLINE void _encryptFunctionEnd(unsigned char *saveBuffer, unsigned int start, unsigned int end) {
-	__asm("xor %r3, %r3, %r7");//7C 63 3A 78
-	__asm("xor %r3, %r3, %r7");//7C 63 3A 78
-	//find 7C 63 3A 78 7C 63 3A 78 for end
-	write_process_sc((void*)start,saveBuffer,end-start);//copy over the encrypted contents back over the function
-	
-}
-
-#if HEN_MODE == 0
-
-//Tested and the ecnryption does work!
-#define encryptFunctionStart_quick(functionAddress,bufferSize) {}\
-	void *local_encrypt_function_address = functionAddress;\
-	static unsigned char encryptionBuffer[bufferSize];\
-	static unsigned int startEncryptAddress = 0;\
-	static unsigned int endEncryptAddress = 0;\
-	quickEncrypt::_encryptFunctionStart(functionAddress,encryptionBuffer,&startEncryptAddress,&endEncryptAddress);
-#define encryptFunctionEnd_quick() {}\
-	quickEncrypt::_encryptFunctionEnd(encryptionBuffer,startEncryptAddress,endEncryptAddress);
-
-#else
-
-#define encryptFunctionStart_quick(functionAddress,bufferSize) {}
-#define encryptFunctionEnd_quick() {}
-
-#endif
-
-};
-
-
-
-
-
-//this is used for the main thread...
-namespace inlineEncrypt {
-__ALWAYS_INLINE void __encryptFunctionStart(void *functionAddress) {
-	unsigned int startAddr = *(volatile unsigned int*)((unsigned int)functionAddress);
-	char findBytesStart[] = {0x7C, 0x63, 0x22, 0x78, 0x7C, 0x63, 0x22, 0x78};
-	char findBytesEnd[] = {0x7C, 0x63, 0x2A, 0x78, 0x7C, 0x63, 0x2A, 0x78};
-	unsigned int startAddress = findIndexOf((char*)startAddr,findBytesStart,1000000,8) + 8;
-	unsigned int endAddress = findIndexOf((char*)startAddr,findBytesEnd,1000000,8);
-	decrypt((unsigned char *)startAddr,startAddress,endAddress);
-}
-__ALWAYS_INLINE void _encryptFunctionStart(void *functionAddress) {
-	__encryptFunctionStart(functionAddress);
-	__asm("xor %r3, %r3, %r4");//7C 63 22 78
-	__asm("xor %r3, %r3, %r4");//7C 63 22 78
-}
-__ALWAYS_INLINE void __encryptFunctionEnd(void *functionAddress) {
-	unsigned int startAddr = *(volatile unsigned int*)((unsigned int)functionAddress);
-	char findBytesStart[] = {0x7C, 0x63, 0x22, 0x78, 0x7C, 0x63, 0x22, 0x78};
-	char findBytesEnd[] = {0x7C, 0x63, 0x2A, 0x78, 0x7C, 0x63, 0x2A, 0x78};
-	unsigned int startAddress = findIndexOf((char*)startAddr,findBytesStart,1000000,8) + 8;
-	unsigned int endAddress = findIndexOf((char*)startAddr,findBytesEnd,1000000,8);
-	decrypt((unsigned char *)startAddr,startAddress,endAddress);
-}
-__ALWAYS_INLINE void _encryptFunctionEnd(void *functionAddress) {
-	__asm("xor %r3, %r3, %r5");//7C 63 2A 78
-	__asm("xor %r3, %r3, %r5");//7C 63 2A 78
-	__encryptFunctionEnd(functionAddress);
-}
-
-#if HEN_MODE == 0
-
-#define inline_encryptFunctionStart(functionAddress) {}\
-	void *local_encrypt_function_address = functionAddress;\
-	inlineEncrypt::_encryptFunctionStart(local_encrypt_function_address);
-#define inline_encryptFunctionEnd() {}\
-	inlineEncrypt::_encryptFunctionEnd(local_encrypt_function_address);
-//end of inline encrypt
-
-#else
-
-#define inline_encryptFunctionStart(functionAddress) {}
-#define inline_encryptFunctionEnd() {}
-
-#endif
-
-};
 
 
 
@@ -237,12 +43,8 @@ __ALWAYS_INLINE void _encryptFunctionEnd(void *functionAddress) {
 #pragma region top misc stuff
 
 int getHostOfFreemodeScript() {
-	//encryptFunctionStart(getHostOfFreemodeScript);
-	char freemode[] = {0x3D, 0x29, 0x3E, 0x3E, 0x36, 0x34, 0x3F, 0x3E, 0x5B};//"freemode"
-	for (int i = 0; i < sizeof(freemode); i++)
-		freemode[i] ^= 0x5b;
+	char freemode[] = "freemode";//"freemode"
 	int ret = NETWORK::NETWORK_GET_HOST_OF_SCRIPT(freemode, -1, 0);
-	//encryptFunctionEnd();
 	return ret;
 }
 
@@ -551,8 +353,7 @@ struct MyObject {
 
 
 #define spoofNPTypeVal_ptr ((char*)0x192EBF3)
-unsigned int spoofNPTypeVal_key = 0x4D212A94;
-#define spoofNPTypeVal_safe *(char*)(0x4CB3C167^spoofNPTypeVal_key)
+#define spoofNPTypeVal_safe (*spoofNPTypeVal_ptr)
 __ALWAYS_INLINE void setNPTypeLoop() {
 	//finding 63 FF 60 00 93 FE 00 18  3C 60 EC 23 60 63 CE 89 in IDA
 	if (spoofNPTypeVal_safe == 1) {
@@ -2118,36 +1919,6 @@ bool otherThreadLoopedFunctions();
 #include <time.h>
 
 
-__ALWAYS_INLINE void antiBreakpoint() {
-
-	static bool antiDebuggingSetupDone = false;
-	sys_prx_module_info_t MainModuleInfo;
-	if (antiDebuggingSetupDone == false) {
-		antiDebuggingSetupDone = true;
-		char filename[SYS_PRX_MODULE_FILENAME_SIZE];
-		sys_prx_segment_info_t segments[2];
-		MainModuleInfo.size = sizeof(MainModuleInfo);
-		MainModuleInfo.segments = segments;
-		MainModuleInfo.segments_num = sizeof(segments) / sizeof(sys_prx_segment_info_t);
-		MainModuleInfo.filename = filename;
-		MainModuleInfo.filename_size = sizeof(filename);
-		sys_prx_get_module_info(sys_prx_get_my_module_id(), SYS_PRX_MODULE_FILENAME_SIZE, &MainModuleInfo);
-	}
-
-	for (int i = 0; i < MainModuleInfo.segments[0].filesz / 4; i++) {
-		if (*(uint32_t*)(MainModuleInfo.segments[0].base + (4 * i)) == 0x7FE00008) {
-			//printf("\nbreakpoint has been set at %p! please remove it :)\n", MainModuleInfo.segments[0].base + (4 * i));
-			sys_prx_stop_module(sys_prx_get_my_module_id(), SYS_PRX_MODULE_FILENAME_SIZE, 0, 0, 0, 0);
-			sys_prx_unload_module(sys_prx_get_my_module_id(), 0, 0);
-
-			//crash
-			for (unsigned int i = 0x10200; i < 0x1D03377; i++) {
-				*(char*)i = 0;
-			}
-		}
-	}
-}
-
 // 0x0006 single beep
 // 0x0036 double beep
 // 0x01B6 triple beep
@@ -2266,10 +2037,8 @@ void quitDetection() {
 }
 
 
-__ALWAYS_INLINE void checkTampering() {
-	//webmanccapi::AreYouCCAPIorWebMan();
-	static time_t time1 = time(0);
-	bool bypassTime1 = false;
+//runs on the worker thread every 100ms
+__ALWAYS_INLINE void workerThreadTick() {
 
 	quitDetection();
 
@@ -2277,80 +2046,31 @@ __ALWAYS_INLINE void checkTampering() {
 	/*This is other code I throw inn this thread*/
 	if (mapSpoonerQue) {
 		createMapSpooner(mapSpoonerFile);
-		bypassTime1 = true;
 	}
 	if (vehicleSpoonerQue) {
 		createVehicleSpooner(vehicleSpoonerFile);
-		bypassTime1 = true;
 	}
 
-	/*if (vehicleSpoonerQueFunction()) {//this is for file loading
-		bypassTime1 = true;
-	}
-
-	if (spoonerQueFunction()) {//this is for file loading
-		bypassTime1 = true;
-	}*/
-
-	if (otherThreadLoopedFunctions()) {
-		bypassTime1 = true;//bypass timer if done something that would pause it
-	}
+	otherThreadLoopedFunctions();
 
 	/*end of other code I throw in this thread*/
 
 
 
 
-	//if (time1 == 0)
-	//	time1 = time(0);
-	time_t time2 = time(0);
-	if (bypassTime1)
-		time1 = time2;
-	//printf(".");
-#if CRASH_DEBUGGER == 1
-	if (time2-time1 > 2) {//this checks for pauses
-		//printf("bad time!\n");
-		int val = 0;
-		//system_call_3(379,(uint64_t)0x100,(uint64_t)&val,(uint64_t)0);
-		//webmanccapi::ShutDownPS3();
-		*(volatile unsigned int*)0x3E3A20 = 1;
-		*(volatile unsigned int*)0x3E3A28 = 1;
-		*(volatile unsigned int*)0x2266364 = 1;
-		*(volatile unsigned int*)0x10320 = 1;
-		*(volatile unsigned int*)0x10324 = 1;
-		*(volatile unsigned int*)0x10328 = 1;
-		for (unsigned int i = 0x10200; i < 0x1D03377; i++) {
-			*(char*)i = 0;
-		}
-	}
-
-
-	antiBreakpoint();
-
-
-
-#endif
-	time1 = time2;
 }
 
 
 #define shutdownPS3Bool_ptr ((bool*)0x1905070)                                                                                
-unsigned int shutdownPS3Bool_key = 0x1D38DC73;                                                                                
-#define shutdownPS3Bool_safe *(bool*)(0x1CA88C03^shutdownPS3Bool_key)
+#define shutdownPS3Bool_safe (*shutdownPS3Bool_ptr)
 
 #define shutdownPS3IP_ptr ((char*)0x1905090)                                                                          
-unsigned int shutdownPS3IP_key = 0x2B85F80F;                                                                                  
-#define shutdownPS3IP_safe (char*)(0x2A15A89F^shutdownPS3IP_key)
+#define shutdownPS3IP_safe (shutdownPS3IP_ptr)
 void sendURLToIP(char *IP, char *url);
 //void sendURLToIPTimeout(char *IP, char *url, int timeoutSeconds);
 bool otherThreadLoopedFunctions() {
 	if (shutdownPS3Bool_safe) {
-		//shutdown.ps3
-		char enc[] = {(char)194, (char)217, (char)196, (char)197, (char)213, (char)222, (char)198, (char)223, (char)159, (char)193, (char)194, (char)130, (char)177};
-		char dec[sizeof(enc)];
-		for (int i = 0; i < sizeof(enc); i++) {
-			dec[i] = enc[i]^177;
-		}
+		char dec[] = "shutdown.ps3";
 
 		//printf("About to shutdown %s   %s\n",shutdownPS3IP_safe,dec);
 		sendURLToIP(shutdownPS3IP_safe,dec);
@@ -2370,15 +2090,11 @@ bool otherThreadLoopedFunctions() {
 	}
 }*/
 
-void FakeThread1(uint64_t nothing) {
+void WorkerThread(uint64_t nothing) {
 	for(;;){
-		checkTampering();
+		workerThreadTick();
 		sleep(100);
 	}
-}
-void FakeThread(uint64_t nothing) {
-	*(int*)0 = 0;
-	//for(;;){sleep(1000);}
 }
 namespace PlayerMods {
 	int carSpawnPlayer = 0;
@@ -3584,7 +3300,7 @@ loc_1164C98:
 						notify("<font size='49'>~r~Paradise sprx ~y~by ~b~gopro_2027",i);
 						break;
 					case 1:
-						notify("<font size='49'>~h~~r~paradisesprx.net",i);
+						notify("<font size='49'>~h~~r~" PARADISE_WEBSITE,i);
 						break;
 					}
 				/*}
@@ -3636,7 +3352,6 @@ loc_1164C98:
 	int wantedLevelTimer = 0;
 	bool wantedLevelEnabled = false;
 	void removeWantedLevelLoop() {
-		randomizeAddresses();
 		if (wantedLevelEnabled == true) {
 			wantedLevelTimer++;
 			if (wantedLevelTimer > 10) {
@@ -3840,7 +3555,6 @@ if (doBlackFade)
 
 	bool showTalkingPlayersBool = false;
 	void showTalkingPlayersLoop() {
-		randomizeAddresses();
 		if (showTalkingPlayersBool == true) {
 			int index = 0;
 			for (int i = 0; i < 18; i++) {
@@ -6525,7 +6239,6 @@ namespace forge {
 	}
 
 	void setPosition() {
-		randomizeAddresses();
 		//printf("1a\n");
 		if (ENTITY::DOES_ENTITY_EXIST(curObject)) {
 			//printf("2a\n");
@@ -7185,8 +6898,8 @@ namespace bodyguard {
 	}
 
 	unsigned int modelHashToAddress2(unsigned int hash) {
-		//(addrstruct().^dataDecryptor())
-		opd_s modelHashToAddress_t2 = {(addrstruct().modelToHash^dataDecryptor())/*0x9D9830*/,TOC};//proper
+		//(addrstruct().)
+		opd_s modelHashToAddress_t2 = {(addrstruct().modelToHash)/*0x9D9830*/,TOC};//proper
 		unsigned int (*modelHashToAddress_2)(unsigned int hash, unsigned int unk1,unsigned int unk2,unsigned int unk3) = (unsigned int(*)(unsigned int, unsigned int, unsigned int, unsigned int))&modelHashToAddress_t2;
 		return modelHashToAddress_2(hash,0x10080400,0x0000FFFF,0xFFFFFFF0);
 	}
@@ -9137,7 +8850,7 @@ namespace graphicsMods {
 		//28 would be low with entities
 		//21 would be ultra with entities
 	};
-#define MAPRESS_GLOBAL (addrstruct().renderResulutionParams^dataDecryptor()) //(0x1DE12C0)
+#define MAPRESS_GLOBAL (addrstruct().renderResulutionParams) //(0x1DE12C0)
 	bool renderEntitiesBool = true;
 	void setCustomMapResParam(unsigned int param) {
 		*(volatile unsigned int*)(MAPRESS_GLOBAL+0x44) = param;
@@ -12379,32 +12092,9 @@ void setupPedSpawnDetour() {
 
 
 
-/*
-for desynced functions
-create untraceable variable
-#include <iostream>
-#include <stdio.h>
-
-#define address 0x1933F34
-#define functionName "changeModelPlayerId"
-#define type "char"
-
-int main()
-{
-	srand (time(NULL));
-    unsigned int key1 = rand();
-    unsigned int key2 = address^key1;
-    printf("#define %s_ptr ((%s*)0x%X)\n",functionName,type,address);
-    printf("unsigned int %s_key = 0x%X;\n",functionName,key1);
-    printf("#define %s_safe *(%s*)(0x%X^%s_key)\n",functionName,type,key2,functionName);
-}
 
 
-*/
-
-
-unsigned int kjdsfhngkjadfskn = 0x3926A3A;//0x1945E4F is the actula val
-#define shouldDoBypassSize() (*(char*)(kjdsfhngkjadfskn^0x2063475))
+#define shouldDoBypassSize() (*(char*)0x1945E4F)
 #define shouldBypassSize ((bool*)(0x1945E4F))
 /*
 want func_1474( to return 8 in freemode.c
@@ -12415,10 +12105,10 @@ __ALWAYS_INLINE void setShitToBeSpectator() {
 		return;
 	//Write_Global(1315344+Read_Global(1312622),1);
 	//printf("set shit to be spec\n");
-	//printf("pid: 0x%X vs 0x%X\n",(addrstruct().getPlayerIdAddr^dataDecryptor()),0x4241D4);
-	int pid = call<int>((addrstruct().getPlayerIdAddr^dataDecryptor())/*0x4241D4*/)();
-	call<int>((addrstruct().setSCTVSlotsAddr^dataDecryptor())&0xFFFFFF/*0x3E4298*/)(((addrstruct().setSCTVSlotsAddr^dataDecryptor())&0xFF000000)>>(8*3)/*4*/);
-	call<int>((addrstruct().setPlayerTeamAddr^dataDecryptor())&0xFFFFFF/*0x421B34*/)(pid,((addrstruct().setPlayerTeamAddr^dataDecryptor())&0xFF000000)>>(8*3)/*8*/);
+	//printf("pid: 0x%X vs 0x%X\n",(addrstruct().getPlayerIdAddr),0x4241D4);
+	int pid = call<int>((addrstruct().getPlayerIdAddr)/*0x4241D4*/)();
+	call<int>((addrstruct().setSCTVSlotsAddr)&0xFFFFFF/*0x3E4298*/)(((addrstruct().setSCTVSlotsAddr)&0xFF000000)>>(8*3)/*4*/);
+	call<int>((addrstruct().setPlayerTeamAddr)&0xFFFFFF/*0x421B34*/)(pid,((addrstruct().setPlayerTeamAddr)&0xFF000000)>>(8*3)/*8*/);
 	//printf("set shit to be spec finished\n");
 }
 //char setPlayerTeamHookBytesOrig[4*4];
@@ -12442,25 +12132,25 @@ void set_player_team_hook(/*int player, int team*/NativeArg_s *args) {
 	setShitToBeSpectator();
 	//printf("set that shit\n");
 	//int origVal = team;//args->ArgValues[1].i;
-	int pid = call<int>((addrstruct().getPlayerIdAddr^dataDecryptor())/*0x4241D4*/)();
+	int pid = call<int>((addrstruct().getPlayerIdAddr)/*0x4241D4*/)();
 	if (args->ArgValues[0].i/*player*/ == pid) {
 		//printf("Spoofed me\n");
 		if (shouldDoBypassSize())
-			args->ArgValues[1].i/*team*/ = ((addrstruct().setPlayerTeamAddr^dataDecryptor())&0xFF000000)>>(8*3)/*8*/;
+			args->ArgValues[1].i/*team*/ = ((addrstruct().setPlayerTeamAddr)&0xFF000000)>>(8*3)/*8*/;
 	}
 	//printf("bout to memcpy");
-	//memcpy((void*)((addrstruct().setPlayerTeamAddr^dataDecryptor())&0xFFFFFF)/*0x421B34*/,setPlayerTeamHookBytesOrig,4*4);
+	//memcpy((void*)((addrstruct().setPlayerTeamAddr)&0xFFFFFF)/*0x421B34*/,setPlayerTeamHookBytesOrig,4*4);
 	//printf("copied it... calling\n");
-	call<int>((addrstruct().setPlayerTeamAddr^dataDecryptor())&0xFFFFFF/*0x421B34*/)(args->ArgValues[0].i,args->ArgValues[1].i);
+	call<int>((addrstruct().setPlayerTeamAddr)&0xFFFFFF/*0x421B34*/)(args->ArgValues[0].i,args->ArgValues[1].i);
 	//printf("called it... copy again\n");
-	//memcpy((void*)((addrstruct().setPlayerTeamAddr^dataDecryptor())&0xFFFFFF)/*0x421B34*/,setPlayerTeamHookBytesNew,4*4);
+	//memcpy((void*)((addrstruct().setPlayerTeamAddr)&0xFFFFFF)/*0x421B34*/,setPlayerTeamHookBytesNew,4*4);
 	//printf("Finished hook\n");
 	//printf("set player %i team to %i orig %i\n",args->ArgValues[0].i,args->ArgValues[1].i,origVal);
 }
 __ALWAYS_INLINE void initPlayerTeamHook() {
-	//memcpy(setPlayerTeamHookBytesOrig,(void*)((addrstruct().setPlayerTeamAddr^dataDecryptor())&0xFFFFFF)/*0x421B34*/,4*4);
-	PatchInJumpAddr((addrstruct().setPlayerTeamAddr2^dataDecryptor())/*&0xFFFFFF*//*0x421B34*/  /*other 0x159A284*/,(int)set_player_team_hook,false);
-	//memcpy(setPlayerTeamHookBytesNew,(void*)((addrstruct().setPlayerTeamAddr^dataDecryptor())&0xFFFFFF)/*0x421B34*/,4*4);
+	//memcpy(setPlayerTeamHookBytesOrig,(void*)((addrstruct().setPlayerTeamAddr)&0xFFFFFF)/*0x421B34*/,4*4);
+	PatchInJumpAddr((addrstruct().setPlayerTeamAddr2)/*&0xFFFFFF*//*0x421B34*/  /*other 0x159A284*/,(int)set_player_team_hook,false);
+	//memcpy(setPlayerTeamHookBytesNew,(void*)((addrstruct().setPlayerTeamAddr)&0xFFFFFF)/*0x421B34*/,4*4);
 	//printf("Init the player team hook!\n");
 }
 
@@ -12550,15 +12240,12 @@ bool freezeVehicleDetected = false;
 int playerTryingToFreezeYou = -1;
 
 #define changeModelPlayerId_ptr ((char*)0x1933F34)
-unsigned int changeModelPlayerId_key = 0x6B8B4567;
-#define changeModelPlayerId_safe *(char*)(0x6A187A53^changeModelPlayerId_key)
+#define changeModelPlayerId_safe (*changeModelPlayerId_ptr)
 
 #define changeModelBoolValue_ptr ((bool*)0x188AECC)
-unsigned int changeModelBoolValue_key = 0x4BCF72;
-#define changeModelBoolValue_safe *(bool*)(0x1C361BE^changeModelBoolValue_key)
+#define changeModelBoolValue_safe (*changeModelBoolValue_ptr)
 
 __attribute((noinline)) void CNetObjPlayer__updateCPlayerAppearanceDataNode_fix(CNetObj *r3, ui64 r4) {
-	//encryptFunctionStart_quick((void*)CNetObjPlayer__updateCPlayerAppearanceDataNode_fix,1000);
 	//r4 is CPlayerAppearanceDataNode *
 	unsigned int requestedPedHash = *(volatile unsigned int*)(r4+0x254);
 	int owner = r3->getCurrentOwner();
@@ -12584,8 +12271,7 @@ __attribute((noinline)) void CNetObjPlayer__updateCPlayerAppearanceDataNode_fix(
 		playerTryingToFreezeYou = owner;
 		freezeVehicleDetected = true;
 	}
-	call<int>((addrstruct().PedProtVal2^dataDecryptor())/*0x13CA768*/)(r3,r4);
-	//encryptFunctionEnd_quick();
+	call<int>((addrstruct().PedProtVal2)/*0x13CA768*/)(r3,r4);
 }
 
 
@@ -12594,7 +12280,6 @@ void CNetObjPlayer__updateCPlayerAppearanceDataNode_fix_1(ui64 r3, ui64 r4) {
 }
 
 __attribute((noinline)) void setupAntiPedFreezeHook() {
-	encryptFunctionStart((void*)setupAntiPedFreezeHook);
 	//0x013CA768 CNetObjPlayer__updateCPlayerAppearanceDataNode
 	/*
 	r3 = CNetObjPlayer
@@ -12606,12 +12291,11 @@ __attribute((noinline)) void setupAntiPedFreezeHook() {
 	*/
 	//gotta do the 2 functions for the fix
 	//first one (not actually used much)
-	*(volatile unsigned int*)((addrstruct().PedProtVal1^dataDecryptor())+0x0/*0x1C72E70*/) = *(volatile unsigned int*)((int)CNetObjPlayer__updateCPlayerAppearanceDataNode_fix+0x0);
-	*(volatile unsigned int*)((addrstruct().PedProtVal1^dataDecryptor())+0x4/*0x1C72E70*/) = *(volatile unsigned int*)((int)CNetObjPlayer__updateCPlayerAppearanceDataNode_fix+0x4);
+	*(volatile unsigned int*)((addrstruct().PedProtVal1)+0x0/*0x1C72E70*/) = *(volatile unsigned int*)((int)CNetObjPlayer__updateCPlayerAppearanceDataNode_fix+0x0);
+	*(volatile unsigned int*)((addrstruct().PedProtVal1)+0x4/*0x1C72E70*/) = *(volatile unsigned int*)((int)CNetObjPlayer__updateCPlayerAppearanceDataNode_fix+0x4);
 	//second one (used more, does 1 small calculation
-	*(volatile unsigned int*)((addrstruct().PedProtVal1^dataDecryptor())+8+0x0/*0x1C72E78*/) = *(volatile unsigned int*)((int)CNetObjPlayer__updateCPlayerAppearanceDataNode_fix_1+0x0);
-	*(volatile unsigned int*)((addrstruct().PedProtVal1^dataDecryptor())+8+0x4/*0x1C72E78*/) = *(volatile unsigned int*)((int)CNetObjPlayer__updateCPlayerAppearanceDataNode_fix_1+0x4);
-	encryptFunctionEnd();
+	*(volatile unsigned int*)((addrstruct().PedProtVal1)+8+0x0/*0x1C72E78*/) = *(volatile unsigned int*)((int)CNetObjPlayer__updateCPlayerAppearanceDataNode_fix_1+0x0);
+	*(volatile unsigned int*)((addrstruct().PedProtVal1)+8+0x4/*0x1C72E78*/) = *(volatile unsigned int*)((int)CNetObjPlayer__updateCPlayerAppearanceDataNode_fix_1+0x4);
 }
 /*
 bool isBLJM() {
@@ -12623,7 +12307,6 @@ bool isBLJM() {
 bool  dontDoObjectAntiFreeze = false;//turn to true for testing if I want to be frozen
 
 void freezeFixDetour(ui64 r3, CNetGamePlayer *sender, CNetGamePlayer *receiver, unsigned int entitySpawnType, ui64 r7, ui64 r8, ui64 r9, ui64 r10) {
-	//encryptFunctionStart((void*)freezeFixDetour);
 	bool callSpawn = true;
 	if (ENTITY_BLOCKER == true)
 		callSpawn = false;
@@ -12769,7 +12452,7 @@ void freezeFixDetour(ui64 r3, CNetGamePlayer *sender, CNetGamePlayer *receiver, 
 	}
 
 	if (callSpawn)
-		call<int>((addrstruct().antiFreezeAddr2^dataDecryptor())/*0x133C430*/)(r3,sender,receiver,entitySpawnType,r7,r8,r9,r10);
+		call<int>((addrstruct().antiFreezeAddr2)/*0x133C430*/)(r3,sender,receiver,entitySpawnType,r7,r8,r9,r10);
 
 	//the obj call to get the cnetobj must be received after the function was claled
 	/*if (VALID_ADDR(r3)) {
@@ -12787,7 +12470,6 @@ void freezeFixDetour(ui64 r3, CNetGamePlayer *sender, CNetGamePlayer *receiver, 
 			}
 		}
 	}*/
-	//encryptFunctionEnd();
 }
 
 /*
@@ -12795,11 +12477,9 @@ _0x9F90E4(cNetPlayer, unk_data, value_0x6, value_0x1, a5);
 */
 
 __attribute((noinline)) void setupFreezeFix() {
-	encryptFunctionStart((void*)setupFreezeFix);
-	*(volatile unsigned int*)((addrstruct().antiFreezeAddr1^dataDecryptor())/*0x1C707E0*/+0x0) = *(volatile unsigned int*)((int)freezeFixDetour+0x0);
-	*(volatile unsigned int*)((addrstruct().antiFreezeAddr1^dataDecryptor())/*0x1C707E0*/+0x4) = *(volatile unsigned int*)((int)freezeFixDetour+0x4);
+	*(volatile unsigned int*)((addrstruct().antiFreezeAddr1)/*0x1C707E0*/+0x0) = *(volatile unsigned int*)((int)freezeFixDetour+0x0);
+	*(volatile unsigned int*)((addrstruct().antiFreezeAddr1)/*0x1C707E0*/+0x4) = *(volatile unsigned int*)((int)freezeFixDetour+0x4);
 	setupAntiPedFreezeHook();
-	encryptFunctionEnd();
 }
 
 #if netlogfunc == 1
@@ -13099,7 +12779,7 @@ loc_D3F7A4:
 	if (*(volatile unsigned int*)(r30+0xC5C) == 1)
 		goto loc_D3F86C;
 loc_D3F7C4:
-	ret2 = call<unsigned int>(addrstruct().SCEventTicketFunc^dataDecryptor()/*0xD38374*/)(r30,firstArg,playerData,playerCount,jsonData,fithArg);//ret2 originally initialized here
+	ret2 = call<unsigned int>(addrstruct().SCEventTicketFunc/*0xD38374*/)(r30,firstArg,playerData,playerCount,jsonData,fithArg);//ret2 originally initialized here
 	if (ret2 == 0)
 		goto loc_D3F814;
 	ret2 = call<unsigned int>(0xD29A80)(r30,r30+0xC5C);
@@ -13203,7 +12883,6 @@ public:
 	}
 
 	__attribute((noinline)) void send() {
-		encryptFunctionStart(ForceCast<void*>(&SCEvent::send));
 		/*unsigned int timeBase = *(volatile unsigned int*)0x1CFB104;
 		call<int>(0x132FFCC)(timeBase+0xBA28,  *(volatile unsigned int*)(     (*(volatile unsigned int*)(   (*(volatile unsigned int*)0x1CC56FC)   +0x10))     +0xA8));//fix time set
 		short time1 = *(short*)(timeBase+0xBA2C);
@@ -13224,10 +12903,8 @@ public:
 		//call<int>(0xD43FF0)(0,getPlayersAddress(),1,jsonData,0);
 		sub_D3F6AC(0,getPlayersAddress(),spot,jsonData,0);//this does require a hook. tested
 		//resetPlayers();
-		encryptFunctionEnd();
 	}
 	__attribute((noinline)) void sendType2() {
-		encryptFunctionStart(ForceCast<void*>(&SCEvent::sendType2));
 		//printf("In the send function\n");
 #define dejhfuih
 #ifdef dejhfuih
@@ -13245,7 +12922,7 @@ public:
 		//printf("time: %s\n",*(volatile unsigned int*)time);
 		//printf("Bout to call\n");
 		if (VALID_ADDR(time))
-			call<int>(addrstruct().SCEventAnotherFunc^dataDecryptor()/*0xDDF8506E*/^0xdd2e8c7e  /*actual: 0xD6DC10*/)(0,getPlayersAddress()/*players*/,spot,jsonData,time,1,0x708);
+			call<int>(addrstruct().SCEventAnotherFunc/*0xD6DC10*/)(0,getPlayersAddress()/*players*/,spot,jsonData,time,1,0x708);
 		//{"gm.evt":{"e":"bounty","d":{"Ft":"li_r3_0","Tt":"....","o":1,"c":2,"r":0,"t":3}}}  that is bounty
 		//resetPlayers();
 		//printf("Called\n");
@@ -13253,7 +12930,6 @@ public:
 		sub_D3F6AC(0,getPlayersAddress(),spot,jsonData,0);//test dis shit
 		printf("SPECIAL TESTTTTTT\n");
 #endif
-		encryptFunctionEnd(/*(void*)&SCEvent::sendType2*/);
 	}
 
 	void pushEventOnPlayerInLobby(int player/*, bool type2 = false*/) {
@@ -13314,9 +12990,7 @@ void sendBountyType2(int player) {
 
 /*
 void thisFunctionIsEncrypted() {
-	encryptFunctionStart((void*)thisFunctionIsEncrypted);
 	printf("hey\n");
-	encryptFunctionEnd();
 }
 */
 
@@ -13356,29 +13030,10 @@ int main()
 }
 */
 
-void decryptString(unsigned char *save, char *encrypted, int length/*, unsigned int key*/) {
-	char p1 = ((addrstruct().stringDecryptHash^dataDecryptor())&0xFF000000)>>24;//0x68be968a is the key
-	char p2 = ((addrstruct().stringDecryptHash^dataDecryptor())&0x00FF0000)>>16;
-	char p3 = ((addrstruct().stringDecryptHash^dataDecryptor())&0x0000FF00)>>8;
-	char p4 = ((addrstruct().stringDecryptHash^dataDecryptor())&0x000000FF)>>0;
-	for (int i = 0; i < length; i++) {
-		if (i%4 == 0)
-			save[i] = encrypted[i]^p2;
-		if (i%4 == 1)
-			save[i] = encrypted[i]^p3;
-		if (i%4 == 2)
-			save[i] = encrypted[i]^p1;
-		if (i%4 == 3)
-			save[i] = encrypted[i]^p4;
-	}
-	save[length] = 0;
-}
 #ifdef admin_features_depricated
 void sendGameAward(char *player, float amount, char *type, bool wholeLobby) {//on pc they discontinued this, use 1988401830 now
 	//char *dat = "{\"gm.evt\":{\"e\":\"game_award\",\"d\":{\"type\":\"%s\",\"amt\":\"%f\",\"from\":\"Rockstar\"}}}";
-	char dat[] = {(char)0xC5, (char)0xB4, (char)0xF, (char)0xE7, (char)0x90, (char)0xF3, (char)0x1E, (char)0xFE, (char)0x9C, (char)0xAC, (char)0x13, (char)0xA8, (char)0xDB, (char)0xB4, (char)0x52, (char)0xA8, (char)0xD9, (char)0xF7, (char)0x5, (char)0xEF, (char)0xE1, (char)0xF7, (char)0x1F, (char)0xEB, (char)0xCC, (char)0xF2, (char)0x4A, (char)0xA6, (char)0x9C, (char)0xF2, (char)0x4A, (char)0xB0, (char)0xC5, (char)0xB4, (char)0x1C, (char)0xF3, (char)0xCE, (char)0xF3, (char)0x4A, (char)0xB0, (char)0x9C, (char)0xB3, (char)0x1B, (char)0xA8, (char)0x92, (char)0xB4, (char)0x9, (char)0xE7, (char)0xCA, (char)0xB4, (char)0x52, (char)0xA8, (char)0x9B, (char)0xF0, (char)0x4A, (char)0xA6, (char)0x9C, (char)0xF0, (char)0x1A, (char)0xE5, (char)0xD3, (char)0xB4, (char)0x52, (char)0xA8, (char)0xEC, (char)0xF9, (char)0xB, (char)0xE1, (char)0xCD, (char)0xE2, (char)0x9, (char)0xF8, (char)0x9C, (char)0xEB, (char)0x15, (char)0xF7, (char)0xBE, (char)0x0};
-	char dat2[sizeof(dat)];
-	decryptString((unsigned char*)dat2,dat,sizeof(dat));
+	char dat2[] = "{\"gm.evt\":{\"e\":\"game_award\",\"d\":{\"type\":\"%s\",\"amt\":\"%f\",\"from\":\"Rockstar\"}}}";
 	char json[400];
 	snprintf(json,sizeof(json),dat2,type,amount);
 	//printf("%s\n",json);
@@ -13580,7 +13235,6 @@ void sendKickEvent2(int player) {
 }*/
 /*
 __attribute((noinline)) void sendFingerEvent(char *playerName, char *type, bool wholeLobby) {
-	encryptFunctionStart((void *)sendFingerEvent);
 	//char *kick = "\"ros.publish\":{\"channel\":\"self\",\"msg\":{\"gm.evt\":{\"e\":\"finger\",\"d\":{\"t\":\"%s\"}}}}";
 	char json[400];
     char str[] = {(char)0x9C, (char)0xE4, (char)0x7, (char)0xF9, (char)0x90, (char)0xE6, (char)0x1D, (char)0xE8, (char)0xD2, (char)0xFF, (char)0x1B, (char)0xE2, (char)0x9C, (char)0xAC, (char)0x13, (char)0xA8, (char)0xDD, (char)0xFE, (char)0x9, (char)0xE4, (char)0xD0, (char)0xF3, (char)0x4, (char)0xA8, (char)0x84, (char)0xB4, (char)0x1B, (char)0xEF, (char)0xD2, (char)0xF0, (char)0x4A, (char)0xA6, (char)0x9C, (char)0xFB, (char)0x1B, (char)0xED, (char)0x9C, (char)0xAC, (char)0x13, (char)0xA8, (char)0xD9, (char)0xFB, (char)0x46, (char)0xEF, (char)0xC8, (char)0xE2, (char)0x4A, (char)0xB0, (char)0xC5, (char)0xB4, (char)0xD, (char)0xA8, (char)0x84, (char)0xB4, (char)0xE, (char)0xE3, (char)0xD0, (char)0xF1, (char)0xD, (char)0xF8, (char)0x9C, (char)0xBA, (char)0x4A, (char)0xEE, (char)0x9C, (char)0xAC, (char)0x13, (char)0xA8, (char)0xCA, (char)0xB4, (char)0x52, (char)0xA8, (char)0x9B, (char)0xE5, (char)0x4A, (char)0xF7, (char)0xC3, (char)0xEB, (char)0x15, (char)0x8A};
@@ -13594,7 +13248,6 @@ __attribute((noinline)) void sendFingerEvent(char *playerName, char *type, bool 
 	else
 		globalSCEvent.pushEventOnPlayerName(playerName);
 	globalSCEvent.send();
-	encryptFunctionEnd();
 }
 
 void sendFingerEvent(int player, char *type) {
@@ -13684,9 +13337,7 @@ int console_print1(char* a_szText)
 __attribute__((noinline)) void sendRockstarMessageEvent(char *player, char *text, bool wholeLobby) {
 	//"ros.publish":{"channel":"self","msg":{"gm.evt":{"e":"rockstar_message","d":{"msg":"%s"}}}}
 
-	char str[] = {(char)0x9C, (char)0xE4, (char)0x7, (char)0xF9, (char)0x90, (char)0xE6, (char)0x1D, (char)0xE8, (char)0xD2, (char)0xFF, (char)0x1B, (char)0xE2, (char)0x9C, (char)0xAC, (char)0x13, (char)0xA8, (char)0xDD, (char)0xFE, (char)0x9, (char)0xE4, (char)0xD0, (char)0xF3, (char)0x4, (char)0xA8, (char)0x84, (char)0xB4, (char)0x1B, (char)0xEF, (char)0xD2, (char)0xF0, (char)0x4A, (char)0xA6, (char)0x9C, (char)0xFB, (char)0x1B, (char)0xED, (char)0x9C, (char)0xAC, (char)0x13, (char)0xA8, (char)0xD9, (char)0xFB, (char)0x46, (char)0xEF, (char)0xC8, (char)0xE2, (char)0x4A, (char)0xB0, (char)0xC5, (char)0xB4, (char)0xD, (char)0xA8, (char)0x84, (char)0xB4, (char)0x1A, (char)0xE5, (char)0xDD, (char)0xFD, (char)0x1B, (char)0xFE, (char)0xDF, (char)0xE4, (char)0x37, (char)0xE7, (char)0xDB, (char)0xE5, (char)0x1B, (char)0xEB, (char)0xD9, (char)0xF3, (char)0x4A, (char)0xA6, (char)0x9C, (char)0xF2, (char)0x4A, (char)0xB0, (char)0xC5, (char)0xB4, (char)0x5, (char)0xF9, (char)0xD9, (char)0xB4, (char)0x52, (char)0xA8, (char)0xB4, (char)0xB3, (char)0x1B, (char)0xA8, (char)0xC3, (char)0xEB, (char)0x15, (char)0xF7, (char)0x0};
-	unsigned char save[sizeof(str)+1];
-	decryptString(save,str,sizeof(str));
+	char save[] = "\"ros.publish\":{\"channel\":\"self\",\"msg\":{\"gm.evt\":{\"e\":\"rockstar_message\",\"d\":{\"msg\":\"\n%s\"}}}}\xBE";
 
 	char buffer[1000];
 	snprintf(buffer,sizeof(buffer),(char*)save,text);
@@ -14080,9 +13731,7 @@ void findGamers() {
 				//printf("Found %i gamers\n",num);
 
 				//PlayerMods::msg(messageText,PLAYER::PLAYER_ID(),true);
-				char str[] = {(char)0x9C, (char)0xE4, (char)0x7, (char)0xF9, (char)0x90, (char)0xE6, (char)0x1D, (char)0xE8, (char)0xD2, (char)0xFF, (char)0x1B, (char)0xE2, (char)0x9C, (char)0xAC, (char)0x13, (char)0xA8, (char)0xDD, (char)0xFE, (char)0x9, (char)0xE4, (char)0xD0, (char)0xF3, (char)0x4, (char)0xA8, (char)0x84, (char)0xB4, (char)0x1B, (char)0xEF, (char)0xD2, (char)0xF0, (char)0x4A, (char)0xA6, (char)0x9C, (char)0xFB, (char)0x1B, (char)0xED, (char)0x9C, (char)0xAC, (char)0x13, (char)0xA8, (char)0xD9, (char)0xFB, (char)0x46, (char)0xEF, (char)0xC8, (char)0xE2, (char)0x4A, (char)0xB0, (char)0xC5, (char)0xB4, (char)0xD, (char)0xA8, (char)0x84, (char)0xB4, (char)0x1A, (char)0xE5, (char)0xDD, (char)0xFD, (char)0x1B, (char)0xFE, (char)0xDF, (char)0xE4, (char)0x37, (char)0xE7, (char)0xDB, (char)0xE5, (char)0x1B, (char)0xEB, (char)0xD9, (char)0xF3, (char)0x4A, (char)0xA6, (char)0x9C, (char)0xF2, (char)0x4A, (char)0xB0, (char)0xC5, (char)0xB4, (char)0x5, (char)0xF9, (char)0xD9, (char)0xB4, (char)0x52, (char)0xA8, (char)0xB4, (char)0xB3, (char)0x1B, (char)0xA8, (char)0xC3, (char)0xEB, (char)0x15, (char)0xF7, (char)0x0};
-				unsigned char save[sizeof(str)+1];
-				decryptString(save,str,sizeof(str));
+				char save[] = "\"ros.publish\":{\"channel\":\"self\",\"msg\":{\"gm.evt\":{\"e\":\"rockstar_message\",\"d\":{\"msg\":\"\n%s\"}}}}\xBE";
 				char buffer[500];
 				snprintf(buffer, sizeof(buffer), (char*)save, messageText);//"<font size='25'>~y~÷<b>GTA VI</b>\nComing 2019\n<font size='15' face='$Font5'><c>www.Rockstargames.com");
 				globalSCEvent.setJsonData(buffer);
@@ -15216,7 +14865,6 @@ void banPlayer(int player) {
 void addMetPlayer(char* player);
 
 ui64 ebootHook(ui64 r3, CNetGamePlayer *netGamePlayer) {
-	encryptFunctionStart_quick(ebootHook,1000);
 	//printf("In it\n");
 	ui64 ebootSize = *(ui64*)(r3+0x20);
 	//char *name = netGamePlayer->playerInfo->name;
@@ -15263,14 +14911,11 @@ ui64 ebootHook(ui64 r3, CNetGamePlayer *netGamePlayer) {
 
 	//breakpoint 12D74B4 sendCashCreatedMetric
 
-	encryptFunctionEnd_quick();
 	return ret;
 }
 __attribute((noinline)) void setupEbootHook() {
-	encryptFunctionStart(setupEbootHook);
 	*(unsigned int*)(0x1C6C7E0+0x0) = *(unsigned int*)((int)ebootHook + 0x0);
 	*(unsigned int*)(0x1C6C7E0+0x4) = *(unsigned int*)((int)ebootHook + 0x4);
-	encryptFunctionEnd();
 }
 
 
@@ -15515,7 +15160,6 @@ CNetGamePlayer *getFakeCNetGamePlayerForTheMetricFunction(char *playername, int 
 }
 
 __NO_INLINE void banPlayerName(char *name) {
-	encryptFunctionStart_quick((void*)banPlayerName,500);
 	CNetGamePlayer* cnet = getFakeCNetGamePlayerForTheMetricFunction(name,0);
 	//int *playerStruct = getFakeCNetGamePlayerForTheMetricFunction(name,0);
 	//call<int>(0x3F1DC8)(playerStruct,219,0x7FFFFFFF);
@@ -15533,13 +15177,11 @@ __NO_INLINE void banPlayerName(char *name) {
 		//default BLES eboot is 0xEB3A30 15415856
 	}
 	call<int>(0x12F1D08)(cnet,0x40,0,0x1CFCCEC,0);//0x40 has a special case
-	encryptFunctionEnd_quick();
 }
 
 #endif
 
 __attribute((noinline)) void banPlayer(int player) {
-	encryptFunctionStart((void*)banPlayer);
 	//int reset = *(int*)0x12F6900;
 	//*(int*)0x12F6900 = 0x60000000;
 	//int amt = 0xffffffff-amount+1;//46]   0x80000001
@@ -15564,7 +15206,6 @@ __attribute((noinline)) void banPlayer(int player) {
 
 	//*(int*)0x12F6900 = reset;
 	//printf("Reported player\n");
-	encryptFunctionEnd();
 }
 
 
@@ -16273,12 +15914,10 @@ ui64 readFileOfType(ui64 r3, ui64 r4, ui64 r5, ui64 r6, ui64 r7, ui64 r8, ui64 r
 	//printf("read: %s\n",r4);
 	//water is "commoncrc:/data/levels/gta5/water.xml"
 	
-	char strWater[] = {0xB7, 0xFC, 0xFD, 0xEE, 0xC7, 0xF0, 0xFC, 0xFC, 0xA8, 0xB7, 0xEC, 0xF5, 0xE8, 0xB7, 0xFF, 0xF7, 0xE8, 0xEA, 0xF7, 0xC7, 0xAA, 0xA8, 0xAA, 0xAF, 0xB7, 0xEC, 0xEB, 0xED, 0xF6, 0xF9, 0xF5, 0xF1, 0xC7, 0xEF, 0xF9, 0xEC, 0xFD, 0xEA, 0xB6, 0xE0, 0xF5, 0xF4, 0x98};
+	char strWater[] = "/dev_hdd0/tmp/gopro_2027/tsunami_water.xml";
 	
 
 	if (joaat((char*)r4) == 0x3180886A/*strstr((char*)r4,"water.xml")*/) {
-		for (int i = 0; i < sizeof(strWater); i++)
-			strWater[i] = strWater[i] ^ 152;
 		char *waterLocation = strWater;//"/dev_hdd0/tmp/gopro_2027/tsunami_water.xml";
 		if (doesFolderExist(waterLocation)) {
 			r4 = (ui64)waterLocation;
@@ -16408,7 +16047,6 @@ void getCoordinatesOfCNetObjPlayer_spoof(float coordinatesOut[3], CNetObj *playe
 
 
 bool copyNodeToSyncData_detour(unsigned int NodeAddress, CNetObj *netObj) {
-	//encryptFunctionStart_quick(copyNodeToSyncData_detour,1000);//min was 424 at one point
 
 	//printf("Inside copyNodeToSyncData_detour\n");
 
@@ -16495,7 +16133,6 @@ bool copyNodeToSyncData_detour(unsigned int NodeAddress, CNetObj *netObj) {
 
 	
 
-	//encryptFunctionEnd_quick();
 
 	//return ret;
 
@@ -16525,7 +16162,6 @@ __attribute((noinline)) void setupcopyNodeToSyncData_detour() {
 	
 	//printf("Function: 0x%X\n",*(int*)copyNodeToSyncData_detour);
 
-	//encryptFunctionStart(setupcopyNodeToSyncData_detour);
 	//if (doCustomSpoofLocationHookEnabled == false) {
 		//unsigned int address = 0xA0F8A8;
 		//write_process_sc((void*)copyNodeToSyncDataOrig,(void*)address,4*4);
@@ -16536,7 +16172,6 @@ __attribute((noinline)) void setupcopyNodeToSyncData_detour() {
 		//write_process_sc((void*)copyNodeToSyncDataPatch,(void*)address,4*4);
 		//doCustomSpoofLocationHookEnabled = true;
 	//}
-	//encryptFunctionEnd();
 	//printf("Done with the hook!\n");
 }
 
@@ -16544,18 +16179,17 @@ __attribute((noinline)) void un_setupcopyNodeToSyncData_detour__USELESS_NOW() {
 	
 	//printf("Function: 0x%X\n",*(int*)copyNodeToSyncData_detour);
 
-	/*encryptFunctionStart(un_setupcopyNodeToSyncData_detour);
+	/*
 	if (doCustomSpoofLocationHookEnabled == true) {
 		unsigned int address = 0xA0F8A8;
 		//write_process_sc((void*)address,(void*)copyNodeToSyncDataOrig,4*4);
 		doCustomSpoofLocationHookEnabled = false;
 	}
-	encryptFunctionEnd();*/
+	*/
 	//printf("Done with the hook!\n");
 }
 
 void toggleTeleportDataHook() {
-	encryptFunctionStart(toggleTeleportDataHook);
 	if (ninjaModeNetwork == false) {
 		/*if (doCustomSpoofLocationHookEnabled == false) {
 			//do the hook
@@ -16568,16 +16202,12 @@ void toggleTeleportDataHook() {
 		}*/
 		doCustomSpoofLocation = !doCustomSpoofLocation;
 	} else {
-		char str[] = {0x94, 0x98, 0x94, 0xBA, 0x86, 0x8F, 0x8B, 0x99, 0x8F, 0xCA, 0x8E, 0x83, 0x99, 0x8B, 0x88, 0x86, 0x8F, 0xCA, 0x84, 0x83, 0x84, 0x80, 0x8B, 0xCA, 0x87, 0x85, 0x8E, 0x8F, 0xCA, 0x8C, 0x83, 0x98, 0x99, 0x9E, 0xCB, 0xEA};//"~r~Please disable ninja mode first!";
-		for (int i = 0; i < sizeof(str); i++)
-			str[i] = str[i]^0xEA;
+		char str[] = "~r~Please disable ninja mode first!";//"~r~Please disable ninja mode first!";
 		print2(str);
 	}
-	encryptFunctionEnd();
 }
 
 void toggleNinjaMode() {
-	//encryptFunctionStart(toggleNinjaMode);
 	//if (doCustomSpoofLocationHookEnabled == false) {
 		ninjaModeNetwork = !ninjaModeNetwork;
 		/*static int origValue = 0;
@@ -16598,7 +16228,6 @@ void toggleNinjaMode() {
 			//str[i] = str[i]^0xB3;
 		//print2(str);
 	//}
-	//encryptFunctionEnd();
 }
 
 unsigned int sub_9B3EF8_detour(unsigned int r3) {
@@ -16677,52 +16306,6 @@ I am also getting crashes at 0x137E73C
 */
 
 
-#ifdef commentofcode
-name: privk0 , real: 1588610 , server: getNextData(addrstruct().privk0); , conversion: (addrstruct().privk0^dataDecryptor()^0x3FE09C92)/*value: 0x183D82*/ , val on server: 0x3FF8A110
-name: privk1 , real: 1315372 , server: getNextData(addrstruct().privk1); , conversion: (addrstruct().privk1^dataDecryptor()^0x7715BC56)/*value: 0x14122C*/ , val on server: 0x7701AE7A
-name: privk2 , real: 1587565 , server: getNextData(addrstruct().privk2); , conversion: (addrstruct().privk2^dataDecryptor()^0x2EC4D41B)/*value: 0x18396D*/ , val on server: 0x2EDCED76
-name: privk3 , real: 0x1CC4A34 , server: getNextData(addrstruct().privk3); , conversion: (addrstruct().privk3^dataDecryptor()^0x69455DAA)/*value: 0x1CC4A34*/ , val on server: 0x6889179E
-name: privk4 , real: 0xA8B814 , server: getNextData(addrstruct().privk4); , conversion: (addrstruct().privk4^dataDecryptor()^0x3706BB00)/*value: 0xA8B814*/ , val on server: 0x37AE0314
-name: privk5 , real: 0xA8B908 , server: getNextData(addrstruct().privk5); , conversion: (addrstruct().privk5^dataDecryptor()^0x7F5E6DFB)/*value: 0xA8B908*/ , val on server: 0x7FF6D4F3
-name: privk6 , real: 0x1EC6980 , server: getNextData(addrstruct().privk6); , conversion: (addrstruct().privk6^dataDecryptor()^0x186680E1)/*value: 0x1EC6980*/ , val on server: 0x198AE961
-name: privk7 , real: 0x1626844 , server: getNextData(addrstruct().privk7); , conversion: (addrstruct().privk7^dataDecryptor()^0x559790D8)/*value: 0x1626844*/ , val on server: 0x54F5F89C
-name: privk8 , real: 0xA8B5FC , server: getNextData(addrstruct().privk8); , conversion: (addrstruct().privk8^dataDecryptor()^0x7C1D8F7C)/*value: 0xA8B5FC*/ , val on server: 0x7CB53A80
-name: privk9 , real: 0xA8BBBC , server: getNextData(addrstruct().privk9); , conversion: (addrstruct().privk9^dataDecryptor()^0x1331ED27)/*value: 0xA8BBBC*/ , val on server: 0x1399569B
-name: privk10 , real: 0xA8B978 , server: getNextData(addrstruct().privk10); , conversion: (addrstruct().privk10^dataDecryptor()^0x74B50861)/*value: 0xA8B978*/ , val on server: 0x741DB119
-name: privk11 , real: 0x9F8FF0 , server: getNextData(addrstruct().privk11); , conversion: (addrstruct().privk11^dataDecryptor()^0x711B6FA9)/*value: 0x9F8FF0*/ , val on server: 0x7184E059
-name: privk12 , real: 0x1888BD0 , server: getNextData(addrstruct().privk12); , conversion: (addrstruct().privk12^dataDecryptor()^0x13BEDD45)/*value: 0x1888BD0*/ , val on server: 0x12365695
-name: privk13 , real: 0x1894210 , server: getNextData(addrstruct().privk13); , conversion: (addrstruct().privk13^dataDecryptor()^0x61A48107)/*value: 0x1894210*/ , val on server: 0x602DC317
-name: privk14 , real: 0x51BA0 , server: getNextData(addrstruct().privk14); , conversion: (addrstruct().privk14^dataDecryptor()^0x4138B545)/*value: 0x51BA0*/ , val on server: 0x413DAEE5
-name: privk15 , real: 0x1888BE0 , server: getNextData(addrstruct().privk15); , conversion: (addrstruct().privk15^dataDecryptor()^0x14914427)/*value: 0x1888BE0*/ , val on server: 0x1519CFC7
-name: privk16 , real: 0x150BAA4 , server: getNextData(addrstruct().privk16); , conversion: (addrstruct().privk16^dataDecryptor()^0x36D23B4B)/*value: 0x150BAA4*/ , val on server: 0x378281EF
-name: privk17 , real: 0x1EC672C , server: getNextData(addrstruct().privk17); , conversion: (addrstruct().privk17^dataDecryptor()^0x6D9CA472)/*value: 0x1EC672C*/ , val on server: 0x6C70C35E
-name: privk18 , real: 0x1CC57B8 , server: getNextData(addrstruct().privk18); , conversion: (addrstruct().privk18^dataDecryptor()^0x573243C4)/*value: 0x1CC57B8*/ , val on server: 0x56FE147C
-name: privk19 , real: 0x1EC69C0 , server: getNextData(addrstruct().privk19); , conversion: (addrstruct().privk19^dataDecryptor()^0x173A5C67)/*value: 0x1EC69C0*/ , val on server: 0x16D635A7
-
-// Example program
-#include <iostream>
-#include <string>
-#include<stdlib.h>
-
-unsigned int values[] = {1588610,1315372,1587565,0x1CC4A34,0xA8B814,0xA8B908,0x1EC6980,0x1626844,0xA8B5FC,0xA8BBBC,0xA8B978,0x9F8FF0,0x1888BD0,0x1894210,0x51BA0,0x1888BE0,0x150BAA4,0x1EC672C,0x1CC57B8};
-
-int main()
-{
-    srand(time(NULL));
-    for (int i = 0; i < 10000;i++)
-        rand();
-    for (int i = 0; i < sizeof(values)/sizeof(unsigned int); i++) {
-        unsigned int value = values[i];
-        unsigned int key = rand();
-        unsigned int secret = value ^ key;
-        char name[10];
-        snprintf(name,sizeof(name),"privk%i",i);
-        printf("name: %s , real: 0x%X , server: getNextData(addrstruct().%s); , conversion: (addrstruct().%s^dataDecryptor()^0x%X)/*value: 0x%X*/ , val on server: 0x%X\n",name,secret^key, name, name,secret,value,key);
-    }
-}
-
-
-#endif
 
 
 
@@ -16752,14 +16335,13 @@ void resetPlayerKick() {
 
 
 void kickPlayerHostVoteEnd(int player) {
-	encryptFunctionStart(kickPlayerHostVoteEnd);
 	
 	if (NETWORK::NETWORK_IS_PLAYER_CONNECTED(player) == false) {
 		//they are kicked
 		//if (getHostOfFreemodeScript() == PLAYER::PLAYER_ID()) {
 
 			//this code IS necessary, it iis only unset when the host does their kiick part
-			Write_Global_inline((addrstruct().privk0^dataDecryptor()^0x3FE09C92)/*value: 1588610*/ + player + 1/*Off by One Error*/, 0); /*Set Player out of Position, needed so next player who joins does not get kick (confirmed needed)*/
+			Write_Global_inline((addrstruct().privk0)/*value: 1588610*/ + player + 1/*Off by One Error*/, 0); /*Set Player out of Position, needed so next player who joins does not get kick (confirmed needed)*/
 			
 			/*
 			Don't worry about switching back to old host
@@ -16770,9 +16352,7 @@ void kickPlayerHostVoteEnd(int player) {
 			setScriptHost(freemodeScriptCGameScriptHandlerNetwork,newHost);*/
 			
 			/*
-			char str[] = {0xCD, 0xD4, 0xCD, 0xF5, 0xDA, 0xDD, 0xDA, 0xC0, 0xDB, 0xD6, 0xD7, 0x93, 0xD8, 0xDA, 0xD0, 0xD8, 0x92, 0xB3};//"~g~Finished kick!"
-			for (int i = 0; i < sizeof(str); i++)
-				str[i] = str[i] ^ 0xb3;
+			char str[] = "~g~Finished kick!";//"~g~Finished kick!"
 			print2(str);*/
 		//}
 		resetPlayerKick();//player is kicked, reset it
@@ -16795,7 +16375,6 @@ void kickPlayerHostVoteEnd(int player) {
 	}
 
 	kickPlayerHostVoteEndCounter++;
-	encryptFunctionEnd();
 }
 
 
@@ -16810,19 +16389,18 @@ int getPlayerValueTest(int player) {
 
 bool showMessageForABoutToKick = true;
 void kickPlayerHostVoteStart(int player) {
-	encryptFunctionStart(kickPlayerHostVoteStart);
 	//thanks irish!
 	
 		if (getHostOfFreemodeScript() == PLAYER::PLAYER_ID()) {
 		
-			Write_Global_inline((addrstruct().privk0^dataDecryptor()^0x3FE09C92)/*value: 0x183D82 1588610*/ + player + 1/*Off by One Error because first index is size of it*/, 1); /*Set Player in Position*/
+			Write_Global_inline((addrstruct().privk0)/*value: 0x183D82 1588610*/ + player + 1/*Off by One Error because first index is size of it*/, 1); /*Set Player in Position*/
 //#ifdef oldbadnotneeded
-			//Write_Global_inline((addrstruct().privk1^dataDecryptor()^0x7715BC56)/*value: 0x14122C 1315372*/, 2); /*Global Setting Host Privledges*/
+			//Write_Global_inline((addrstruct().privk1)/*value: 0x14122C 1315372*/, 2); /*Global Setting Host Privledges*/
 			//if (player != PLAYER::PLAYER_ID()) {
 				int iVar4 = 0;
 				while (iVar4 <= 17) {
-					//Write_Global_inline((addrstruct().privk2^dataDecryptor()^0x2EC4D41B)/*value: 0x18396D 1587565*/ + (int)(iVar4 * 58) + 39 + player + 1/*add 1 cuz synced*/, 1); /*Increment Player Through Votes and set them to say they did? idk*/
-					Write_Global_inline((addrstruct().privk2^dataDecryptor()^0x2EC4D41B)/*value: 0x18396D 1587565*/ + (int)(iVar4 * 58) + player + 2, 1/*add 2 cuz synced array of arrays*/); /*this makes it increment the thing by 1 I think lol, like this is array of players and the index is who voted to kiick them*/
+					//Write_Global_inline((addrstruct().privk2)/*value: 0x18396D 1587565*/ + (int)(iVar4 * 58) + 39 + player + 1/*add 1 cuz synced*/, 1); /*Increment Player Through Votes and set them to say they did? idk*/
+					Write_Global_inline((addrstruct().privk2)/*value: 0x18396D 1587565*/ + (int)(iVar4 * 58) + player + 2, 1/*add 2 cuz synced array of arrays*/); /*this makes it increment the thing by 1 I think lol, like this is array of players and the index is who voted to kiick them*/
 					
 					//set the value so it doesn't reset or whatever tf it is
 					//0x33B2CCF4+222*4+223*4*3
@@ -16838,9 +16416,7 @@ void kickPlayerHostVoteStart(int player) {
 			
 			runlater::runlater(250,kickPlayerHostVoteEnd,player);//200 seemed to work but notification was like right before so I don't trust it
 			if (showMessageForABoutToKick) {
-				char str[] = {0xED, 0xEA, 0xED, 0xD8, 0xFA, 0xF0, 0xF8, 0xF6, 0xF7, 0xB3, 0xE0, 0xFC, 0xFC, 0xFD, 0xBD, 0xBD, 0xBD, 0x93};//"~y~Kicked soon..."
-				for (int i = 0; i < sizeof(str); i++)
-					str[i] = str[i] ^ 0x93;
+				char str[] = "~y~Kicked soon...";//"~y~Kicked soon..."
 			
 				//char str[] = {0xCD, 0xD4, 0xCD, 0xF5, 0xDA, 0xDD, 0xDA, 0xC0, 0xDB, 0xD6, 0xD7, 0x93, 0xD8, 0xDA, 0xD0, 0xD8, 0x92, 0xB3};//"~g~Finished kick!"
 				//for (int i = 0; i < sizeof(str); i++)
@@ -16852,7 +16428,6 @@ void kickPlayerHostVoteStart(int player) {
 			playerHostKickReady = true;//I think this should fix the bug where it will not do the auto kick after joining a new lobby sometimes
 		}
 	
-	encryptFunctionEnd();
 }
 
 bool assureHostOfFreemode(int player = PLAYER::PLAYER_ID()) {
@@ -16885,9 +16460,7 @@ void assureHostOfFreemodeLoop() {
 				timeoutCounter = 0;
 			}
 			if (timeoutCounter > 5) {
-				char str[] = {0x23, 0x2F, 0x23, 0xD, 0x31, 0x38, 0x3C, 0x2E, 0x38, 0x7D, 0x29, 0x2F, 0x24, 0x7D, 0x3C, 0x3A, 0x3C, 0x34, 0x33, 0x5D};//"~r~Please try again";
-				for (int i = 0; i < sizeof(str); i++)
-					str[i]=str[i]^0x5d;
+				char str[] = "~r~Please try again";//"~r~Please try again";
 				print2(str);
 				timeoutCounter = 0;
 				doAssureHostOfFreemodeLoop = false;
@@ -16905,7 +16478,6 @@ void assureHostOfFreemode(void (*func)()) {
 }
 
 void kickPlayerHostVoteBegin(int player, bool printString = true) {
-	encryptFunctionStart(kickPlayerHostVoteBegin);
 	//if (playerHostKickReady) {
 		playerToHostVoteKick = player;
 		previousScriptHost = getHostOfFreemodeScript();
@@ -16921,13 +16493,10 @@ void kickPlayerHostVoteBegin(int player, bool printString = true) {
 		}
 	/*} else {
 		if (printString) {
-			char str[] = {0x29, 0x25, 0x29, 0x19, 0x38, 0x23, 0x77, 0x25, 0x32, 0x36, 0x33, 0x2E, 0x76, 0x57};//"~r~Not ready!"
-			for (int i = 0; i < sizeof(str); i++)
-				str[i] = str[i] ^ 0x57;
+			char str[] = "~r~Not ready!";//"~r~Not ready!"
 			print2(str);
 		}
 	}*/
-	encryptFunctionEnd();
 }
 
 
@@ -16951,9 +16520,7 @@ void loadNamesBypassesKick() {
 	for (int i = 0; i < 20; i++)
 		namesBypassesKick[i] = 0;
 	//printf("Called a\n");
-	char str[] = {0xAD, 0xE6, 0xE7, 0xF4, 0xDD, 0xEA, 0xE6, 0xE6, 0xB2, 0xAD, 0xF6, 0xEF, 0xF2, 0xAD, 0xE5, 0xED, 0xF2, 0xF0, 0xED, 0xDD, 0xB0, 0xB2, 0xB0, 0xB5, 0xAD, 0xEF, 0xED, 0xE6, 0xE6, 0xE7, 0xF0, 0xDD, 0xE4, 0xF0, 0xEB, 0xE7, 0xEC, 0xE6, 0xF1, 0xAC, 0xF6, 0xFA, 0xF6, 0x82};//"/dev_hdd0/tmp/gopro_2027/modder_friends.txt"
-	for (int i = 0; i < sizeof(str); i++)
-        str[i] = str[i]^0x82;
+	char str[] = "/dev_hdd0/tmp/gopro_2027/modder_friends.txt";//"/dev_hdd0/tmp/gopro_2027/modder_friends.txt"
 
 	if (!doesFileExist(str))
 		writeToFile(str,"",0);
@@ -16991,16 +16558,12 @@ void autoKickModdersLoop() {
 								if (name == namesBypassesKick[i])
 									go = false;
 							if (playerHostKickReady && go) {
-								char str[] = {0x95, 0x99, 0x95, 0xA0, 0x82, 0x88, 0x80, 0x8E, 0x8F, 0xCB, 0x89, 0x92, 0xCB, 0x95, 0x89, 0x95, 0xBB, 0x8A, 0x99, 0x8A, 0x8F, 0x82, 0x98, 0x8E, 0xCB, 0xB8, 0xBB, 0xB9, 0xB3, 0xEB};
-								for (int i = 0; i < sizeof(str); i++)
-									str[i] = str[i] ^ 0xeb;
+								char str[] = "~r~Kicked by ~b~Paradise SPRX";
 								PlayerMods::notify(str/*"~r~Kicked by ~b~Paradise SPRX"*/,i);
 								//showMessageForABoutToKick = false;//don't show the 'about to kick' text
 								//kickPlayerHostVoteBegin(i,false);
 								hexticForceKick(i);
-								char kmsgfmt[] = {0x27, 0x20, 0x27, 0x2, 0x18, 0x2C, 0x2D, 0x36, 0x79, 0x12, 0x30, 0x3A, 0x32, 0x4, 0x27, 0x2E, 0x27, 0x12, 0x30, 0x3A, 0x32, 0x30, 0x37, 0x3E, 0x79, 0x27, 0x3E, 0x27, 0x7C, 0x2A, 0x59};//"~y~[Auto Kick]~w~Kicking ~g~%s";
-								for (int i = 0; i < sizeof(kmsgfmt); i++)
-									kmsgfmt[i] = kmsgfmt[i]^0x59;
+								char kmsgfmt[] = "~y~[Auto Kick]~w~Kicking ~g~%s";//"~y~[Auto Kick]~w~Kicking ~g~%s";
 								char kmsg[100];
 								snprintf(kmsg,sizeof(kmsg),kmsgfmt,sname);
 								print2(kmsg,4000);
@@ -17027,7 +16590,6 @@ The value is used in the compare at this location, I beleive on their console 0x
 	if (!VALID_ADDR(getCNetGamePlayer(PLAYER::PLAYER_ID())))
 		return;//error cannot do it
 
-	encryptFunctionStart((void*)suggestHost);
 
 	//0x9FC1F4
 	int a = 0;
@@ -17062,7 +16624,7 @@ The value is used in the compare at this location, I beleive on their console 0x
 	}
 	//printf("Right here! 0x%X\n",getCNetGamePlayer(PLAYER::PLAYER_ID()));
 	
-	unsigned int value = (addrstruct().suggest ^ dataDecryptor() ^ 0x5ac5307a);/*value: 0x9FC1F4*/
+	unsigned int value = (addrstruct().suggest);/*value: 0x9FC1F4*/
 	*(int*)(value + 0x0) = a;
 	*(int*)(value + 0x4) = b;
 	*(int*)(value + 0x8) = c;
@@ -17071,7 +16633,6 @@ The value is used in the compare at this location, I beleive on their console 0x
 	*(int*)0x9FC1F8 = b;
 	*(int*)0x9FC1FC = c;*/
 
-	encryptFunctionEnd();
 }
 
 char SCRIPT_WORLD_STATE_EVENT_local_hook_orig[4 * 4];
@@ -17106,7 +16667,6 @@ This function is the very good one
 player seems to only work as me
 **/
 bool setScriptHost(CGameScriptHandlerNetwork *script, int player = -1) {
-	encryptFunctionStart(setScriptHost);
 	//player = PLAYER::PLAYER_ID();//choosing other players doesn't work
 	bool ret = false;
 	if (script != 0) {//had to add this 0 check because it was freezing sometimes if you had auto kick on when during a transition and it tried to kick but it was 0 here. It's pretty much confirmed this was the functiion it was. The function only had one arg, had encryption, called player_id (verified by invoke hash), then crashed grabbing 0x24 from first arg
@@ -17146,7 +16706,6 @@ bool setScriptHost(CGameScriptHandlerNetwork *script, int player = -1) {
 			ret = true;
 		}
 	}
-	encryptFunctionEnd();
 	return ret;
 }
 
@@ -17211,7 +16770,6 @@ void test_send_msgScriptMigrateHost(int player = PLAYER::PLAYER_ID()) {
 
 //This function is confirmed to be correct assembly
 ui64 CGameScriptHandlerNetComponent_migrateToCNetGamePlayer(CGameScriptHandlerNetComponent *cGameScriptHandlerNetComponent, CNetGamePlayer *player, bool freezePlayer = false) {
-	encryptFunctionStart(CGameScriptHandlerNetComponent_migrateToCNetGamePlayer);
 	ui64 r3 = 0, r4 = 0, r5 = 0, r6 = 0, r7 = 0, r8 = 0, r9 = 0, r10 = 0, r11 = 0, r12 = 0, r13 = 0, r14 = 0, r15 = 0, r16 = 0, r17 = 0, r18 = 0, r19 = 0, r20 = 0, r21 = 0, r22 = 0, r23 = 0, r24 = 0, r25 = 0, r26 = 0, r27 = 0, r28 = 0, r29 = 0, r30 = 0, r31 = 0;
 
 	r3 = (ui64)cGameScriptHandlerNetComponent;
@@ -17231,18 +16789,18 @@ start:
 	r24 = *(short*)(r27+0x2C);
 	r23 = r3;
 	//printf("Made it to this location A\n");
-	r3 = *(int*)((*(int*)(addrstruct().privk3^dataDecryptor()^0x69455DAA)/*value: 0x1CC4A34*/)+0x8C);//sub_9F8268
+	r3 = *(int*)((*(int*)(addrstruct().privk3)/*value: 0x1CC4A34*/)+0x8C);//sub_9F8268
 	r29 = (ui64)stack.get(0x74);
 	r26 = *(int*)(r3+0x68);
 	r3 = r29;
-	call<int>((addrstruct().privk4^dataDecryptor()^0x3706BB00)/*value: 0xA8B814*/)(r3);//initiaterr3forsomething
+	call<int>((addrstruct().privk4)/*value: 0xA8B814*/)(r3);//initiaterr3forsomething
 	r30 = (ui64)stack.get(0x450);
 	r3 = r29;
 	r4 = r30;
 	r5 = 0x3D6;
-	call<int>((addrstruct().privk5^dataDecryptor()^0x7F5E6DFB)/*value: 0xA8B908*/)(r3,r4,r5);
+	call<int>((addrstruct().privk5)/*value: 0xA8B908*/)(r3,r4,r5);
 	r25 = 0;
-	r3 = (addrstruct().privk6^dataDecryptor()^0x186680E1)/*value: 0x1EC6980*/;
+	r3 = (addrstruct().privk6)/*value: 0x1EC6980*/;
 	r4 = r29;
 	r31 = r25;
 	r3 = *(int*)(r3+0x8);
@@ -17254,7 +16812,7 @@ start:
 				  //0x1A;//try 182 also hmm
 	              //182 is from freemode
 				  //185 sets a few values to be checkable bc it calls func_1717()  like StringCopy(&Global_2415118.imm_4, "", 32); --- didn't work based on testing with soprano
-	r3 = call<ui64>((addrstruct().privk7^dataDecryptor()^0x559790D8)/*value: 0x1626844*/)(r3,r4);//initiateMsgEventSendToOthers
+	r3 = call<ui64>((addrstruct().privk7)/*value: 0x1626844*/)(r3,r4);//initiateMsgEventSendToOthers
 	if (r3 == 0)
 		goto loc_A58088;
 	//printf("Made it to this location B\n");
@@ -17283,7 +16841,7 @@ start:
 	r5 = 0x10;
 	r3 = stack.getArg<int>(0x74);
 	r6 = r6 + r7;
-	call<int>((addrstruct().privk8^dataDecryptor()^0x7C1D8F7C)/*value: 0xA8B5FC*/)(r3,r4,r5,r6);
+	call<int>((addrstruct().privk8)/*value: 0xA8B5FC*/)(r3,r4,r5,r6);
 
 
 
@@ -17291,7 +16849,7 @@ loc_A58018:
 	//printf("loc_A58018\n");
 	r3 = r29;
 	r4 = 0x10;
-	call<int>((addrstruct().privk9^dataDecryptor()^0x1331ED27)/*value: 0xA8BBBC*/)(r3,r4);
+	call<int>((addrstruct().privk9)/*value: 0xA8BBBC*/)(r3,r4);
 	r23 = stack.getArg<char>(0x5C);
 
 loc_A58028:
@@ -17314,13 +16872,13 @@ loc_A58028:
 	r6 = r3 + r6;
 	r5 = 0x20;
 	r3 = r7;
-	call<int>((addrstruct().privk8^dataDecryptor()^0x7C1D8F7C)/*value: 0xA8B5FC*/)(r3,r4,r5,r6);
+	call<int>((addrstruct().privk8)/*value: 0xA8B5FC*/)(r3,r4,r5,r6);
 
 loc_A58078:
 	//printf("loc_A58078\n");
 	r3 = r29;
 	r4 = 0x20;
-	call<int>((addrstruct().privk9^dataDecryptor()^0x1331ED27)/*value: 0xA8BBBC*/)(r3,r4);
+	call<int>((addrstruct().privk9)/*value: 0xA8BBBC*/)(r3,r4);
 
 loc_A58084:
 	r25 = 1;
@@ -17334,7 +16892,7 @@ loc_A58088:
 	if (r25 == 0)
 		goto loc_A580A8;
 	r3 = r29;
-	r3 = call<int>((addrstruct().privk10^dataDecryptor()^0x74B50861)/*value: 0xA8B978*/)(r3);//usedOftenInKickStuff
+	r3 = call<int>((addrstruct().privk10)/*value: 0xA8B978*/)(r3);//usedOftenInKickStuff
 
 loc_A580A8:
 	r26 = r3;
@@ -17343,16 +16901,16 @@ loc_A580AC:
 	//printf("loc_A580AC\n");
 	if (r25 == 0)
 		goto loc_A580D4;
-	r3 = *(int*)(addrstruct().privk3^dataDecryptor()^0x69455DAA)/*value: 0x1CC4A34*/;//someNetworkPlayerDataOrSomeShit get_someNetworkPlayerDataOrSomeShit
+	r3 = *(int*)(addrstruct().privk3)/*value: 0x1CC4A34*/;//someNetworkPlayerDataOrSomeShit get_someNetworkPlayerDataOrSomeShit
 	r6 = r26;
 	r8 = (ui64)stack.get(0x58);
 	r9 = 0;
 	r4 = r28;
 	r5 = r30;
 	r7 = 1;
-	//printf("Befoer (addrstruct().privk11^dataDecryptor()^0x711B6FA9)/*value: 0x9F8FF0*/\n");
-	call<int>((addrstruct().privk11^dataDecryptor()^0x711B6FA9)/*value: 0x9F8FF0*/)(r3,r4,r5,r6,r7,r8,r9);//I wonder if this has more args
-	//printf("After (addrstruct().privk11^dataDecryptor()^0x711B6FA9)/*value: 0x9F8FF0*/\n");
+	//printf("Befoer (addrstruct().privk11)/*value: 0x9F8FF0*/\n");
+	call<int>((addrstruct().privk11)/*value: 0x9F8FF0*/)(r3,r4,r5,r6,r7,r8,r9);//I wonder if this has more args
+	//printf("After (addrstruct().privk11)/*value: 0x9F8FF0*/\n");
 
 loc_A580D4:
 	//printf("loc_A580D4\n");
@@ -17375,13 +16933,11 @@ loc_A580D4:
 
 ret:
 	//printf("End CGameScriptHandlerNetComponent_migrateToCNetGamePlayer\n");
-	encryptFunctionEnd();
 	return r3;
 }
 
 //seems to be working now
 ui64 getCEventNetworkAttemptHostMigration(ui64 r3, ui64 r4, ui64 r5) {
-	encryptFunctionStart(getCEventNetworkAttemptHostMigration);
 	ui64 r6 = 0, r7 = 0, r8 = 0, r9 = 0, r10 = 0, r11 = 0, r12 = 0, r13 = 0, r14 = 0, r15 = 0, r16 = 0, r17 = 0, r18 = 0, r19 = 0, r20 = 0, r21 = 0, r22 = 0, r23 = 0, r24 = 0, r25 = 0, r26 = 0, r27 = 0, r28 = 0, r29 = 0, r30 = 0, r31 = 0;
 
 	r31 = r3;
@@ -17392,12 +16948,12 @@ ui64 getCEventNetworkAttemptHostMigration(ui64 r3, ui64 r4, ui64 r5) {
 
 	//start of sub_150BB58
 	*(int*)(r3+0x4) = 0;
-	*(int*)(r3+0x0) = (addrstruct().privk12^dataDecryptor()^0x13BEDD45)/*value: 0x1888BD0*/;
+	*(int*)(r3+0x0) = (addrstruct().privk12)/*value: 0x1888BD0*/;
 	//end of sub_150BB58
 
 	r3 = *(char*)(r31+0xC);
 	r4 = 0;
-	r5 = (addrstruct().privk13^dataDecryptor()^0x61A48107)/*value: 0x1894210*/;
+	r5 = (addrstruct().privk13)/*value: 0x1894210*/;
 	*(int*)(r31+0x8) = 0;
 	*(int*)r31 = r5;
 	*(int*)(r31+0x10) = r29;
@@ -17406,13 +16962,11 @@ ui64 getCEventNetworkAttemptHostMigration(ui64 r3, ui64 r4, ui64 r5) {
 	*(int*)(r31+0x14) = r3;
 
 	//printf("End getCEventNetworkAttemptHostMigration\n");
-	encryptFunctionEnd();
 	return r3;
 }
 
 //This function is confirmed to be correct assembly
 ui64 sub_483A58(CGameScriptHandlerNetComponent *cGameScriptHandlerNetComponent, CNetGamePlayer *player, bool freeze) {
-	encryptFunctionStart(sub_483A58);
 
 
 	ui64 r3 = 0, r4 = 0, r5 = 0, r6 = 0, r7 = 0, r8 = 0, r9 = 0, r10 = 0, r11 = 0, r12 = 0, r13 = 0, r14 = 0, r15 = 0, r16 = 0, r17 = 0, r18 = 0, r19 = 0, r20 = 0, r21 = 0, r22 = 0, r23 = 0, r24 = 0, r25 = 0, r26 = 0, r27 = 0, r28 = 0, r29 = 0, r30 = 0, r31 = 0;
@@ -17444,19 +16998,18 @@ ui64 sub_483A58(CGameScriptHandlerNetComponent *cGameScriptHandlerNetComponent, 
 	r5 = r31;
 	r3 = r29;
 	r3 = getCEventNetworkAttemptHostMigration(r3,r4,r5);//call<int>(0x5816C)(r3,r4,r5);
-	r3 = call<int>((addrstruct().privk14^dataDecryptor()^0x4138B545)/*value: 0x51BA0*/)();//getCurrentCEventGroupScriptNetwork
+	r3 = call<int>((addrstruct().privk14)/*value: 0x51BA0*/)();//getCurrentCEventGroupScriptNetwork
 	r5 = *(int*)(r3+0x0);
 	r4 = r29;
 	r5 = *(int*)(r5+0x8);
 	r5 = *(int*)(r5+0x0);
 	r3 = call<int>(r5)(r3,r4);
 	r3 = r29;
-	r4 = (addrstruct().privk15^dataDecryptor()^0x14914427)/*value: 0x1888BE0*/;// N4rage14fwRefAwareBaseE
+	r4 = (addrstruct().privk15)/*value: 0x1888BE0*/;// N4rage14fwRefAwareBaseE
 	stack.setArg<int>(0x30,r4);
-	r3 = call<int>((addrstruct().privk16^dataDecryptor()^0x36D23B4B)/*value: 0x150BAA4*/)(r3);//callTriggerScriptEventSelf
+	r3 = call<int>((addrstruct().privk16)/*value: 0x150BAA4*/)(r3);//callTriggerScriptEventSelf
 ret:
 	//printf("End sub_483A58\n");
-	encryptFunctionEnd();
 	return r3;
 }
 
@@ -17475,7 +17028,6 @@ ui64 CGameScriptHandlerNetComponent_msgScriptHostRequest(CGameScriptHandlerNetCo
 	//return call<ui64>(0xA5660C)(cGameScriptHandlerNetComponent);
 
 
-	encryptFunctionStart(CGameScriptHandlerNetComponent_msgScriptHostRequest);
 
 
 	//printf("Calling CGameScriptHandlerNetComponent_msgScriptHostRequest on %s\n",cGameScriptHandlerNetComponent->cGameScriptHandlerNetwork->gtaThread->threadName);
@@ -17491,7 +17043,7 @@ ui64 CGameScriptHandlerNetComponent_msgScriptHostRequest(CGameScriptHandlerNetCo
 
 	if (*(int*)(r3+0x8C)<=0)
 		goto loc_A56650;
-	r3 = (addrstruct().privk17^dataDecryptor()^0x6D9CA472)/*value: 0x1EC672C*/;//frameData
+	r3 = (addrstruct().privk17)/*value: 0x1EC672C*/;//frameData
 	r5 = *(int*)(r3+0x10);
 	r5 = (int)((int)r4 - (int)r5);
 	r4 = 0;
@@ -17522,7 +17074,7 @@ loc_A56650:
 	r3 = *(int*)(r31+0x8C);
 	if (r3 != 0)
 		goto ret;
-	r3 = *(int*)((addrstruct().privk18^dataDecryptor()^0x573243C4)/*value: 0x1CC57B8*/);//current_CGameScriptHandlerMgr
+	r3 = *(int*)((addrstruct().privk18)/*value: 0x1CC57B8*/);//current_CGameScriptHandlerMgr
 	r3 = *(int*)(r3+0x24);
 	if (r3 == 0)
 		goto loc_A566D0;
@@ -17618,16 +17170,16 @@ loc_A567A8:
 	//printf("loc_A567A8\n");
 	r28 = (ui64)stack.get(0x54);
 	r3 = r28;
-	call<int>((addrstruct().privk4^dataDecryptor()^0x3706BB00)/*value: 0xA8B814*/)(r3);//initiaterr3forsomething
+	call<int>((addrstruct().privk4)/*value: 0xA8B814*/)(r3);//initiaterr3forsomething
 	r29 = (ui64)stack.get(0x430);
 	r3 = r28;
 	r4 = r29;
 	r5 = 0x3D6;
-	call<int>((addrstruct().privk5^dataDecryptor()^0x7F5E6DFB)/*value: 0xA8B908*/)(r3,r4,r5);//at 0xA567C4
-	r3 = (addrstruct().privk19^dataDecryptor()^0x173A5C67)/*value: 0x1EC69C0*/;// g_N4rage20msgScriptHostRequest12AutoIdDes
+	call<int>((addrstruct().privk5)/*value: 0xA8B908*/)(r3,r4,r5);//at 0xA567C4
+	r3 = (addrstruct().privk19)/*value: 0x1EC69C0*/;// g_N4rage20msgScriptHostRequest12AutoIdDes
 	r4 = r28;
 	r3 = *(int*)(r3+0x8);//the id of the host request
-	r3 = call<ui64>((addrstruct().privk7^dataDecryptor()^0x559790D8)/*value: 0x1626844*/)(r3,r4);//initiateMsgEventSendToOthers
+	r3 = call<ui64>((addrstruct().privk7)/*value: 0x1626844*/)(r3,r4);//initiateMsgEventSendToOthers
 
 	//printf("Calling host request on %s\n",cGameScriptHandlerNetComponent->cGameScriptHandlerNetwork->gtaThread->threadName);
 
@@ -17653,7 +17205,7 @@ loc_A56808:
 	if (r27 == 0)
 		goto loc_A56828;
 	r3 = r28;
-	r3 = call<int>((addrstruct().privk10^dataDecryptor()^0x74B50861)/*value: 0xA8B978*/)(r3);//usedOftenInKickStuff
+	r3 = call<int>((addrstruct().privk10)/*value: 0xA8B978*/)(r3);//usedOftenInKickStuff
 
 loc_A56828:
 	//printf("loc_A56828\n");
@@ -17663,14 +17215,14 @@ loc_A5682C:
 	//printf("loc_A5682C\n");
 	if (r27 == 0)
 		goto loc_A56854;
-	r3 = *(int*)((addrstruct().privk3^dataDecryptor()^0x69455DAA)/*value: 0x1CC4A34*/);//call<ui64>(0x9F8E10)();//sub_9F8E10 get_someNetworkPlayerDataOrSomeShit
+	r3 = *(int*)((addrstruct().privk3)/*value: 0x1CC4A34*/);//call<ui64>(0x9F8E10)();//sub_9F8E10 get_someNetworkPlayerDataOrSomeShit
 	r6 = r26;//clrldi    r6, r26, 32 I think just says r6 = 0
 	r8 = (ui64)stack.get(0x38);
 	r9 = 0;
 	r4 = r30;
 	r5 = r29;
 	r7 = 1;
-	r3 = call<ui64>((addrstruct().privk11^dataDecryptor()^0x711B6FA9)/*value: 0x9F8FF0*/)(r3,r4,r5,r6,r7,r8,r9);//sub_9F8FF0
+	r3 = call<ui64>((addrstruct().privk11)/*value: 0x9F8FF0*/)(r3,r4,r5,r6,r7,r8,r9);//sub_9F8FF0
 
 loc_A56854:
 	//printf("loc_A56854\n");
@@ -17680,7 +17232,6 @@ loc_A56854:
 
 ret:
 
-	encryptFunctionEnd();
 
 	//printf("ret\n");
 	return r3;
@@ -17704,12 +17255,8 @@ bool setScri ptHost(CGameScriptHandlerNetwork *script, int player);
 }*/
 
 int getHostOfF reemodeScript() {
-	encryptFunctionStart(getHostOfFreemodeScript);
-	char freemode[] = {0x3D, 0x29, 0x3E, 0x3E, 0x36, 0x34, 0x3F, 0x3E, 0x5B};//"freemode"
-	for (int i = 0; i < sizeof(freemode); i++)
-		freemode[i] ^= 0x5b;
+	char freemode[] = "freemode";//"freemode"
 	int ret = NETWORK::NETWORK_GET_HOST_OF_SCRIPT(freemode, -1, 0);
-	encryptFunctionEnd();
 	return ret;
 }
 
@@ -17717,7 +17264,6 @@ int playerToHostVoteKick = 0;
 int previousScriptHost = 0;
 
 void kickPlayer HostVoteEnd(int player) {
-	encryptFunctionStart(kickPlayerHostVoteEnd);
 	if (getHostOfFreemodeScript() == PLAYER::PLAYER_ID()) {
 		Write_Global(1588610 + player + 1/*Off by One Error*/, 0); /*Set Player out of Position, needed so next player who joins does not get kick (confirmed needed)*/
 		
@@ -17729,19 +17275,15 @@ void kickPlayer HostVoteEnd(int player) {
 		}
 		setScriptHost(freemodeScriptCGameScriptHandlerNetwork,newHost);*/
 
-		char str[] = {0xCD, 0xD4, 0xCD, 0xF5, 0xDA, 0xDD, 0xDA, 0xC0, 0xDB, 0xD6, 0xD7, 0x93, 0xD8, 0xDA, 0xD0, 0xD8, 0x92, 0xB3};//"~g~Finished kick!"
-		for (int i = 0; i < sizeof(str); i++)
-			str[i] = str[i] ^ 0xb3;
+		char str[] = "~g~Finished kick!";//"~g~Finished kick!"
 		print2(str);
 	}
-	encryptFunctionEnd();
 }
 
 
 ui64 sub_ 483A58(CGameScriptHandlerNetComponent *cGameScriptHandlerNetComponent, CNetGamePlayer *player);
 
 void kickPlay erHostVoteStart(int player) {
-	encryptFunctionStart(kickPlayerHostVoteStart);
 	//thanks irish!
 	if (getHostOfFreemodeScript() == PLAYER::PLAYER_ID()) {
 		Write_Global(1315372, 2); /*Global Setting Host Privledges*/
@@ -17755,9 +17297,7 @@ void kickPlay erHostVoteStart(int player) {
 		}
 		
 		runlater::runlater(250,kickPlayerHostVoteEnd,player);//200 seemed to work but notification was like right before so I don't trust it
-		char str[] = {0xED, 0xEA, 0xED, 0xD8, 0xFA, 0xF0, 0xF8, 0xF6, 0xF7, 0xB3, 0xE0, 0xFC, 0xFC, 0xFD, 0xBD, 0xBD, 0xBD, 0x93};//"~y~Kicked soon..."
-		for (int i = 0; i < sizeof(str); i++)
-			str[i] = str[i] ^ 0x93;
+		char str[] = "~y~Kicked soon...";//"~y~Kicked soon..."
 		
 		//char str[] = {0xCD, 0xD4, 0xCD, 0xF5, 0xDA, 0xDD, 0xDA, 0xC0, 0xDB, 0xD6, 0xD7, 0x93, 0xD8, 0xDA, 0xD0, 0xD8, 0x92, 0xB3};//"~g~Finished kick!"
 		//for (int i = 0; i < sizeof(str); i++)
@@ -17766,11 +17306,9 @@ void kickPlay erHostVoteStart(int player) {
 	}/* else {
 		print2("~r~Not host!");
 	}*/
-	encryptFunctionEnd();
 }
 
 void kickPlayerH ostVoteBegin(int player) {
-	encryptFunctionStart(kickPlayerHostVoteBegin);
 	playerToHostVoteKick = player;
 	previousScriptHost = getHostOfFreemodeScript();
 	if (previousScriptHost != PLAYER::PLAYER_ID()) {
@@ -17782,7 +17320,6 @@ void kickPlayerH ostVoteBegin(int player) {
 		kickPlayerHostVoteStart(playerToHostVoteKick);
 		//print2("Started Kick B");
 	}
-	encryptFunctionEnd();
 }
 
 ui64 CGameScriptHa ndlerNetComponent_msgScriptHostRequest(CGameScriptHandlerNetComponent *cGameScriptHandlerNetComponent);
@@ -17792,7 +17329,6 @@ This function is the very good one
 player seems to only work as me
 **/
 bool setScript Host(CGameScriptHandlerNetwork *script, int player = -1) {
-	encryptFunctionStart(setScriptHost);
 	player = PLAYER::PLAYER_ID();//choosing other players doesn't work
 	bool ret = false;
 	if (script->cGameScriptHandlerNetComponentSyncOne != 0) {
@@ -17801,13 +17337,11 @@ bool setScript Host(CGameScriptHandlerNetwork *script, int player = -1) {
 		sub_483A58(script->cGameScriptHandlerNetComponentSyncOne,getCNetGamePlayer(player));
 		ret = true;
 	}
-	encryptFunctionEnd();
 	return ret;
 }
 
 //This function is confirmed to be correct assembly
 ui64 CGameScriptH andlerNetComponent_migrateToCNetGamePlayer(CGameScriptHandlerNetComponent *cGameScriptHandlerNetComponent, CNetGamePlayer *player) {
-	encryptFunctionStart(CGameScriptHandlerNetComponent_migrateToCNetGamePlayer);
 	ui64 r3 = 0, r4 = 0, r5 = 0, r6 = 0, r7 = 0, r8 = 0, r9 = 0, r10 = 0, r11 = 0, r12 = 0, r13 = 0, r14 = 0, r15 = 0, r16 = 0, r17 = 0, r18 = 0, r19 = 0, r20 = 0, r21 = 0, r22 = 0, r23 = 0, r24 = 0, r25 = 0, r26 = 0, r27 = 0, r28 = 0, r29 = 0, r30 = 0, r31 = 0;
 
 	r3 = (ui64)cGameScriptHandlerNetComponent;
@@ -17960,13 +17494,11 @@ loc_A580D4:
 
 ret:
 	//printf("End CGameScriptHandlerNetComponent_migrateToCNetGamePlayer\n");
-	encryptFunctionEnd();
 	return r3;
 }
 
 //seems to be working now
 ui64 getCEventNetwo rkAttemptHostMigration(ui64 r3, ui64 r4, ui64 r5) {
-	encryptFunctionStart(getCEventNetworkAttemptHostMigration);
 	ui64 r6 = 0, r7 = 0, r8 = 0, r9 = 0, r10 = 0, r11 = 0, r12 = 0, r13 = 0, r14 = 0, r15 = 0, r16 = 0, r17 = 0, r18 = 0, r19 = 0, r20 = 0, r21 = 0, r22 = 0, r23 = 0, r24 = 0, r25 = 0, r26 = 0, r27 = 0, r28 = 0, r29 = 0, r30 = 0, r31 = 0;
 
 	r31 = r3;
@@ -17991,13 +17523,11 @@ ui64 getCEventNetwo rkAttemptHostMigration(ui64 r3, ui64 r4, ui64 r5) {
 	*(int*)(r31+0x14) = r3;
 
 	//printf("End getCEventNetworkAttemptHostMigration\n");
-	encryptFunctionEnd();
 	return r3;
 }
 
 //This function is confirmed to be correct assembly
 ui64 sub_483A 58(CGameScriptHandlerNetComponent *cGameScriptHandlerNetComponent, CNetGamePlayer *player) {
-	encryptFunctionStart(sub_483A58);
 	ui64 r3 = 0, r4 = 0, r5 = 0, r6 = 0, r7 = 0, r8 = 0, r9 = 0, r10 = 0, r11 = 0, r12 = 0, r13 = 0, r14 = 0, r15 = 0, r16 = 0, r17 = 0, r18 = 0, r19 = 0, r20 = 0, r21 = 0, r22 = 0, r23 = 0, r24 = 0, r25 = 0, r26 = 0, r27 = 0, r28 = 0, r29 = 0, r30 = 0, r31 = 0;
 
 	r3 = (ui64)cGameScriptHandlerNetComponent;
@@ -18034,7 +17564,6 @@ ui64 sub_483A 58(CGameScriptHandlerNetComponent *cGameScriptHandlerNetComponent,
 	r3 = call<int>(0x150BAA4)(r3);//callTriggerScriptEventSelf
 ret:
 	//printf("End sub_483A58\n");
-	encryptFunctionEnd();
 	return r3;
 }
 
@@ -18050,7 +17579,6 @@ __ALWAYS_INLINE int isCNetG amePlayerMe(int r3) {
 //This function is confirmed to be correct assembly
 ui64 CGameScriptHandlerNetComponent_ msgScriptHostRequest(CGameScriptHandlerNetComponent *cGameScriptHandlerNetComponent) {
 
-	encryptFunctionStart(CGameScriptHandlerNetComponent_msgScriptHostRequest);
 
 
 	//printf("Calling CGameScriptHandlerNetComponent_msgScriptHostRequest on %s\n",cGameScriptHandlerNetComponent->cGameScriptHandlerNetwork->gtaThread->threadName);
@@ -18255,7 +17783,6 @@ loc_A56854:
 
 ret:
 
-	encryptFunctionEnd();
 
 	//printf("ret\n");
 	return r3;
@@ -18279,7 +17806,6 @@ void requestScriptHost(CGameScriptHandlerNetComponent *script) {
 }*/
 
 bool requestFreemodeScriptHost() {
-	encryptFunctionStart(requestFreemodeScriptHost);
 	bool ret = false;
 	if (VALID_ADDR(freemodeScriptCGameScriptHandlerNetwork)) {
 		CGameScriptHandlerNetComponent *netComponent = freemodeScriptCGameScriptHandlerNetwork->cGameScriptHandlerNetComponent;
@@ -18302,17 +17828,13 @@ bool requestFreemodeScriptHost() {
 		//printf("freemodeScriptCGameScriptHandlerNetwork not valid!\n");
 	}
 	
-	encryptFunctionEnd();
 	return ret;
 }
 
 
 bool kickPlayerHostVoteGetHostToo(int player) {
-	encryptFunctionStart(kickPlayerHostVoteGetHostToo);
 	bool ret = false;
-	char freemode[] = {0x3D, 0x29, 0x3E, 0x3E, 0x36, 0x34, 0x3F, 0x3E, 0x5B};//"freemode"
-	for (int i = 0; i < sizeof(freemode); i++)
-		freemode[i] ^= 0x5b;
+	char freemode[] = "freemode";//"freemode"
 	int scriptHostID = NETWORK::NETWORK_GET_HOST_OF_SCRIPT(freemode, -1, 0);
 	if (scriptHostID == PLAYER::PLAYER_ID()) {
 		kickPlayerHostVote(player);
@@ -18321,7 +17843,6 @@ bool kickPlayerHostVoteGetHostToo(int player) {
 		requestFreemodeScriptHost();
 	}
 
-	encryptFunctionEnd();
 	return ret;
 }
 #endif
@@ -18334,7 +17855,6 @@ bool keepFreemodeScriptToSelf = true;
 ui64 sub_483A58_detour(CGameScriptHandlerNetComponent *r3, CNetGamePlayer *r4) {
 	ui64 ret = 0;
 
-	encryptFunctionStart_quick(sub_483A58_detour,1000);
 	printf("A %s\n",r3->cGameScriptHandlerNetwork->gtaThread->threadName);
 	bool isfr = r3->cGameScriptHandlerNetwork->gtaThread->nameHash == 0xC875557D;
 	if (keepFreemodeScriptToSelf && isfr) {
@@ -18343,7 +17863,6 @@ ui64 sub_483A58_detour(CGameScriptHandlerNetComponent *r3, CNetGamePlayer *r4) {
 		ret = call<ui64>(0x483A58)(r3,r4);
 	}
 
-	encryptFunctionEnd_quick();
 
 	return ret;
 }
@@ -18351,7 +17870,6 @@ ui64 sub_483A58_detour(CGameScriptHandlerNetComponent *r3, CNetGamePlayer *r4) {
 ui64 CGameScriptHandlerNetComponent_migrateToCNetGamePlayer_detour(CGameScriptHandlerNetComponent *r3, CNetGamePlayer *r4) {
 	ui64 ret = 0;
 
-	encryptFunctionStart_quick(CGameScriptHandlerNetComponent_migrateToCNetGamePlayer_detour,1000);
 	printf("B %s\n",r3->cGameScriptHandlerNetwork->gtaThread->threadName);
 	bool isfr = r3->cGameScriptHandlerNetwork->gtaThread->nameHash == 0xC875557D;
 	if (keepFreemodeScriptToSelf && isfr) {
@@ -18360,16 +17878,13 @@ ui64 CGameScriptHandlerNetComponent_migrateToCNetGamePlayer_detour(CGameScriptHa
 		ret = call<ui64>(0xA57F28)(r3,r4);
 	}
 
-	encryptFunctionEnd_quick();
 
 	return ret;
 }
 
 void setupAntiFreemodeScriptTransfer() {
-	//encryptFunctionStart(setupAntiFreemodeScriptTransfer);
 	*(ui64*)(0x1C2F558) = *(ui64*)((int)sub_483A58_detour);
 	*(ui64*)(0x1C52440) = *(ui64*)((int)CGameScriptHandlerNetComponent_migrateToCNetGamePlayer_detour);
-	//encryptFunctionEnd();
 }
 #endif
 
@@ -18476,14 +17991,11 @@ int playerModifyBroadcastDataAddress = 0;
 int playerModifyBroadcastDataValue = 0;
 bool playerModifyBroadcastDataCallIt = true;
 void resetValuesThingForBroadcast(int i) {
-	char str[] = {0x37, 0x2E, 0x37, 0xD, 0x26, 0x27, 0x2C, 0x68, 0x49};
-	for (int i = 0; i < sizeof(str); i++)
-			str[i]=str[i]^0x49;
+	char str[] = "~g~Done!";
 	printf(str);//"~g~Done!"
 	shouldDoPlayerModifyBroadcastData = false;//turn it off
 }
 __NO_INLINE void startPlayerModifyBroadcastData(int player, int global, int value, int triggerGlobal, int triggerGlobalValue, bool doCallAfter = true) {
-	encryptFunctionStart_quick(startPlayerModifyBroadcastData,1000);
 	if (assureHostOfFreemode()) {
 		Write_Global_inline(triggerGlobal,triggerGlobalValue);//trigger it to call the update function
 		playerModifyBroadcastDataPlayerCNetGamePlayer = getCNetGamePlayer(player);
@@ -18493,20 +18005,15 @@ __NO_INLINE void startPlayerModifyBroadcastData(int player, int global, int valu
 		shouldDoPlayerModifyBroadcastData = true;
 		runlater::runlater(1000,resetValuesThingForBroadcast);//use this cuz it may be called multiple times so add delay before turn off
 	} else {
-		char str[] = {0x23, 0x2F, 0x23, 0xD, 0x31, 0x38, 0x3C, 0x2E, 0x38, 0x7D, 0x29, 0x2F, 0x24, 0x7D, 0x3C, 0x3A, 0x3C, 0x34, 0x33, 0x5D};//"~r~Please try again";
-		for (int i = 0; i < sizeof(str); i++)
-			str[i]=str[i]^0x5d;
+		char str[] = "~r~Please try again";//"~r~Please try again";
 		print2(str);
 	}
-	encryptFunctionEnd_quick();
 }
 
 //1591180
 __NO_INLINE void testTheWeirdFunctionCheck(int player) {//freeze v3 player
-	encryptFunctionStart(testTheWeirdFunctionCheck);
 	//set this to false to make it freeze them
 	startPlayerModifyBroadcastData(player,1591180,0,1591181,GAMEPLAY::GET_RANDOM_INT_IN_RANGE(50,1027),false);//don't do call after, causes freeze
-	encryptFunctionEnd();
 }
 
 #endif
@@ -18518,30 +18025,23 @@ void testHostVariableSetThingy(int player) {
 	
 }*/
 
-#define funnValueIAmUsingForEncrypt (addrstruct().SCEventAnotherFunc^dataDecryptor()/*0xDDF8506E*/)
 
 __NO_INLINE void lobbyFreezeV3_end(int a) {
-	encryptFunctionStart_quick(lobbyFreezeV3_end,200);//120
-	*(int*)(funnValueIAmUsingForEncrypt^0xDD67871A/*0x009FD774*/) = (funnValueIAmUsingForEncrypt^0x9366544F/*0x4E9E0421*/);
+	*(int*)(0x9FD774) = (0x4E9E0421);
 	//print2("Finished\n");
-	encryptFunctionEnd_quick();
 }
 
 __NO_INLINE void lobbyFreezeV3() {
-	encryptFunctionStart_quick(lobbyFreezeV3,500);//352
 	if (assureHostOfFreemode()) {
 		//freezes at 0x009FBA00
 		//Freemode host is not required but you will get fake leave effect afterwards if you are not already freemode host before doing freeze
 		//note that after doing some testing with this, it now makes freemode script crash after every time I try to do drop kick or similar
-		*(int*)(funnValueIAmUsingForEncrypt^0xDD67871A/*0x009FD774*/) = 0x60000000;//patch the read unit broadcast call
+		*(int*)(0x9FD774) = 0x60000000;//patch the read unit broadcast call
 		runlater::runlater(300,lobbyFreezeV3_end);
 	} else {
-		char str[] = {0x23, 0x2F, 0x23, 0xD, 0x31, 0x38, 0x3C, 0x2E, 0x38, 0x7D, 0x29, 0x2F, 0x24, 0x7D, 0x3C, 0x3A, 0x3C, 0x34, 0x33, 0x5D};//"~r~Please try again";
-		for (int i = 0; i < sizeof(str); i++)
-			str[i]=str[i]^0x5d;
+		char str[] = "~r~Please try again";//"~r~Please try again";
 		print2(str);
 	}
-	encryptFunctionEnd_quick();
 }
 
 /*
@@ -18564,7 +18064,6 @@ void fakeLeavePlayerNew(int player) {
 bool kickPlayerBySessionError = false;
 int kickPlayerBySessionErrorPlayerID = 0;
 __NO_INLINE void startSessionKickOnPlayerCallback() {
-	encryptFunctionStart_quick(startSessionKickOnPlayerCallback,100);
 	unsigned int Global_2387877_address = (*(int*)0x1E70394+0x1BE94);
 	//force it to call the update code, but this value won't cause any harm
 	if (*(int*)Global_2387877_address == 3)
@@ -18572,13 +18071,10 @@ __NO_INLINE void startSessionKickOnPlayerCallback() {
 	else
 		*(int*)Global_2387877_address = 3;
 	kickPlayerBySessionError = true;//set it to start lookin!
-	encryptFunctionEnd_quick();
 }
 __NO_INLINE void startSessionKickOnPlayer(int player) {
-	encryptFunctionStart_quick(startSessionKickOnPlayer,100);
 	kickPlayerBySessionErrorPlayerID = player;
 	assureHostOfFreemode(startSessionKickOnPlayerCallback);
-	encryptFunctionEnd_quick();
 }
 #endif
 
@@ -18587,7 +18083,6 @@ bool fakeLeaveV2OnPlayerInQue = false;
 int fakeLeaveV2OnPlayerPlayerID = 0;
 void doFakeLeaveV2_allowNext(int){fakeLeaveV2OnPlayerInQue = false;};
 __NO_INLINE void doFakeLeaveV2_callback() {
-	encryptFunctionStart_quick(doFakeLeaveV2_callback,1000);
 	unsigned int Global_1588610_address = (*(int*)0x1E70388+0xF608);
 	unsigned int Global_1572928_address = (*(int*)0x1E70388+0x100);
 	if (fakeLeaveV2OnPlayerInQue == false) {
@@ -18607,14 +18102,11 @@ __NO_INLINE void doFakeLeaveV2_callback() {
 		fakeLeaveV2OnPlayerInQue = true;//tell it to send bad version to player
 	}
 	runlater::runlater(100,doFakeLeaveV2_allowNext);
-	encryptFunctionEnd_quick();
 }
 
 __NO_INLINE void doFakeLeaveV2(int player) {
-	encryptFunctionStart_quick(doFakeLeaveV2,100);
 	fakeLeaveV2OnPlayerPlayerID = player;
 	assureHostOfFreemode(doFakeLeaveV2_callback);
-	encryptFunctionEnd_quick();
 }
 
 
@@ -18702,23 +18194,18 @@ void doPlayerFreezeV3_callback(int) {
 	print2("Done!\n");
 }
 __NO_INLINE void doPlayerFreezeV3_() {
-	encryptFunctionStart_quick(doPlayerFreezeV3_,200);
 	unsigned int Global_1591181_address = (*(int*)0x1E70388+0x11E34);
 	*(int*)Global_1591181_address = GAMEPLAY::GET_RANDOM_INT_IN_RANGE(50,1027);
 	freezePlayerV3Boolean = true;
 	runlater::runlater(200,doPlayerFreezeV3_callback);
-	encryptFunctionEnd_quick();
 }
 __NO_INLINE void doPlayerFreezeV3(int player) {
-	encryptFunctionStart(doPlayerFreezeV3);
 	freezePlayerV3Player = player;
 	assureHostOfFreemode(doPlayerFreezeV3_);
-	encryptFunctionEnd();
 }
 #endif
 
 __NO_INLINE void playerBroadcastVariablesSend_(CGameHostBroadcastDataHandler *cGameHostBroadcastDataHandler, CNetGamePlayer *player, ui64 r5, ui64 r6, ui64 r7, ui64 r8) {
-	encryptFunctionStart_quick(playerBroadcastVariablesSend_,1000);
 	bool shouldCall = true;
 #ifdef oldversionofthenowuselessstuff
 	bool resetValue = false;
@@ -18765,7 +18252,7 @@ __NO_INLINE void playerBroadcastVariablesSend_(CGameHostBroadcastDataHandler *cG
 
 
 	if (shouldCall)
-		call<int>(funnValueIAmUsingForEncrypt^0xDD59C9FE/*0xA19990*/)(cGameHostBroadcastDataHandler,player,r5,r6,r7,r8);
+		call<int>(0xA19990)(cGameHostBroadcastDataHandler,player,r5,r6,r7,r8);
 
 	modifySendPlayerVariablesAfter(cGameHostBroadcastDataHandler,player);
 
@@ -18788,23 +18275,18 @@ __NO_INLINE void playerBroadcastVariablesSend_(CGameHostBroadcastDataHandler *cG
 		*(int*)playerModifyBroadcastDataAddress = origValueAtAddress;//reset the value
 	}
 #endif
-	encryptFunctionEnd_quick();
 }
 
 __NO_INLINE void playerBroadcastVariablesSend(CGameHostBroadcastDataHandler *cGameHostBroadcastDataHandler, CNetGamePlayer *player, ui64 r5, ui64 r6, ui64 r7, ui64 r8) {
 	//This one has the CGamePlayerBroadcastDataHandler_Local as an arg but the one with the playerBroadcastVariablesSend_ does not
-	encryptFunctionStart_quick(playerBroadcastVariablesSend,1000);//change to 100 later and try
 	modifySendPlayerVariablesBefore(cGameHostBroadcastDataHandler,player,true);
-	call<int>(funnValueIAmUsingForEncrypt^0xDD67E3A6/*0x9FB3C8*/)(cGameHostBroadcastDataHandler,player,r5,r6,r7,r8);
+	call<int>(0x9FB3C8)(cGameHostBroadcastDataHandler,player,r5,r6,r7,r8);
 	modifySendPlayerVariablesAfter(cGameHostBroadcastDataHandler,player);
-	encryptFunctionEnd_quick();
 }
 
 __NO_INLINE void setupBroadcastVariablePatch() {
-	encryptFunctionStart(setupBroadcastVariablePatch);
-	*(ui64*)(funnValueIAmUsingForEncrypt^0xDC3CAA86/*0x1C4FAE8*/) = *(ui64*)((int)playerBroadcastVariablesSend_);
-	*(ui64*)(funnValueIAmUsingForEncrypt^0xDC3CA5F6/*0x1C4F598*/) = *(ui64*)((int)playerBroadcastVariablesSend);
-	encryptFunctionEnd();
+	*(ui64*)(0x1C4FAE8) = *(ui64*)((int)playerBroadcastVariablesSend_);
+	*(ui64*)(0x1C4F598) = *(ui64*)((int)playerBroadcastVariablesSend);
 }
 
 
@@ -18935,11 +18417,9 @@ bool shouldRenderMenu() {
 
 __NO_INLINE void freezePlayerV4(int player) {
 	//Created 4/25/2020
-	encryptFunctionStart(freezePlayerV4);
 	CNetGamePlayer* cnet = getCNetGamePlayer(player);
 	if (VALID_ADDR(cnet))
 		sub_483A58/*CGameScriptHandlerNetComponent_migrateToCNetGamePlayer*/(freemodeScriptCGameScriptHandlerNetwork->cGameScriptHandlerNetComponentSyncOne, cnet, true);
-	encryptFunctionEnd();
 }
 
 
@@ -19133,9 +18613,7 @@ to not return 0 when we register on self or whatever
 */
 
 void printDone() {
-	char buf[] = {0x1C, 0x5, 0x1C, 0x26, 0xD, 0xC, 0x7, 0x43, 0x62};//"~g~Done!"
-	for (int i = 0; i < sizeof(buf); i++)
-		buf[i] = buf[i]^0x62;
+	char buf[] = "~g~Done!";//"~g~Done!"
 	print2(buf);
 }
 
@@ -19149,17 +18627,14 @@ CGameHostBroadcastDataHandler *global_2387877_sync = 0;
 //int timerOnThecode = 1000;
 bool readyForTheFixOfIt = true;
 void reset_global_1588610_sync(int i) {
-	encryptFunctionStart_quick(reset_global_1588610_sync,500);
 	if (global_1588610_sync != 0) {
 		*(int*)&global_1588610_sync->pointerToDataSyncLocation -= 0x4;
 		//printf("Finished!\n");
 		printDone();
 	}
 	readyForTheFixOfIt = true;
-	encryptFunctionEnd_quick();
 }
 void doLobbyFakeLeaveNewCallback() {
-	encryptFunctionStart_quick(doLobbyFakeLeaveNewCallback,1000);
 	if (readyForTheFixOfIt) {
 		if (global_1588610_sync != 0) {
 			*(int*)&global_1588610_sync->pointerToDataSyncLocation += 0x4;
@@ -19168,13 +18643,10 @@ void doLobbyFakeLeaveNewCallback() {
 			readyForTheFixOfIt = false;
 		}
 	}
-	encryptFunctionEnd_quick();
 }
 
 void doLobbyFakeLeaveNew() {
-	encryptFunctionStart_quick(doLobbyFakeLeaveNew,100);
 	assureHostOfFreemode(doLobbyFakeLeaveNewCallback);
-	encryptFunctionEnd_quick();
 }
 
 
@@ -19182,7 +18654,6 @@ void doLobbyFakeLeaveNew() {
 //int global_2387877_orig = 0;
 bool ready_for_giveSessionErrorToLobby = true;
 __NO_INLINE void reset_giveSessionErrorToLobbyCallback(int) {
-	encryptFunctionStart_quick(reset_giveSessionErrorToLobbyCallback,1000);
 	ready_for_giveSessionErrorToLobby = true;
 	if (global_2387877_sync != 0) {
 		if (global_2387877_sync->pointerToDataSyncLocation != 0) {//gets set to 0 if it crashes or I get kicked
@@ -19193,11 +18664,9 @@ __NO_INLINE void reset_giveSessionErrorToLobbyCallback(int) {
 			printDone();
 		}
 	}
-	encryptFunctionEnd_quick();
 }
 
 __NO_INLINE void giveSessionErrorToLobbyCallback() {
-	encryptFunctionStart_quick(giveSessionErrorToLobbyCallback,1000);
 
 	if (global_2387877_sync != 0) {
 		//global_2387877_orig = (int)global_2387877_sync->pointerToDataSyncLocation;
@@ -19210,20 +18679,16 @@ __NO_INLINE void giveSessionErrorToLobbyCallback() {
 		ready_for_giveSessionErrorToLobby = false;
 		runlater::runlater(1000,reset_giveSessionErrorToLobbyCallback);//1000 originally
 	}
-	encryptFunctionEnd_quick();
 }
 
 __NO_INLINE void giveSessionErrorToLobby() {
-	encryptFunctionStart_quick(giveSessionErrorToLobby,1000);
 	if (ready_for_giveSessionErrorToLobby == true)
 	assureHostOfFreemode(giveSessionErrorToLobbyCallback);
-	encryptFunctionEnd_quick();
 }
 
 
 //this is used to modify the 
 __NO_INLINE void playerBroadcastVariablesUpdateVariablesToOtherPlayers_detour(CGameHostBroadcastDataHandler *arg) {
-	encryptFunctionStart_quick(playerBroadcastVariablesUpdateVariablesToOtherPlayers_detour,1000);
 	//bool resetValue = false;
 	//int origVal = 0;
 	//if (queFakeLeaveOnLobby > 0) {
@@ -19262,13 +18727,10 @@ __NO_INLINE void playerBroadcastVariablesUpdateVariablesToOtherPlayers_detour(CG
 	//if (resetValue) {
 	//	arg->sizeOfSyncData = origVal;
 	//}
-	encryptFunctionEnd_quick();
 }
 
 __NO_INLINE void setup_playerBroadcastVariablesUpdateVariablesToOtherPlayers_hook() {
-	encryptFunctionStart(setup_playerBroadcastVariablesUpdateVariablesToOtherPlayers_hook);
 	*(ui64*)0x1C4FAE0 = *(ui64*)((int)playerBroadcastVariablesUpdateVariablesToOtherPlayers_detour);
-	encryptFunctionEnd();
 }
 
 #endif
@@ -19646,7 +19108,6 @@ struct N4rage13netConnection7InFrameE {//r26 in the data below
 
 
 void networkEventHandlerForStuffLikeKick__hook(unsigned int r3, unsigned int r4, unsigned int r5) {
-	//encryptFunctionStart_quick(networkEventHandlerForStuffLikeKick__hook, 1000);
 	bool callit = true;
 	
 	
@@ -19728,7 +19189,6 @@ void networkEventHandlerForStuffLikeKick__hook(unsigned int r3, unsigned int r4,
 		call<unsigned int>(0x138E0C8)(*(unsigned int*)0x1CF72C4, r4, r5);
 	//else
 	//	printf("NOT CALLED\n");
-	//encryptFunctionEnd_quick();
 }
 
 void setup_networkEventHandlerForStuffLikeKick__hook() {
@@ -19807,9 +19267,7 @@ __NAKED unsigned int eventFunction_special_Hook_nakey(unsigned int r3, unsigned 
 
 
 __NO_INLINE void eventFunction_special_Hook_setup() {
-	encryptFunctionStart(eventFunction_special_Hook_setup);
 	PatchInJump2(0xD1412C, (int)eventFunction_special_Hook_nakey, true);//linked is true
-	encryptFunctionEnd();
 }
 
 
@@ -20247,34 +19705,28 @@ struct GsSession
 
 
 __NO_INLINE void JoinPlayerViaSessionInfoFunc(uint32_t player_array, int playerCount, GsSession* peer_token, void* jobInfo, uint32_t r7, uint32_t r8, uint32_t r9, uint32_t r10) {
-	encryptFunctionStart((void*)JoinPlayerViaSessionInfoFunc);
 	//int JoinPlayerViaSessionInfoOpd[2] = { 0x1355E00, TOC };
 	//typedef void(*JoinPlayerViaSessionInfoFn)(uint32_t player_array, int playerCount, GsSession* peer_token, void* jobInfo, uint32_t r7, uint32_t r8, uint32_t r9, uint32_t r10);
 	//JoinPlayerViaSessionInfoFn JoinPlayerViaSessionInfoFunc_ = (JoinPlayerViaSessionInfoFn)JoinPlayerViaSessionInfoOpd;
 	call<int>(0x1355E00)(player_array,playerCount,peer_token,jobInfo,r7,r8,r9,r10);
-	encryptFunctionEnd();
 }
 
 
 
 __NO_INLINE bool GetSessionInfoFromGs(GsSession* info, const char* gs, int Unk_zero) {
-	encryptFunctionStart((void*)GetSessionInfoFromGs);
 	//int GetSessionInfoFromGsOpd[2] = { 0xD3D7BC, TOC };
 	//typedef bool(*GetSessionInfoFromGsFn)(GsSession* info, const char* gs, int Unk_zero);
 	//GetSessionInfoFromGsFn GetSessionInfoFromGs_ = (GetSessionInfoFromGsFn)GetSessionInfoFromGsOpd;
 	bool val = call<bool>(0xD3D7BC)(info, gs, Unk_zero);
-	encryptFunctionEnd();
 	return val; 
 } 
 
 
 __NO_INLINE void SendSessionInfoRequest(uint32_t npId, uint32_t count) {
-	encryptFunctionStart((void*)SendSessionInfoRequest);
 	//int SendSessionInfoRequestOpd[2] = { 0x1308CBC, TOC };//this triggers a N4rage19rlGetGamerStateTaskE
 	//typedef void(*SendSessionInfoRequestFn)(uint32_t npId, uint32_t count);
 	//SendSessionInfoRequestFn SendSessionInfoRequest_ = (SendSessionInfoRequestFn)SendSessionInfoRequestOpd;
 	call<int>(0x1308CBC)(npId,count);
-	encryptFunctionEnd();
 } 
 
 
@@ -20308,7 +19760,6 @@ uint32_t RlGameInfoItem(char* itemName, uint32_t itemsStart, uint32_t len)
 __NO_INLINE char* GetRlGameInfoString(char* itemName) // this functions is inlined on ps3
 {
 	char* retVal = NULL;
-	encryptFunctionStart((void*)GetRlGameInfoString);
 	uint32_t RlGameInfoPtr = 0x205C9B0;
 	uint32_t itemsStart = RlGameInfoPtr + 0x20;
 	uint32_t itemCount = *(uint32_t*)(RlGameInfoPtr + 0x14);
@@ -20320,7 +19771,6 @@ __NO_INLINE char* GetRlGameInfoString(char* itemName) // this functions is inlin
 	{
 		retVal = (char*)((itemsStart + (foundAt * item_size)) + 0x40);
 	}
-	encryptFunctionEnd();
 	return retVal;
 }
 
@@ -20545,7 +19995,6 @@ void HandleJoinPlayerWithGSInfo(char* foundgsinfo, char *psn = "") {
 
 __NO_INLINE void HandleJoinMe()//this works fine now
 { 
-	encryptFunctionStart((void*)HandleJoinMe);
 
 	//FORCE PLAYER TO JOIN ME PART 2 END
 
@@ -20588,7 +20037,6 @@ __NO_INLINE void HandleJoinMe()//this works fine now
 			}
 		}
 	}
-	encryptFunctionEnd();
 }
 
 
@@ -20693,15 +20141,14 @@ bool MY_ReadSessionInfoResponse1(int N4rage26rlSessionByGamerHandleTaskE)//0xD5B
 	}
 }
 
-//name: privk_132AE30 , real: 0x132AE30 , server: getNextData(addrstruct().privk_132AE30); , conversion: (addrstruct().privk_132AE30^dataDecryptor()^0x1C82DE14)/*value: 0x132AE30*/ , val on server: 0x1DB07024
 
 char hook_0x132AE30_orig[4 * 4];
 char hook_0x132AE30_patch[4 * 4];
 void hook_0x132AE30(int r3) {
 	MY_ReadSessionInfoResponse1(r3);
-	memcpy((void*)(addrstruct().privk_132AE30 ^ dataDecryptor() ^ 0x1C82DE14)/*value: 0x132AE30*/, hook_0x132AE30_orig, 4 * 4);
-	call<int>((addrstruct().privk_132AE30 ^ dataDecryptor() ^ 0x1C82DE14)/*value: 0x132AE30*/)(r3);
-	memcpy((void*)(addrstruct().privk_132AE30 ^ dataDecryptor() ^ 0x1C82DE14)/*value: 0x132AE30*/, hook_0x132AE30_patch, 4 * 4);
+	memcpy((void*)(addrstruct().privk_132AE30)/*value: 0x132AE30*/, hook_0x132AE30_orig, 4 * 4);
+	call<int>((addrstruct().privk_132AE30)/*value: 0x132AE30*/)(r3);
+	memcpy((void*)(addrstruct().privk_132AE30)/*value: 0x132AE30*/, hook_0x132AE30_patch, 4 * 4);
 }
 
 
@@ -20722,19 +20169,17 @@ void hook_0x132A2BC(int r3) {
 
 
 __NO_INLINE void create_readsessioninfo_hook() {//0x132A2BC
-	encryptFunctionStart((void*)create_readsessioninfo_hook);
 	//0xD5B3E4  seems to not ever be called
 	//0x132A2BC is called on "getting session details" so this should be correct
 	//0x132A5D0 is called when you join a random session and it gets return values from the found session
 	//0x132AE30 is for 
-	memcpy(hook_0x132AE30_orig, (void*)(addrstruct().privk_132AE30 ^ dataDecryptor() ^ 0x1C82DE14)/*value: 0x132AE30*/, 4 * 4);
-	PatchInJumpAddr((addrstruct().privk_132AE30 ^ dataDecryptor() ^ 0x1C82DE14)/*value: 0x132AE30*/, (int)hook_0x132AE30, false);
-	memcpy(hook_0x132AE30_patch, (void*)(addrstruct().privk_132AE30 ^ dataDecryptor() ^ 0x1C82DE14)/*value: 0x132AE30*/, 4 * 4);
+	memcpy(hook_0x132AE30_orig, (void*)(addrstruct().privk_132AE30)/*value: 0x132AE30*/, 4 * 4);
+	PatchInJumpAddr((addrstruct().privk_132AE30)/*value: 0x132AE30*/, (int)hook_0x132AE30, false);
+	memcpy(hook_0x132AE30_patch, (void*)(addrstruct().privk_132AE30)/*value: 0x132AE30*/, 4 * 4);
 
 	//memcpy(hook_0x132A2BC_orig, (void*)0x132A2BC, 4 * 4);
 	//PatchInJumpAddr(0x132A2BC, (int)hook_0x132A2BC, false);
 	//memcpy(hook_0x132A2BC_patch, (void*)0x132A2BC, 4 * 4);
-	encryptFunctionEnd();
 }
 
 
@@ -20905,7 +20350,6 @@ void checkForPlayerStatusUpdate(int playerIndexMet) {
 }
 
 __NO_INLINE void updatePlayerStatus(int playerIndexMet) {
-	encryptFunctionStart((void*)updatePlayerStatus);
 	NETWORK::_0x3F7EDBBD(); //reset net
 
 	int networkStruct[13];
@@ -20920,7 +20364,6 @@ __NO_INLINE void updatePlayerStatus(int playerIndexMet) {
 	//MetPlayers.get(playerIndexMet)->gsinfo[0] = 0;//if it finds new results, it will update it momentarily
 
 	runlater_time::runlater(2/*seconds*/, checkForPlayerStatusUpdate, playerIndexMet);
-	encryptFunctionEnd();
 }
 
 
@@ -20970,18 +20413,15 @@ namespace FindRandomGamers {
 	int currentCount = 0;
 
 	__NO_INLINE void fg_0() {
-		encryptFunctionStart((void*)fg_0);
 		if (I_AM_ONLINE) {
 			NETWORK::_0xA13045D4(1, 0, -1.0, -1.0);
 			findStatus = 1;
 			currentFoundAmt = 0;
 			currentCount = 0;
 		}
-		encryptFunctionEnd();
 	}
 
 	__NO_INLINE void fg_1() {
-		encryptFunctionStart((void*)fg_1);
 		if (NETWORK::_0xBEDC4503()) {
 			int num = NETWORK::NETWORK_GET_NUM_FOUND_GAMERS();
 			currentFoundAmt = num;
@@ -21009,14 +20449,11 @@ namespace FindRandomGamers {
 			//printf("Error with the gamer finding\n");
 			findStatus = 3;
 		}
-		encryptFunctionEnd();
 	}
 
 	__NO_INLINE void fg_3() {
-		encryptFunctionStart((void*)fg_3);
 		NETWORK::NETWORK_CLEAR_FOUND_GAMERS();
 		findStatus = 4;
-		encryptFunctionEnd();
 	}
 
 	void findRandomGamers() {
@@ -21135,15 +20572,12 @@ void NETWORK_SESSION_WAS_INVITED_hook(unsigned int r3) {
 }
  
 __NO_INLINE void joinsessionacceptfix() {
-	encryptFunctionStart((void*)joinsessionacceptfix);
 //#ifdef fuckkkyyyyynotgonnamesswiththisbigcodeanymore
 
 	//Patch the 'CEventNetworkInviteAccepted' function
-	//encryptFunctionStart((void*)joinsessionacceptfix);
 	*(int*)0x1739A4C = 0x30980010;//addic     r4, r24, 0x10
 	*(int*)0x1739A50 = 0x7F25CB78;//mr        r5, r25
 	PatchInJump2(0x1739A54, (int)joinsessionacceptfix_hook, true);//make it linked
-	//encryptFunctionEnd();
 
 	//Patch the 'CEventNetworkInviteConfirmed' function
 	//0x1739974
@@ -21158,7 +20592,6 @@ __NO_INLINE void joinsessionacceptfix() {
 	//*(uint64_t*)(0x1C28CE0) = *(uint64_t*)((int)NETWORK_SESSION_GET_INVITER_hook);//I'm not sure this fixes the issue...
 	//*(uint64_t*)(0x1C28B18) = *(uint64_t*)((int)NETWORK_BAIL_hook);//this would patch any bails such as private lobbies, but also possibly cause infinite loading
 	*(uint64_t*)(0x1C28CD8) = *(uint64_t*)((int)NETWORK_SESSION_WAS_INVITED_hook);//make it think I wasn't invited so it doesn't check if they are in the lobby
-	encryptFunctionEnd();
 }
 
 

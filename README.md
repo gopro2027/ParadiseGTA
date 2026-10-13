@@ -10,5 +10,8 @@ A lot of the code in this is very very messy... Please keep in mind that I was t
 
 I also do not take responsibility for what anybody else does with this code. This is all written for GTA V Online PS3 edition which is not available anymore. If any of this stuff causes havoc at the hands of other dev's then that's not my fault because in it's current state as posted here, it does nothing.
 
+#### Server
+The `paradisesprx` folder contains an open source replacement for the old paradisesprx.net backend that runs on Vercel, with free key generation. The SPRX connects to the host set in `PARADISE_SERVER_HOST` in `prx.cpp`. See [paradisesprx/README.md](paradisesprx/README.md) for setup. The runtime code encryption, server data encryption, string obfuscation and anti-debug code have been removed, so the project builds without any post-build step.
+
 #### More Info
 You can find other repo's related to this project posted on my github.

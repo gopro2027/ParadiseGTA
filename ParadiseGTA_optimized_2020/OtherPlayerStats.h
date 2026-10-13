@@ -13,25 +13,15 @@ __ALWAYS_INLINE bool canCreateAnEvent() {
 	return true;
 }
 bool NETWORK_INCREMENT_STAT_CALL(int player, unsigned int hash, int amount) {
-	randomizeAddresses();
 	if (I_AM_ONLINE > 0) {
-		//randomizeAddresses();
 		if (player == PLAYER::PLAYER_ID()) {
-			//randomizeAddresses();
 			int prev = 0;
-			//randomizeAddresses();
 			STATS::STAT_GET_INT(hash,&prev,1);
-			//randomizeAddresses();
 			STATS::STAT_SET_INT(hash,amount+prev,1);
-			//randomizeAddresses();
 			return true;
-			//randomizeAddresses();
 		}
-		randomizeAddresses();
-		opd_s NETWORK_INCREMENT_STAT_t = {addrstruct().allClientStatsAddress^dataDecryptor()/*0x12D141C is original, 0x13AE3B0 is for the funny patch thing*/,TOC};
-		//randomizeAddresses();
+		opd_s NETWORK_INCREMENT_STAT_t = {addrstruct().allClientStatsAddress/*0x12D141C is original, 0x13AE3B0 is for the funny patch thing*/,TOC};
 		void (*NETWORK_INCREMENT_STAT1)(unsigned int hash, int amount, CNetGamePlayer *playerDataPointer) = (void(*)(unsigned int, int, CNetGamePlayer *))&NETWORK_INCREMENT_STAT_t;
-		//randomizeAddresses();
 		setPlayerStatInt(player,hash%80,amount,true);
 		//if (*(volatile int*)(*(volatile unsigned int*)0x1CC4A54+0x10) == -1 || *(volatile int*)(*(volatile unsigned int*)0x1CC4A54+0x14) == -1) {
 		if (canCreateAnEvent() == false) {
@@ -39,9 +29,7 @@ bool NETWORK_INCREMENT_STAT_CALL(int player, unsigned int hash, int amount) {
 		} else {
 			NETWORK_INCREMENT_STAT1(hash,amount,getCNetGamePlayer(player));
 		}
-		randomizeAddresses();
 	}
-	randomizeAddresses();
 	return true;
 }
 /*

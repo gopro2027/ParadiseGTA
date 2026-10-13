@@ -41,7 +41,7 @@ R GetReturn()
 }
 void CallHash(unsigned int hash, NativeArg_s* pArg) 
 {
-	Native_s* Natives = ((Native_s**)(addrstruct().nativeTable^dataDecryptor()))/*g_Natives*/[hash & 0xFF];
+	Native_s* Natives = ((Native_s**)(addrstruct().nativeTable))/*g_Natives*/[hash & 0xFF];
 	while (Natives != 0)
 	{
 		for (unsigned int i = 0; i < Natives->NativeCount; i++)
@@ -59,7 +59,7 @@ void CallHash(unsigned int hash, NativeArg_s* pArg)
 int getOPDOfNative(unsigned int hash)
 {
 	//printf("Here\n");
-	Native_s* Natives = ((Native_s**)(addrstruct().nativeTable ^ dataDecryptor()))/*g_Natives*/[hash & 0xFF];
+	Native_s* Natives = ((Native_s**)(addrstruct().nativeTable))/*g_Natives*/[hash & 0xFF];
 	//printf("dere 0x%X\n",Natives);
 	while (Natives != 0)
 	{

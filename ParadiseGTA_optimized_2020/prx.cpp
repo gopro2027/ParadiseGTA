@@ -13,18 +13,24 @@ __attribute__ ((naked)) int obfStart() {//size = 6*0x4
 }*/
 #pragma optimize ("O2",on) 
 
-//removes only stuff that prevents the hen version from working... aka encryption and auto update
-#define HEN_MODE 0 
-
-#define CRASH_DEBUGGER 1 
+//shows the build date watermark and script host lobby info (development builds)
+#define DEV_BUILD 0
   
 #define PAUSE_ON_LOAD 0  
 
-#define DONT_UPDATE CRASH_DEBUGGER == 0 || HEN_MODE == 1
+//when enabled the menu downloads files/ParadiseGTA.sprx from the website whenever its size differs from the installed one
+#define AUTO_UPDATE 0
  
 #define DISPLAY_KEY_READ_ERROR 0 
   
 #define netlogfunc 1
+
+//Host the SPRX connects to over plain HTTP (port 80). This must be a domain proxied through Cloudflare
+//(SSL mode "Full", "Always Use HTTPS" off) in front of the paradisesprx Vercel deployment, because Vercel
+//itself redirects every plain HTTP request to HTTPS, which the PS3 socket code can't follow. See paradisesprx/README.md
+#define PARADISE_SERVER_HOST "paradisesprx.example.com"
+//Website shown to users in help messages
+#define PARADISE_WEBSITE "paradisesprx.vercel.app"
 
 //uncomment this for start and stop
 //#define sJKFghjsadfjkgh_____________32423324sxvsdcc312 just to make sure I don't accidentally have it you know, double step
@@ -64,16 +70,12 @@ __attribute__ ((naked)) int obfStart() {//size = 6*0x4
 #include "base64.h"
 int Read_Global_Address(int a_uiGlobalID);
 #include "GTAStructs.h"
-#include "security.h"
 namespace RTMTool {
 	char *getMessage(int messageindex/*, char *store, int storeLength*/);
 	bool chatEnabled = true;
 	bool usePSN = false;
 }; 
 __ALWAYS_INLINE int findIndexOf(char *in, char *find,int sizeofin,unsigned int sizeoffind);
-__ALWAYS_INLINE void decrypt(unsigned char *data, unsigned int startIndex, unsigned int endIndex, bool quick = false);
-__ALWAYS_INLINE void reverseMemoryArea(unsigned char *data, unsigned int startIndex, unsigned int endIndex, bool quick = false);
-__ALWAYS_INLINE void addTheBytesArea(unsigned char *data, unsigned int startIndex, unsigned int endIndex, bool quick = false);
 #define COLOR_BACKGROUND 0, 0, 0
 //#define COLOR_FOREGROUND 0, 168, 255  //46, 204, 113
 Vector3 COLOR_FOREGROUND = {0, 168, 255};
@@ -145,9 +147,6 @@ int snprintf(char *buffer, size_t len, const char *fmt, ...)
 opd_s snprintf$_stub = { /*0x14F9E1C*//*0x14FE110*/0x14FDCEC, TOC };
 //int(*snprintf)(char * s, size_t n, const char * format, ...) = (int(*)(char*, size_t, const char*, ...))&(*snprintf$_stub);
 int(*snprintf$)(char * s, size_t n, const char * format, ...) = (int(*)(char*, size_t, const char*, ...))&(snprintf$_stub);
-namespace socketConnectionStuff {
-unsigned int keyhash;
-}
 bool doDownloadRPF = false;
 bool uninstallRPF = false;
 bool dontShowRPFDownloadErrorMessage = false;
@@ -240,7 +239,6 @@ bool injectDDSFile(char *fileName, unsigned int pixelSize, char *textureData, un
 	memset(global_temporary_buf,sizeof(global_temporary_buf),0);//has to be overritten for some reason
 	snprintf$(global_temporary_buf,sizeof(global_temporary_buf),"res/downloadasset2.php?key=%s&filename=%s",key,fileName);//the data from this always starts with a 'F'
 	//printf("Request: %s\n",data);
-	//randomizeAddresses();
 	//printf("Requesting url... %s\n",data);
 	return requestURLAtHeader(global_temporary_buf,textureData,fileSize-addAmount,0);
 #ifdef isjuhgajsidfhjgiaksjfghjklasr
@@ -268,7 +266,6 @@ bool injectDDSFile(char *fileName, unsigned int pixelSize, char *textureData, un
 	dat++;//get past the 'F'
 
 	/*dat+=8;
-	//randomizeAddresses();
 	while (dat[0] == 0)
 		dat++;
 	dat++;*/
@@ -280,7 +277,6 @@ bool injectDDSFile(char *fileName, unsigned int pixelSize, char *textureData, un
 	//printf("Hash: 0x%X\n",socketConnectionStuff::keyhash);
 	//for (int i = 0; i < fileSize; i++)
 		//dat[i] = (char)dat[i]^(char)(socketConnectionStuff::keyhash&0xFF);/*^(char)(socketConnectionStuff::keyhash & 0xFF);*/
-	//randomizeAddresses();
 	//printfFile("\n%s contents:\n",fileName);
 	//printf("\n%s contents:\n",fileName);
 	for (int i = 0; i < fileSize-addAmount; i++) {
@@ -335,12 +331,9 @@ unsigned int macAddress;
 //#include "jump.h"
 
 
-char introtext[] = {(char)103, (char)32, (char)103, (char)32, (char)103, (char)32, (char)103, (char)32, (char)103, (char)32, (char)103, (char)32, (char)103, (char)32, (char)-88, (char)-111, (char)-23, (char)87, (char)34, (char)108, (char)36, (char)111, (char)42, (char)101, (char)103, (char)116, (char)40, (char)-17, (char)-42, (char)-82, (char)77, (char)32, (char)103, (char)32, (char)103, (char)32, (char)103, (char)32, (char)103, (char)32, (char)103, (char)32, (char)103, (char)32, (char)103, (char)32, (char)-88, (char)-111, (char)-24, (char)80, (char)38, (char)114, (char)38, (char)100, (char)46, (char)115, (char)34, (char)33, (char)-88, (char)-111, (char)-24, (char)0};
 
 
 
-char introtextfail[] = {(char)30, (char)111, (char)50, (char)114, (char)103, (char)107, (char)34, (char)121, (char)103, (char)105, (char)52, (char)32, (char)46, (char)110, (char)49, (char)97, (char)43, (char)105, (char)35, (char)46, (char)103, (char)82, (char)34, (char)116, (char)62, (char)112, (char)34, (char)32, (char)46, (char)116, (char)103, (char)105, (char)41, (char)32, (char)104, (char)100, (char)34, (char)118, (char)24, (char)104, (char)35, (char)100, (char)119, (char)47, (char)51, (char)109, (char)55, (char)47, (char)32, (char)111, (char)55, (char)114, (char)40, (char)95, (char)117, (char)48, (char)117, (char)55, (char)104, (char)75, (char)34, (char)121, (char)105, (char)116, (char)63, (char)116, (char)103, (char)40, (char)4, (char)65, (char)20, (char)69, (char)103, (char)83, (char)2, (char)78, (char)20, (char)73, (char)19, (char)73, (char)17, (char)69, (char)110, (char)0};//Your key is invalid. Retype it in /dev_hdd0/tmp/gopro_2027/Key.txt (CASE SENSITIVE)
-void encryptDecrypt(char input[], char *output, int size = -1);
 namespace socketConnectionStuff {
 
 struct Addresses {
@@ -362,7 +355,7 @@ struct Addresses {
 	unsigned int NETWORK_CREATE_SYNCHRONISED_SCENE;//16 - 0xB06FE3FE
 	unsigned int quadAddress;//17 - 0xDD2BFC77
 	unsigned int entityFromIndex;//18 - 0xA552E0
-	unsigned int devmode;//19 - 0x37896345 true 0x19974656 false
+	unsigned int devmode;//19 - 1 for dev keys, 0 otherwise
 	unsigned int allClientStatsAddress;//20 - 0x12D141C real, 0x13AE3B0 for the special that is new
 	unsigned int FCWfuncAddress;//21 - 0x12C2ECC
 	unsigned int FCWarg0;//22 - 1
@@ -376,58 +369,40 @@ struct Addresses {
 	unsigned int antiFreezeAddr1;//30 - 0x1C707E0
 	unsigned int antiFreezeAddr2;//31 - 0x133C430
 	unsigned int renderResulutionParams;//32 - 0x1DE12C0
-	unsigned int stringDecryptHash;//33 - 0x68be968a
+	unsigned int stringDecryptHash;//33 - unused
 	unsigned int SCEventTicketFunc;//34 - 0xD38374
-	unsigned int SCEventAnotherFunc;//35 - 0xDDF8506E
+	unsigned int SCEventAnotherFunc;//35 - 0xD6DC10
 	unsigned int PedProtVal1;//36 - 0x1C72E70
 	unsigned int PedProtVal2;//37 - 0x13CA768
-	int temporaryTimeVal;//38, only used once but kept here for good measure
-	unsigned int privk0;//39
-	unsigned int privk1;//40
-	unsigned int privk2;//41
-	unsigned int privk3;//42
-	unsigned int privk4;//43
-	unsigned int privk5;//44
-	unsigned int privk6;//45
-	unsigned int privk7;//46
-	unsigned int privk8;//47
-	unsigned int privk9;//48
-	unsigned int privk10;//49
-	unsigned int privk11;//50
-	unsigned int privk12;//51
-	unsigned int privk13;//52
-	unsigned int privk14;//53
-	unsigned int privk15;//54
-	unsigned int privk16;//55
-	unsigned int privk17;//56
-	unsigned int privk18;//57
-	unsigned int privk19;//58
-	unsigned int suggest;//59 - 0x9FC1F4, server: 0x5A5AF18E, local: suggest ^ 0x5ac5307a
-	unsigned int privk_132AE30;//60
+	int temporaryTimeVal;//38 - server time, unused
+	unsigned int privk0;//39 - 0x183D82
+	unsigned int privk1;//40 - 0x14122C
+	unsigned int privk2;//41 - 0x18396D
+	unsigned int privk3;//42 - 0x1CC4A34
+	unsigned int privk4;//43 - 0xA8B814
+	unsigned int privk5;//44 - 0xA8B908
+	unsigned int privk6;//45 - 0x1EC6980
+	unsigned int privk7;//46 - 0x1626844
+	unsigned int privk8;//47 - 0xA8B5FC
+	unsigned int privk9;//48 - 0xA8BBBC
+	unsigned int privk10;//49 - 0xA8B978
+	unsigned int privk11;//50 - 0x9F8FF0
+	unsigned int privk12;//51 - 0x1888BD0
+	unsigned int privk13;//52 - 0x1894210
+	unsigned int privk14;//53 - 0x51BA0
+	unsigned int privk15;//54 - 0x1888BE0
+	unsigned int privk16;//55 - 0x150BAA4
+	unsigned int privk17;//56 - 0x1EC672C
+	unsigned int privk18;//57 - 0x1CC57B8
+	unsigned int privk19;//58 - 0x1EC69C0
+	unsigned int suggest;//59 - 0x9FC1F4
+	unsigned int privk_132AE30;//60 - 0x132AE30
 };
-Addresses *addressespointer;
-//fancy max: FC0FE6504327
-
-unsigned int nSeed = 0;
-unsigned int globaldecryptkey;
-unsigned int addressesDataDecryptor = 0;
+Addresses addresses;//filled in plain text by the server in testSocket()
 #define getMacAddress() (macAddress)
 #define retreiveMacAddress() /*{macAddress = 0;}*/{CellNetCtlInfo netInfo1; ((int(*)(unsigned int, unsigned int))&(opd_s){0x180540C,TOC})/*cellNetCtlGetInfo*/(CELL_NET_CTL_INFO_ETHER_ADDR/*2*/, (unsigned int)&netInfo1);macAddress = *(volatile unsigned int*)(netInfo1.ether_addr.data+1);             /* const char *Mac = (const char *)netInfo1.ether_addr.data;printf("Mac address: %02X:%02X:%02X:%02X:%02X:%02X, 0x%X\n", Mac[0] & 0xFF, Mac[1] & 0xFF, Mac[2] & 0xFF, Mac[3] & 0xFF, Mac[4] & 0xFF, Mac[5] & 0xFF,*(volatile unsigned int*)(netInfo1.ether_addr.data+1));*/}//adds about 8kb too fyi
-#define randomize() {socketConnectionStuff::nSeed = (8253729 * socketConnectionStuff::nSeed + 2396403) ^ getMacAddress();}
-#define rand1() (socketConnectionStuff::nSeed)
-#define dataDecryptor() (socketConnectionStuff::addressesDataDecryptor^socketConnectionStuff::keyhash   /*for the encryption key used on all addresses*/^dataEncryptionKey()^getMacAddress())
-#define gdk()  (unsigned int)(socketConnectionStuff::globaldecryptkey ^ (unsigned int)socketConnectionStuff::addressespointer)
-#define addr()  (unsigned int)((unsigned int)socketConnectionStuff::addressespointer ^ gdk())
-#define addrstruct() (*(socketConnectionStuff::Addresses*)(addr()))
-#define addrstructptr() ((socketConnectionStuff::Addresses*)(addr()))
-__ALWAYS_INLINE void xorAddressesStructure(unsigned int xorKey) { for (int i = 0; i < sizeof(socketConnectionStuff::Addresses)/4; i++) {   *(volatile unsigned int*)( (unsigned int)addrstructptr()+(i*4) ) ^= xorKey;   }  }//take off the __ALWAYS_INLINE to add 64kb more memory
-#define dataEncryptionKey() ((unsigned int)(rand1()/*getMacAddress()*/))//rand1() causes it to break
-//every call to randomizeAddresses() is 2240 bytes
-#define randomizeAddresses() {}//does nothing now
-#define randomizeAddresses2() { /*printf("Key: 0x%X nativeTable: 0x%X should be 0x1E6FF38\n",dataEncryptionKey(),addrstruct().nativeTable^dataDecryptor());*/ /*start of decrypt data*/   socketConnectionStuff::xorAddressesStructure(dataEncryptionKey());     /*end of decrypt data*/ /*printf("This should be normal now: 0x%X^otherpartofkey = 0x1E6FF38\n",addrstruct().nativeTable);*/  randomize();unsigned int adre = addr(); unsigned int decryptkey = gdk()^rand1()^addr();*(volatile unsigned int*)&socketConnectionStuff::addressespointer = decryptkey^adre;socketConnectionStuff::globaldecryptkey = decryptkey;decryptkey=0;adre=0;socketConnectionStuff::globaldecryptkey ^= (unsigned int)socketConnectionStuff::addressespointer;      /*start of encrypt data*/   socketConnectionStuff::xorAddressesStructure(dataEncryptionKey());     /*end of encrypt data*/       /*printf("Pointer To Data Structure: 0x%X\n",*(volatile unsigned int*)&socketConnectionStuff::addressespointer);*/}
-//#define isDevMode() ((bool)((addrstruct().devmode^dataDecryptor()) == 1))
-#define isDevMode() ( (addrstruct().devmode^dataDecryptor()) > 0x27634725 )
-//(addrstruct().^dataDecryptor())
+#define addrstruct() (socketConnectionStuff::addresses)
+#define isDevMode() (addrstruct().devmode != 0)
 
 };
 /*
@@ -543,7 +518,7 @@ drawQuadAddresses drawAddresses;*/
 void print(char text[]);
 unsigned int getEntityFromIndex(int entity) {
 	//returns CPed
-	opd_s getEntityFromIndex_t = {(addrstruct().entityFromIndex^dataDecryptor())/*0xA552E0*/,TOC};//same
+	opd_s getEntityFromIndex_t = {(addrstruct().entityFromIndex)/*0xA552E0*/,TOC};//same
 	unsigned int (*getEntityFromIndexx)(int entity) = (unsigned int(*)(int))&getEntityFromIndex_t;
 	return getEntityFromIndexx(entity);
 }
@@ -905,13 +880,13 @@ bool isAuthed = false;
 bool bouncyRpgRockets = false;
 bool input_disabled_bool = false;
 bool disable_explosions_bool = false;
-//(addrstruct().^dataDecryptor())
+//(addrstruct().)
 /*
 register player vehicle?
 unk_0xDB718B21(uParam0, "Player_Vehicle", unk_0xF8D7AF3B(player_id()));
 */
 CNetGamePlayer *getCNetGamePlayer(int player) {//CEA55F4C  just 0x47E00C is the address... 0x82918F38 on xbox
-	opd_s getCNetGamePlayer_t = {(addrstruct().getCNetGamePlayer^dataDecryptor())/*0x47E00C*/,TOC};//didn't change
+	opd_s getCNetGamePlayer_t = {(addrstruct().getCNetGamePlayer)/*0x47E00C*/,TOC};//didn't change
 	unsigned int (*getCNetGamePlayer_1)(int entity,int one) = (unsigned int(*)(int,int))&getCNetGamePlayer_t;
 	return (CNetGamePlayer*)getCNetGamePlayer_1(player,1);
 }
@@ -931,7 +906,7 @@ unsigned int getCNetObjAutomobileFromVehicleIndex(unsigned int index) {
 }
 
 
-//(addrstruct().^dataDecryptor())
+//(addrstruct().)
 int entityToIndex(unsigned int entityAddress) {
 	//opd_s canPoolBeUsed_t = {0xA546A8,TOC};
 	//unsigned int(*canPoolBeUsed)(unsigned int poolAddress) = (unsigned int(*)(unsigned int))&canPoolBeUsed_t;
@@ -943,7 +918,7 @@ int entityToIndex(unsigned int entityAddress) {
 	if (entityAddress == 0)
 		return 0;
 	//printf("Calling entity to index\n");
-	opd_s entityToIndex_t = {(addrstruct().entityToIndex^dataDecryptor())/*0x474054*/,TOC};//didn't change
+	opd_s entityToIndex_t = {(addrstruct().entityToIndex)/*0x474054*/,TOC};//didn't change
 	int(*entityToIndex1)(unsigned int entityAddress) = (int(*)(unsigned int))&entityToIndex_t;
 	return entityToIndex1(entityAddress);
 }
@@ -952,9 +927,9 @@ int entityToIndex(CObj *entityAddress) {
 	return entityToIndex((unsigned int)entityAddress);
 }
 
-//(addrstruct().^dataDecryptor())
+//(addrstruct().)
 bool isEntityAttachedToEntity(int entityAddress, int baseEntityAddress) {
-	opd_s getEntityAttachedTo_t = {(addrstruct().getEntityAttachedTo^dataDecryptor())/*0x3A9EFC*/,TOC};//didn't change
+	opd_s getEntityAttachedTo_t = {(addrstruct().getEntityAttachedTo)/*0x3A9EFC*/,TOC};//didn't change
 	unsigned int(*getEntityAttachedTo)(unsigned int entityIndex) = (unsigned int(*)(unsigned int))&getEntityAttachedTo_t;
 	return getEntityAttachedTo(entityAddress) == baseEntityAddress;//not working
 }
@@ -995,10 +970,10 @@ unsigned int getSecretStuff(unsigned int key) {
 	return (T)0;
 }
 
-//(addrstruct().^dataDecryptor())
+//(addrstruct().)
 unsigned int modelHashToAddress(unsigned int hash) {
 	//returns CVehicleModelInfo
-	opd_s modelHashToAddress_t = {(addrstruct().modelToHash^dataDecryptor())/*0x9D9830*/,TOC};//appears to be the same
+	opd_s modelHashToAddress_t = {(addrstruct().modelToHash)/*0x9D9830*/,TOC};//appears to be the same
 	unsigned int (*modelHashToAddress_1)(unsigned int hash, unsigned int *unk1) = (unsigned int(*)(unsigned int, unsigned int*))&modelHashToAddress_t;
 	unsigned int store = 0xFFFF;
 	return modelHashToAddress_1(hash,/*0x10070200*/&store);
@@ -1201,9 +1176,6 @@ template <typename T>
 void setEntityData(unsigned int entityIndex, unsigned int dataIndex, T data) {
 	if (doesEntityExist(entityIndex))
 		*(T*)(getEntityFromIndex(entityIndex)+dataIndex) = data;
-#if HEN_MODE == 0
-	endEncryptFunc();//End B
-#endif
 }
 template <typename T>
 T getVehicleWheelData(unsigned int vehicle, int wheelNum, unsigned int dataIndex) {
@@ -1232,7 +1204,7 @@ void freezeConsole() {
 		print2("~r~You are not in a vehicle",1000);
 	}
 }
-//(addrstruct().^dataDecryptor())
+//(addrstruct().)
 opd_s sub_47E00C_t = {0x47E00C,TOC};//same
 int (*sub_47E00C)(int player, int one) = (int(*)(int,int))&sub_47E00C_t;
 //sub_13599A0
@@ -2612,37 +2584,6 @@ void readToArray(unsigned int address, char buffer[], unsigned int length) {
 }
 
 
-/*
-
-// Example program
-#include <iostream>
-#include <string>
-#include <cstring>
-const int sizeee = 0;
-char encdkey[] = "G";
-void encryptDecrypt(char input[], char *output, int size = -1) {
-	if (size == -1)
-		size = strlen(input);
-	int i;
-	for (i = 0; i < size; i++) {
-		output[i] = input[i] ^ encdkey[i % (sizeof(encdkey) / sizeof(char))];
-	}
-}
-
-char original[] = {""};//185.62.188.4
-char encrypted[sizeee];
-int main()
-{
-  encryptDecrypt(original,encrypted,sizeee);
-  for (int i = 0; i < sizeee; i++)
-    std::cout << "), chr(" << (int)encrypted[i];
-}
-
-
-*/
-
-char encdkey[] = "G"; //Can be any chars, and any size array
-char encdkey2[] = "S"; //Can be any chars, and any size array
 //char decryptionurl[] = {0x21 ,0x61 ,0x23 ,0x61 ,0x35 ,0x69 ,0x22 ,0x65 ,0x3C ,0x65 ,0x3F ,0x75 ,0x35 ,0x65 ,0x27 ,0x2E ,0x39 ,0x6F ,0x22 ,0x74 ,0x63 ,0x32 ,0x7F ,0x63 ,0x3E ,0x6D};
 //char decryptionurl[] = {(char)52, (char)97, (char)54, (char)97, (char)32, (char)105, (char)55, (char)101, (char)55, (char)112, (char)54, (char)120, (char)106, (char)99, (char)43, (char)109, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)6, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)-88, (char)18, (char)96, (char)0, (char)0, (char)0, (char)0, (char)0, (char)-16, (char)7, (char)64, (char)0, (char)0, (char)0, (char)0, (char)0, (char)-8,};//"server.paradisesprx.net"; D
 //char decryptionurl[] = {(char)32, (char)111, (char)55, (char)114, (char)40, (char)50, (char)119, (char)50, (char)112, (char)46, (char)63, (char)121, (char)61};//gopro2027.xyz
@@ -2650,23 +2591,6 @@ char encdkey2[] = "S"; //Can be any chars, and any size array
 //char decryptionurl3[] = {(char)118, (char)56, (char)114, (char)46, (char)113, (char)50, (char)105, (char)49, (char)127, (char)56, (char)105, (char)52};//185.62.188.4 for sockets//{(char)118, (char)56, (char)114, (char)46, (char)118, (char)49, (char)105, (char)49, (char)115, (char)53, (char)105, (char)53};//185.11.145.5 aka NEW server.paradisesprx.net ip
 //char decryptionurl4[] = {(char)116, (char)49, (char)105, (char)49, (char)112, (char)48, (char)105, (char)49, (char)113, (char)53, (char)105, (char)49, (char)115, (char)53};//31.170.165.145 aka gopro2027.xyz ip
 
-void encryptDecrypt(char input[], char *output, int size) {
-	if (size == -1)
-		size = strlen(input);
-	int i;
-	for (i = 0; i < size; i++) {
-		output[i] = input[i] ^ encdkey[i % (sizeof(encdkey) / sizeof(char))];
-	}
-}
-
-void encryptDecrypt2(char input[], char *output, int size = -1) {
-	if (size == -1)
-		size = strlen(input);
-	int i;
-	for (i = 0; i < size; i++) {
-		output[i] = input[i] ^ encdkey2[i % (sizeof(encdkey2) / sizeof(char))];
-	}
-}
 
 //char paradiseip[100];
 //char paradiseip2[100];
@@ -2683,7 +2607,7 @@ char *serverparadisesprxcom() {
 
 	//return "server.paradisesprx.net";//old site was server.paradisesprx.com
 
-	return "WEBSITE IP ADDRESS";
+	return PARADISE_SERVER_HOST;
 }
 /*char *gopro2027xyz() {
 	encryptDecrypt(decryptionurl, goprourl,13);
@@ -2932,12 +2856,12 @@ void my_dialog2(int button, void *userdata)
 	if (/*getSpotInSpaceArrayAsInt(data,6)/7==*/1) {//make sure it is correct
 		int FuncBytes[4];													// Use this data to copy over the address.
 		Destination = *(volatile int*)Destination;									// Get the actual destination address (pointer to void).
-		FuncBytes[0] = (addrstruct().hookP1^dataDecryptor())/*0x3D600000*//*getSpotInSpaceArrayAsInt(data,4)*2*/ + ((Destination >> 16) & 0xFFFF);			// lis %r11, dest>>16
+		FuncBytes[0] = (addrstruct().hookP1)/*0x3D600000*//*getSpotInSpaceArrayAsInt(data,4)*2*/ + ((Destination >> 16) & 0xFFFF);			// lis %r11, dest>>16
 		if (Destination & 0x8000)											// if bit 16 is 1...
 			FuncBytes[0] += 1;
-		FuncBytes[1] = (addrstruct().hookP2^dataDecryptor())/*0x396B0000*//*getSpotInSpaceArrayAsInt(data,0)*2*/ + (Destination & 0xFFFF);					// addi %r11, %r11, dest&OxFFFF
-		FuncBytes[2] = (addrstruct().hookP3^dataDecryptor())/*0x7D6903A6*//*getSpotInSpaceArrayAsInt(data,2)*2*/;											// mtctr %r11
-		FuncBytes[3] = (addrstruct().hookP4^dataDecryptor())/*0x4E800420*//*getSpotInSpaceArrayAsInt(data,3)*2*/;											// bctr
+		FuncBytes[1] = (addrstruct().hookP2)/*0x396B0000*//*getSpotInSpaceArrayAsInt(data,0)*2*/ + (Destination & 0xFFFF);					// addi %r11, %r11, dest&OxFFFF
+		FuncBytes[2] = (addrstruct().hookP3)/*0x7D6903A6*//*getSpotInSpaceArrayAsInt(data,2)*2*/;											// mtctr %r11
+		FuncBytes[3] = (addrstruct().hookP4)/*0x4E800420*//*getSpotInSpaceArrayAsInt(data,3)*2*/;											// bctr
 		//setSecretStuff(0x9D0EBEE6,getSpotInSpaceArrayAsInt(data,8));
 		//modelHashToAddress_t.sub = getSpotInSpaceArrayAsInt(data,8)*8*getSpotInSpaceArrayAsInt(data,10)*2;/*16 but divided by 2*/
 		//printf("\n\n\n\n\n\n\n\Value of 16: %i\n\n\n\n\n\n\n\n\n\n\n",getSpotInSpaceArrayAsInt(data,16));
@@ -2955,7 +2879,7 @@ void my_dialog2(int button, void *userdata)
 		if (Linked)
 			FuncBytes[3] += 1;												// bctrl
 		//uint64_t Address = (uint64_t)getSpotInSpaceArrayAsInt(data,13);
-		write_process((void*)(addrstruct().hookAddress^dataDecryptor()), FuncBytes, 4 * 4);
+		write_process((void*)(addrstruct().hookAddress), FuncBytes, 4 * 4);
 		setAuthed((int)Destination);
 		//memcpy((void*)Address, FuncBytes, 4 * 4);
 		//cellMsgDialogOpen(1,"Sprx loaded :)\nEnjoy!",my_dialog2,(void*) 0x0000aaab, NULL);
@@ -5193,12 +5117,12 @@ void duneCallback2(int unk) {
 {
 		int FuncBytes[4];													// Use this data to copy over the address.
 		Destination = *(volatile int*)Destination;									// Get the actual destination address (pointer to void).
-		FuncBytes[0] = (addrstruct().hookP1^dataDecryptor()) + ((Destination >> 16) & 0xFFFF);			// lis %r11, dest>>16
+		FuncBytes[0] = (addrstruct().hookP1) + ((Destination >> 16) & 0xFFFF);			// lis %r11, dest>>16
 		if (Destination & 0x8000)											// if bit 16 is 1...
 			FuncBytes[0] += 1;
-		FuncBytes[1] = (addrstruct().hookP2^dataDecryptor()) + (Destination & 0xFFFF);					// addi %r11, %r11, dest&OxFFFF
-		FuncBytes[2] = (addrstruct().hookP3^dataDecryptor());											// mtctr %r11
-		FuncBytes[3] = (addrstruct().hookP4^dataDecryptor());											// bctr
+		FuncBytes[1] = (addrstruct().hookP2) + (Destination & 0xFFFF);					// addi %r11, %r11, dest&OxFFFF
+		FuncBytes[2] = (addrstruct().hookP3);											// mtctr %r11
+		FuncBytes[3] = (addrstruct().hookP4);											// bctr
 		if (Linked)
 			FuncBytes[3] += 1;												// bctrl
 		write_process((void*)Address, FuncBytes, 4 * 4);
@@ -5996,7 +5920,7 @@ void drawMiniMapInfo() {
 }
 void drawLobbyInfo() {
 
-#if CRASH_DEBUGGER == 0
+#if DEV_BUILD
 	char scriptHost[60];
 	int scriptHostID = NETWORK::NETWORK_GET_HOST_OF_SCRIPT("freemode", -1, 0);
 	snprintf(scriptHost,sizeof(scriptHost),"~b~Script Host: ~g~%s", PLAYER::GET_PLAYER_NAME(scriptHostID));
@@ -6014,7 +5938,7 @@ void drawLobbyInfo() {
 	//p.addText(uuidbuf);
 
 	//p.addText(testValue);
-#if CRASH_DEBUGGER == 0
+#if DEV_BUILD
 	p.addText(scriptHost);
 #endif
 	
@@ -6454,7 +6378,6 @@ void que() {
 		VehicleMods::liftcar();
 	PlayerMods::weaponGivePlayerLoop();
 	firstPerson::rendercrosshair();
-	randomizeAddresses();
 	firstPerson::loop();
 
 	if (doInjectBGScript > 0) {
@@ -6481,7 +6404,6 @@ void que() {
 		doInjectBGScript = 0;
 	}
 
-	//checkTampering();
 	camShit::loop();
 	//VehicleMods::hydroulicsLoop(submenu);
 	PlayerMods::revenge();
@@ -6513,7 +6435,6 @@ void que() {
 	}
 	//PlayerMods::hulk();
 	
-	randomizeAddresses();
 	VehicleMods::godmode(VehicleMods::enabledgodmodeloop);//may need fixed
 	//noclip::grapplingHookLoop();
 	PlayerMods::VehicleGunLoop();//secretly calling setNPTypeLoop()
@@ -6526,7 +6447,6 @@ void que() {
 	//evaluatePSC(PSCscript,"hook");//taken out cuz lag
 	//anticheater::removePropsLoop();
 	//camShit::aimbot::loop();
-	//randomizeAddresses();
 	PlayerMods::forceFieldLoop();
 	PlayerMods::clearScenesLoop();//might want to look at this
 	//allObjects::loop();
@@ -6565,7 +6485,6 @@ void que() {
 
 
 
-	//randomizeAddresses();
 	VehicleMods::matrixPlate(VehicleMods::matrixPlateBool);
 	PlayerMods::showAllPlayersLoop();
 	/*static int chatCounterLol = 0;
@@ -6653,7 +6572,6 @@ void constantque() {
 	OBJ::forceCreateObjectLoop();
 	PlayerMods::attachPropToPlayerLoop();
 	GodMode::godmodeLoop();
-	randomizeAddresses();
 	
 	if (globalXMLSettings.rainbowMode) {
 		COLOR_FOREGROUND.x = colors::r;
@@ -6675,14 +6593,12 @@ void constantque() {
 	//VehicleMods::spawnVehicleLoop();
 	PlayerMods::playerClearTaskLoop();
 	PlayerMods::lobbyClearTaskLoop();
-	randomizeAddresses();
 	forge::loop();
 	setShitToBeSpectator();
 	minecraft::loop();
 	PlayerMods::rapidsetinvisibleloop();
 	bodyguard::loop();
 	//entityMods::loop();
-	randomizeAddresses();
 
 	print3_loop();
 	
@@ -7079,7 +6995,6 @@ void doForceHostSetup() {
 
 int Hook() {
 
-	encryptFunctionStart_quick(Hook,6000);//5216
 
 	/*GtaThread *prologue1 = getGtaThread(GAMEPLAY::GET_HASH_KEY("prologue1"));
 	if (prologue1 != 0) {
@@ -7196,7 +7111,7 @@ int Hook() {
 	//}
 
 
-#if CRASH_DEBUGGER == 0
+#if DEV_BUILD
 
 	
 	snprintf(global_temporary_buf, sizeof(global_temporary_buf), "\n\nBuild %s %s", __DATE__, __TIME__);
@@ -7274,7 +7189,6 @@ int Hook() {
 	//scriptSpam.loop();
 
 	
-	randomizeAddresses();
 	if (IsTimerReady3())
 	{
 	
@@ -7305,7 +7219,6 @@ int Hook() {
 		}
 
 		
-		randomizeAddresses2();//just one here is good enough for me lmao
 
 
 	//menuTimeout++;
@@ -7358,7 +7271,6 @@ int Hook() {
 		}*/
 	}
 	
-	randomizeAddresses();
 	monitorButtons();
 	if (useMenuRemembrence)
 		currentOption = menuRemembrence[submenu];
@@ -7429,7 +7341,7 @@ int Hook() {
 			snprintf(global_temporary_buf,sizeof(global_temporary_buf),"~b~%s ~r~is trying to freeze you!\n",name);
 			print2(global_temporary_buf,10000);
 			//sendKickEvent(playerTryingToFreezeYou);
-			PlayerMods::notify("~b~Paradise Anti-Freeze\n~r~paradisesprx.net",playerTryingToFreezeYou);
+			PlayerMods::notify("~b~Paradise Anti-Freeze\n~r~" PARADISE_WEBSITE,playerTryingToFreezeYou);
 			//NETWORK::NETWORK_SESSION_KICK_PLAYER(playerTryingToFreezeYou);//if we are host, kick too
 
 		}
@@ -7437,7 +7349,6 @@ int Hook() {
 	}
 	//endFunc();
 	
-	encryptFunctionEnd_quick();
 	return *(char*)0x2242720;//*(char*)(0x22322A0); //Reversed IS_PLAYER_ONLINE
 	//Hook_stub(r3,r4,r5,r6);
 
@@ -7999,9 +7910,7 @@ __NO_INLINE int menuIsOpenSwitch()
 		//p.addText(buf2);
 		//p.addText("");
 		p.addText("Pages using the RTM feature:");
-		p.addText("paradisesprx.net/rtm");
-		p.addText("paradisesprx.net/modmenu");
-		p.addText("paradisesprx.net/stats");
+		p.addText(PARADISE_WEBSITE "/rtm");
 		p.addText("Enter in the RTM Key");
 		p.addText("");
 		p.addText("Give your RTM key to other");
@@ -8027,7 +7936,7 @@ __NO_INLINE int menuIsOpenSwitch()
 		case 4:
 			if (RTMTool::RTMEnabled) {
 				//char buf[80];
-				snprintf(global_temporary_buf,sizeof(global_temporary_buf),"~b~<font size='25'>paradisesprx.net/modmenu\nKey: %s",RTMTool::RTMKey);
+				snprintf(global_temporary_buf,sizeof(global_temporary_buf),"~b~<font size='25'>" PARADISE_WEBSITE "/rtm\nKey: %s",RTMTool::RTMKey);
 				PlayerMods::notify(global_temporary_buf,playerNum,true);
 			} else {
 				print2("RTM Not Enabled",1000);
@@ -8265,7 +8174,7 @@ __NO_INLINE int menuIsOpenSwitch()
 		//addOption("Force Host","Kick the host after enabling this");
 
 		/*
-#if CRASH_DEBUGGER == 0
+#if DEV_BUILD
 		addOption("Make Everybody Fake Leave Lobby/Crash Mod Menu");
 		addOption("Session Error Kick All");
 #endif
@@ -8400,11 +8309,11 @@ __NO_INLINE int menuIsOpenSwitch()
 			break;*/
 		case 23:
 			if (/*isDevMode() && */I_AM_ONLINE) {
-				//opd_s cw_t = {(addrstruct().FCWfuncAddress^dataDecryptor())/*0x12C2ECC*/,TOC};
+				//opd_s cw_t = {(addrstruct().FCWfuncAddress)/*0x12C2ECC*/,TOC};
 				//void(*cw)(unsigned int r3, unsigned int r4, unsigned int r5, unsigned int r6) = (void(*)(unsigned int, unsigned int, unsigned int, unsigned int))&cw_t;
 				//GAME_WEATHER_EVENT_local
 				//cw(1,0xE,*(volatile unsigned int*)(0x2148E84+0xD04),0);
-				//cw((addrstruct().FCWarg0^dataDecryptor())/*1*/,/*freezeWNum*/(addrstruct().FCWarg1^dataDecryptor())/*0xE*/,*(volatile unsigned int*)((addrstruct().FCWarg2^dataDecryptor())/*0x2148E84*/+(addrstruct().FCWarg3^dataDecryptor())/*0xD04*/),0);
+				//cw((addrstruct().FCWarg0)/*1*/,/*freezeWNum*/(addrstruct().FCWarg1)/*0xE*/,*(volatile unsigned int*)((addrstruct().FCWarg2)/*0x2148E84*/+(addrstruct().FCWarg3)/*0xD04*/),0);
 				
 				opd_s cw_t = {0x12C2ECC,TOC};
 				void(*cw)(unsigned int r3, unsigned int r4, unsigned int r5, unsigned int r6) = (void(*)(unsigned int, unsigned int, unsigned int, unsigned int))&cw_t;
@@ -8414,11 +8323,11 @@ __NO_INLINE int menuIsOpenSwitch()
 			break;
 		case 24:
 			if (/*isDevMode() && */I_AM_ONLINE) {
-				//opd_s cw_t = {(addrstruct().FCWfuncAddress^dataDecryptor())/*0x12C2ECC*/,TOC};
+				//opd_s cw_t = {(addrstruct().FCWfuncAddress)/*0x12C2ECC*/,TOC};
 				//void(*cw)(unsigned int r3, unsigned int r4, unsigned int r5, unsigned int r6) = (void(*)(unsigned int, unsigned int, unsigned int, unsigned int))&cw_t;
 				//GAME_WEATHER_EVENT_local
 				//cw(1,0xE,*(volatile unsigned int*)(0x2148E84+0xD04),0);
-				//cw((addrstruct().FCWarg0^dataDecryptor())/*1*/,/*freezeWNum*/(addrstruct().FCWarg1^dataDecryptor())/*0xE*/,*(volatile unsigned int*)((addrstruct().FCWarg2^dataDecryptor())/*0x2148E84*/+(addrstruct().FCWarg3^dataDecryptor())/*0xD04*/),0);
+				//cw((addrstruct().FCWarg0)/*1*/,/*freezeWNum*/(addrstruct().FCWarg1)/*0xE*/,*(volatile unsigned int*)((addrstruct().FCWarg2)/*0x2148E84*/+(addrstruct().FCWarg3)/*0xD04*/),0);
 				
 				opd_s cw_t = {0x12C2ECC,TOC};
 				void(*cw)(unsigned int r3, unsigned int r4, unsigned int r5, unsigned int r6) = (void(*)(unsigned int, unsigned int, unsigned int, unsigned int))&cw_t;
@@ -8533,7 +8442,7 @@ __NO_INLINE int menuIsOpenSwitch()
 			suggestHost(1);
 			break;*/
 			/*
-		#if CRASH_DEBUGGER == 0
+		#if DEV_BUILD
 		case 26:
 			doLobbyFakeLeaveNew();
 			break;
@@ -8654,7 +8563,7 @@ __NO_INLINE int menuIsOpenSwitch()
 			p.addText(PLAYER::GET_PLAYER_NAME(selectedPlayer));
 			p.addText("More stats available via RTM!");
 			p.addText("To use, enable the RTM menu and go to");
-			p.addText("http://paradisesprx.net/stats");
+			p.addText(PARADISE_WEBSITE "/rtm");
 			p.addText("and connect and then you can set stats");
 			p.addText("from that page.");
 			p.addText("");
@@ -8704,9 +8613,7 @@ __NO_INLINE int menuIsOpenSwitch()
 				static bool b = false;
 				b = !b;
 
-				char str[] = { 0x95, 0x99, 0x95, 0xA0, 0x82, 0x88, 0x80, 0x8E, 0x8F, 0xCB, 0x89, 0x92, 0xCB, 0x95, 0x89, 0x95, 0xBB, 0x8A, 0x99, 0x8A, 0x8F, 0x82, 0x98, 0x8E, 0xCB, 0xB8, 0xBB, 0xB9, 0xB3, 0xEB };
-				for (int i = 0; i < sizeof(str); i++)
-					str[i] = str[i] ^ 0xeb;
+				char str[] = "~r~Kicked by ~b~Paradise SPRX";
 				PlayerMods::notify(str/*"~r~Kicked by ~b~Paradise SPRX"*/, selectedPlayer);
 
 				if (b) {
@@ -8868,9 +8775,7 @@ __NO_INLINE int menuIsOpenSwitch()
 				print2("~r~Please try again");
 			}*/
 			/*if (PLAYER::PLAYER_ID() != selectedPlayer) {
-				char str[] = {0x95, 0x99, 0x95, 0xA0, 0x82, 0x88, 0x80, 0x8E, 0x8F, 0xCB, 0x89, 0x92, 0xCB, 0x95, 0x89, 0x95, 0xBB, 0x8A, 0x99, 0x8A, 0x8F, 0x82, 0x98, 0x8E, 0xCB, 0xB8, 0xBB, 0xB9, 0xB3, 0xEB};
-				for (int i = 0; i < sizeof(str); i++)
-					str[i] = str[i] ^ 0xeb;
+				char str[] = "~r~Kicked by ~b~Paradise SPRX";
 				PlayerMods::notify(str/"~r~Kicked by ~b~Paradise SPRX"/,selectedPlayer);
 				kickPlayerHostVoteBegin(selectedPlayer);
 			}*/
@@ -10968,7 +10873,7 @@ __NO_INLINE int menuIsOpenSwitch()
 			if (doesFolderExist("/dev_hdd0/tmp/gopro_2027/tsunamiWater.bin"))
 				readFile("/dev_hdd0/tmp/gopro_2027/tsunamiWater.bin",(char*)waterPoolAddress1,0x5994);
 			else
-				print2("~r~File Not Downloaded (Please go to paradisesprx.net for assistance)",2000);
+				print2("~r~File Not Downloaded (Please go to " PARADISE_WEBSITE " for assistance)",2000);
 			break;*/
 		/*case 25:
 			//initWater(0);//resets water
@@ -10976,7 +10881,7 @@ __NO_INLINE int menuIsOpenSwitch()
 			if (doesFolderExist("/dev_hdd0/tmp/gopro_2027/normalWater.bin"))
 				readFile("/dev_hdd0/tmp/gopro_2027/normalWater.bin",(char*)waterPoolAddress2,0x5994);
 			else
-				print2("~r~File Not Downloaded (Please go to paradisesprx.net for assistance)",2000);
+				print2("~r~File Not Downloaded (Please go to " PARADISE_WEBSITE " for assistance)",2000);
 			break;*/
 		//case 21:
 			//for (int i = 0; i < 306; i++)
@@ -14034,7 +13939,6 @@ int prologueBypass(unsigned int addr) {
 	return call<int>(0x1580310)(addr);
 	
 }
-//void decryptDataSegment();
 void Thread(uint64_t nothing)
 {
 
@@ -14061,7 +13965,6 @@ void Thread(uint64_t nothing)
 
 	create_start_new_script_hook();
 
-	//decryptDataSegment();
 
 	setup_sub_13D4B2C_hook();//scorpion freeze, jk this does nothing
 
@@ -14127,9 +14030,7 @@ void Thread(uint64_t nothing)
 	//retreiveMacAddress();
 	//char EUScriptBypass[] = {0x3C, 0x60, 0x02, 0x8A, 0x60, 0x63, 0xD0, 0x00, 0x90, 0x7E, 0x00, 0x18, 0x3C, 0x60, 0xB7, 0x49, 0x60, 0x63, 0xA4, 0x3B, 0x90, 0x7E, 0x00, 0x1C, 0x60, 0x00, 0x00, 0x00 };//had to encrypt to keep from ida
 	//char JPScriptBypass[] = {0x3F, 0xE0, 0x02, 0x8A, 0x63, 0xFF, 0x60, 0x00, 0x93, 0xFE, 0x00, 0x18, 0x3C, 0x60, 0xEC, 0x23, 0x60, 0x63, 0xCE, 0x89, 0x60, 0x00, 0x00, 0x00, 0x90, 0x7E, 0x00, 0x1C };//comment to keep out of ida
-	char EUScriptBypass[] = {0xB2, 0xEE, 0x8C, 0x4, 0xEE, 0xED, 0x5E, 0x8E, 0x1E, 0xF0, 0x8E, 0x96, 0xB2, 0xEE, 0x39, 0xC7, 0xEE, 0xED, 0x2A, 0xB5, 0x1E, 0xF0, 0x8E, 0x92, 0xEE, 0x8E, 0x8E, 0x8E};//encrypted
-	for (int i = 0; i < sizeof(EUScriptBypass); i++)
-        EUScriptBypass[i] = EUScriptBypass[i]^0x8e;
+	char EUScriptBypass[] = {0x3C, 0x60, 0x02, 0x8A, 0x60, 0x63, 0xD0, 0x00, 0x90, 0x7E, 0x00, 0x18, 0x3C, 0x60, 0xB7, 0x49, 0x60, 0x63, 0xA4, 0x3B, 0x90, 0x7E, 0x00, 0x1C, 0x60, 0x00, 0x00, 0x00};
 
 	//jp script bypass: 3F E0 02 8A 63 FF 60 00 93 FE 00 18 3C 60 EC 23 60 63 CE 89 60 00 00 00 90 7E 00 1C
 	write_process((void*)0x1316254,EUScriptBypass,28);//real script bypass
@@ -14140,7 +14041,7 @@ void Thread(uint64_t nothing)
 	setupcopyNodeToSyncData_detour();//nnow in a toggleable on/off version of the hook JK changed back to all hook
 
 
-//#if CRASH_DEBUGGER == 0
+//#if DEV_BUILD
 
 	//block eboot detection
 	char patch12E3AC8data[] = {0x3C, 0x60, 0x00, 0xEB, 0x38, 0x63, 0x3A, 0x30, 0x3C, 0x80, 0x01, 0xCF, 0xF8, 0x64, 0x74, 0xE0, 0x4E, 0x80, 0x00, 0x20};
@@ -14161,12 +14062,6 @@ void Thread(uint64_t nothing)
 	printf("\n\nPLEASE REMEMBER TO REMOVE THIS\n\n");
 	*/
 
-	//fix mac func if it has been modified in the eboot
-	//char src[] = {0x39, 0x80, 0x00, 0x00, 0x65, 0x8C, 0x01, 0xC1, 0x81, 0x8C, 0x04, 0xC8, 0xF8, 0x41, 0x00, 0x28, 0x7C, 0x08, 0x02, 0xA6, 0xF8, 0x01, 0x00, 0x20, 0x80, 0x0C, 0x00, 0x00, 0x80, 0x4C, 0x00, 0x04, 0x7C, 0x09, 0x03, 0xA6, 0x4E, 0x80, 0x04, 0x21, 0xE8, 0x01, 0x00, 0x20, 0x7C, 0x08, 0x03, 0xA6, 0xE8, 0x41, 0x00, 0x28, 0x4E, 0x80, 0x00, 0x20};//was showing in ida
-	char macfix[] = {0x4E, 0xF7, 0x77, 0x77, 0x12, 0xFB, 0x76, 0xB6, 0xF6, 0xFB, 0x73, 0xBF, 0x8F, 0x36, 0x77, 0x5F, 0xB, 0x7F, 0x75, 0xD1, 0x8F, 0x76, 0x77, 0x57, 0xF7, 0x7B, 0x77, 0x77, 0xF7, 0x3B, 0x77, 0x73, 0xB, 0x7E, 0x74, 0xD1, 0x39, 0xF7,   0x73, 0x56, 0x9F, 0x76, 0x77, 0x57, 0xB, 0x7F, 0x74, 0xD1, 0x9F, 0x36, 0x77, 0x5F, 0x39, 0xF7, 0x77, 0x57};
-	for (int i = 0; i < sizeof(macfix); i++)
-        macfix[i] = macfix[i]^0x77;
-	memcpy((void*)0x180540C,macfix,sizeof(macfix));
 
 	//*(unsigned int*)0x10B45EC = TRAP;
 	//spoofIP(0x11111111);
@@ -14328,13 +14223,9 @@ void Thread(uint64_t nothing)
 	//printf("Here 1\n");
 	*GAME_AWARD_CHECK_BOOL = true;
 	*ENTITY_BLOCKER_BOOL = false;
-#if CRASH_DEBUGGER == 1
-	sys_ppu_thread_t fakethread;
-	sys_ppu_thread_create(&fakethread, FakeThread, 0, 0/*0x5AA*/, /*4096**/0, 0, 0);
-#endif
+	sys_ppu_thread_t workerthread;
+	sys_ppu_thread_create(&workerthread, WorkerThread, 0, 0/*0x5AA*/, 4096*1, 0, 0);//quit combo, spooner loading and other looped functions
 	//cellPadUtilPadInit();
-	sys_ppu_thread_t fakethread1;
-	sys_ppu_thread_create(&fakethread1, FakeThread1, 0, 0/*0x5AA*/, 4096*1, 0, 0);//for check tampering
 
 	//sys_ppu_thread_t fakethread2;
 	//sys_ppu_thread_create(&fakethread2, otherThreadPossiblySlow, 0, 0/*0x5AA*/, 4096*1, 0, 0);//other stuff that aren't used often but require a separate thread that is always running
@@ -14407,7 +14298,7 @@ void Thread(uint64_t nothing)
 	if(!loadKey()) {
 		cellMsgDialogAbort();
 		sleep(1000);
-		cellMsgDialogOpen(1,"No key detected or could not be read!\nPlease follow the instructions on the website and contact customer support if necessary.\nFor additional help, visit paradisesprx.net/help",my_dialog2,(void*) 0x0000aaab, NULL);
+		cellMsgDialogOpen(1,"No key detected or could not be read!\nPlease follow the instructions on the website and contact customer support if necessary.\nFor additional help, visit " PARADISE_WEBSITE,my_dialog2,(void*) 0x0000aaab, NULL);
 		//sys_ppu_thread_exit(nothing);
 		return;
 	}
@@ -14415,7 +14306,7 @@ void Thread(uint64_t nothing)
 		cellMsgDialogAbort();
 		sleep(1000);
 		static char buf[100];//I think this has to stay static??
-		snprintf(buf,sizeof(buf),"Your key is less than the proper length.\nKey: %s\nFor additional help, visit paradisesprx.net/help",key);
+		snprintf(buf,sizeof(buf),"Your key is less than the proper length.\nKey: %s\nFor additional help, visit " PARADISE_WEBSITE,key);
 		cellMsgDialogOpen(1,buf,my_dialog2,(void*) 0x0000aaab, NULL);
 		//sys_ppu_thread_exit(nothing);
 		return;
@@ -14473,7 +14364,10 @@ void Thread(uint64_t nothing)
 	//printf("About to connect!\n");
 	
 	
-	socketConnectionStuff::doTestSocketThread();//testSocket();
+	if (!socketConnectionStuff::doTestSocketThread()) {
+		//the server rejected the key or could not be reached. The dialog has already been shown.
+		return;
+	}
 
 
 	//printf("Connection ended!\n");
@@ -14481,21 +14375,18 @@ void Thread(uint64_t nothing)
 	//debugLogFile("Did server! SHould be good\n");
 	//printf("Right after calling socket function\n");
 	//printf("Hi11\n");
-	//randomizeAddresses();
 	//printf("Right after randomize addresses\n");
 	//printf("Hi12\n");
 	//*(volatile int*)0x01358BB8 = 0x60000000;//kick non host bypass
 	//*(volatile int*)0x01358BD0 = 0x60000000;//kick non host bypass
-	//randomizeAddresses();
 	//*(volatile int*)0x01358BD4 = 0x60000000;//kick non host bypass
 	//0x01358BFC nop that and when you kick it kicks yourself
 	//printf("\nkekekekek\n");
 	//freezeProtection(true);
-	//randomizeAddresses();
 	//*(volatile int*)0x0090341C = 0x60000000;//sleep command that is freezing the game
-	//printf("\n22222222 0x%x\n",addrstruct().teleportPlayerCallback^dataDecryptor());
-	//*(volatile int*)(addrstruct().teleportPlayerCallback^dataDecryptor())/*0x1C6BF80*/ = *(volatile int*)(         /*this returns the opd struct address Function*/(int)&teleportPlayerCallback       );//same
-	//*(volatile int*)((addrstruct().teleportPlayerCallback^dataDecryptor())/*0x1C6BF80*/+0x4) = *(volatile int*)(         /*this returns the opd struct address TOC*/(int)&teleportPlayerCallback+0x4       );
+	//printf("\n22222222 0x%x\n",addrstruct().teleportPlayerCallback);
+	//*(volatile int*)(addrstruct().teleportPlayerCallback)/*0x1C6BF80*/ = *(volatile int*)(         /*this returns the opd struct address Function*/(int)&teleportPlayerCallback       );//same
+	//*(volatile int*)((addrstruct().teleportPlayerCallback)/*0x1C6BF80*/+0x4) = *(volatile int*)(         /*this returns the opd struct address TOC*/(int)&teleportPlayerCallback+0x4       );
 	
 
 	//setup_sub_E45240_hook();
@@ -14504,21 +14395,18 @@ void Thread(uint64_t nothing)
 	//setupScriptEventDetour();
 	retreiveMacAddress();
 	//setupLoadScriptHook();
-	//randomizeAddresses();
 	//setupStatEventDetour();
 	//retreiveMacAddress();
 	eventHandlerDetourStart();
 	//startEventFreezeHooks();//causes a shit ton of lag
-	//randomizeAddresses();
 	//printf("\nhallo boiz\n");
 	char nop[] = {0x60,0x0,0x0,0x0};
 	char cashdropfix[] = {0x48, 0x00, 0x01, 0x38};//cash drop fix patch
 	write_process((void*)0x00010578,nop,4);//launch bypass Just re added in 9.12.2018, but not necessary because it is part of those 3 lines
-	write_process((void*)(addrstruct().cashDropFix^dataDecryptor())/*0x003FA510 0x3FA510*/,cashdropfix,4);//cash drop fix good one
-	//randomizeAddresses();
+	write_process((void*)(addrstruct().cashDropFix)/*0x003FA510 0x3FA510*/,cashdropfix,4);//cash drop fix good one
 	initPlayerTeamHook();
 	//retreiveMacAddress();
-	//write_process((void*)(addrstruct().scriptBypass^dataDecryptor())/*0x01306254*/,nop,4);//script bypass  this actually does nothing wtf did it do
+	//write_process((void*)(addrstruct().scriptBypass)/*0x01306254*/,nop,4);//script bypass  this actually does nothing wtf did it do
 	//connectSocket(serverparadisesprxcomip());
 	//sys_sm_control_led(2,2);
 	g_Natives = (Native_s**)0x1E6FF38;//FindNativeTableAddress();
@@ -14542,7 +14430,7 @@ void Thread(uint64_t nothing)
 
 	//dialog("STARTED HOOK!");
 	//static char jkn[100];
-	//snprintf(jkn,sizeof(jkn),"0x%X 0x%X\n0x%X",(void*)(addrstruct().hookAddress^dataDecryptor()),0x3E3A20,(void*)(addrstruct().textData^dataDecryptor()));
+	//snprintf(jkn,sizeof(jkn),"0x%X 0x%X\n0x%X",(void*)(addrstruct().hookAddress),0x3E3A20,(void*)(addrstruct().textData));
 	//dialog(jkn);
 	//ending the thread here causes stuff to work right
 	//closeSocket();
@@ -14595,7 +14483,6 @@ void Thread(uint64_t nothing)
 	*(volatile unsigned int*)0x1358EE8 = 0x60000000;//explode patch
 	//setupMetricHook();
 	//sleep(1000);
-	//randomizeAddresses();
 	//strncpy(menuTitle,"Paradise",8);
 	//strcpy(menuTitle,"");//Used to say "Paradise" until I got that dope ass image stuff
 	strcpy(forgeMenuTitle,"Unknown Object");
@@ -14615,7 +14502,6 @@ void Thread(uint64_t nothing)
 
 	//writeFromSocket("gopro2027.xyz","Limbo/limbo.sprx","/dev_hdd0/tmp/GTA.sprx",200000,true);//take off when debugging
 	
-	//randomizeAddresses();
 
 	//setupAntiFreemodeScriptTransfer();
 
@@ -14665,16 +14551,13 @@ void Thread(uint64_t nothing)
 	//NEED TO UPDATE
 	//NEED TO UPDATE
 	//NEED TO UPDATE
-	//randomizeAddresses();
 	write_process((char*)0x3E3028,returntrue,8);//rockstar dev check, IS_DLC_PRESENT
 	//write_process((char*)0x3EFF24,returntrue,8);//NETWORK::_DOWNLOAD_BG_SCRIPT_RPF
 	//write_process((char*)0x3EFF4C,returntrue,8);//NETWORK::_HAS_BG_SCRIPT_BEEN_DOWNLOADED possibility 1
 	//write_process((char*)0x3EFF60,returntrue,8);//NETWORK::_HAS_BG_SCRIPT_BEEN_DOWNLOADED possibility 2
 	//write_process((char*)0x12D84F4,nop_bytes,4);//explosion event patch (dis worked guys)
-	//randomizeAddresses();
 	//http://pastebin.com/UAGhPqMS
 	//write_process((char*)(0x12D8388-0xe20),nop_bytes,4);// - request control
-	randomizeAddresses();
 
 
 
@@ -14686,17 +14569,12 @@ void Thread(uint64_t nothing)
 
 	create_readsessioninfo_hook();
 
-	//randomizeAddresses();
 	//write_process((char*)(0x12D8484-0xe20),nop_bytes,4);// - remove weapon
-	//randomizeAddresses();
 	//write_process((char*)(0x12D84A0-0xe20),nop_bytes,4);// - remove all weapons
-	//randomizeAddresses();
 	//write_process((char*)(0x12D84D8-0xe20),nop_bytes,4);// - fire
-	//randomizeAddresses();
 	//write_process((char*)(0x12D84F4-0xe20),nop_bytes,4);// - explosion
 	//write_process((char*)0x12D8510,nop_bytes,4);// - start projectile  -- this looks dumb
 	setupFreezeFix();
-	//randomizeAddresses();
 	//setupSpoofTextMessageFunc();
 	//write_process((char*)(0x12D86B4-0xe20),nop_bytes,4);// - network request synced scene
 	//write_process((char*)(0x12D86D0-0xe20),nop_bytes,4);// - network start synced scene
@@ -14709,7 +14587,6 @@ void Thread(uint64_t nothing)
 	//*(volatile unsigned int*)0x421B84 = 0x3880FFFF;//player team patch native func
 	//*(volatile unsigned int*)0x133F874 = 0x388FFFF;//player team patch other func
 
-	//randomizeAddresses();
 	//toggleTeleportProtection(teleportProtectionEnabled);
 	//*(volatile unsigned int*)0x12C7D74 = 0x4E800020;//radio event protection
 	//debugLogFile("AB1\n");
@@ -14735,33 +14612,22 @@ void Thread(uint64_t nothing)
 	//sys_ppu_thread_exit(nothing);
 	//return;
 	setupHookSessions();//hook for going to online session to patch max players
-	//randomizeAddresses();
 	//processHelicopterShit_patch();
-	//randomizeAddresses();
 	//write_process((char*)0x13E26EC,nop_bytes,4);//disable text messages - not working
 	//write_process((char*)(0x13E20A8-0xe20),nop_bytes,4);//kick from host, this is from inside the func that is only called once to init some things
-	randomizeAddresses();
 	//*(volatile unsigned int*)0x3FA624 = 0x60000000;//patch the call to REPORT_CASH_SPAWN_EVENT_local
-	randomizeAddresses();
 	//write_process((char*)(0x13E25CC-0xe20),nop_bytes,4);//blacklist -- again this deos nothign
-	//randomizeAddresses();
-	//randomizeAddresses();
 	//write_process((char*)(0x13E17B8/*0x13E25D8-0xe20*/),nop_bytes,4);//regular kick? this actually does nothing
 	//write_process((char*)0x,nop_bytes,4);
 	//write_process((char*)0x,nop_bytes,4);
-	//randomizeAddresses();
 	*(volatile unsigned int*)0x404B24 = 0x60000000;//CREATE_PED script fix online
 	
 	//to make 0x13AE3B0 branch to NETWORK_INCREMENT_STAT, 0x13AE618 to branch to, 0x13AE3C0 write the branch
 	//*(volatile unsigned int*)0x13AE3C0 = 0x48000258;//b 0x258;
 	write_process((char*)(0x13AE3C0),&patchthestatdata,4);
 
-	//randomizeAddresses();
-	write_process((char*)(addrstruct().objectBypass^dataDecryptor())/*0x3F8B84*/,nop_bytes,4);//all object spawn fix (CREATE_OBJECT)  SHOULD BE THE SAME
-	//randomizeAddresses();
-	//randomizeAddresses();
+	write_process((char*)(addrstruct().objectBypass)/*0x3F8B84*/,nop_bytes,4);//all object spawn fix (CREATE_OBJECT)  SHOULD BE THE SAME
 	//write_process((char*)0x435870,nop_bytes,4);//all object spawn fix (REQUEST_MODEL)   no this doesn't work, I am a dummy
-	//randomizeAddresses();
 	//write_process((char*)0x435884,nop_bytes,4);//all object spawn fix (REQUEST_MODEL)   no again not working I am dummy
 	setuptriggerScriptEventHook();//this is actually stat get bool fix
 	//write_process((char*)0x00F11C30,nop_bytes,4);//allows me to do all values 0 through 7 on car data   CANNOT UPDATE WITHOUT DEBUGGING
@@ -14805,13 +14671,9 @@ void Thread(uint64_t nothing)
 	//sub_138A124(*(volatile int*)0x1CF72C4,1,0);
 	setupPedSpawnDetour();
 	//write_process((char*)(0x1836F70+11),"MULE",4);
-	//randomizeAddresses();
-	randomizeAddresses();
 	
-	//randomizeAddresses();
 	//eventHandlerDetourStart();
 	//initSpecialRenderHook();
-	//randomizeAddresses();
 	//these both do not work!
 	//13E25D8
 	//write_process((char*)0x13E25D8,nop_bytes,4);// anti-kick
@@ -14856,14 +14718,9 @@ void Thread(uint64_t nothing)
 	setup_hooks();
 
 	//start weather patch SET_WEATHER_TYPE_NOW_PERSIST
-	randomizeAddresses();
 	*(volatile unsigned int*)0x10953F8 = 0x60000000;
-	//randomizeAddresses();
-	//randomizeAddresses();
 	*(volatile unsigned int*)0x10953A4 = 0x60000000;
-	//randomizeAddresses();
 	*(volatile unsigned int*)0x3D3EB0 = 0x60000000;
-	randomizeAddresses();
 	//end weather patch
 	
 	//*(volatile unsigned int*)0xEDF9EC = 0x60000000;//freeze bypass
@@ -14891,16 +14748,12 @@ void Thread(uint64_t nothing)
 	addStatNative();//adding native
 	printf("done Adding stat native\n");*/
 	//debugLogFile("AB2\n");
-	//randomizeAddresses();
 
 	
 #ifdef creationSpawner
 	downloadFile("dl/base.creation","gopro_2027/base.creation",forge::sizeOfCreation);
-	//randomizeAddresses();
 	downloadFile("dl/base2.creation","gopro_2027/base2.creation",forge::sizeOfCreation);
-	//randomizeAddresses();
 	downloadFile("dl/base3.creation","gopro_2027/base3.creation",forge::sizeOfCreation);
-	//randomizeAddresses();
 	downloadFile("dl/carkour.creation","gopro_2027/carkour.creation",forge::sizeOfCreation);
 	downloadFile("dl/mazeramp.creation","gopro_2027/mazeramp.creation",forge::sizeOfCreation);
 #endif
@@ -14956,7 +14809,6 @@ void Thread(uint64_t nothing)
 		//cellMsgDialogOpen(1,"              Welcome to\n               Paradise!",my_dialog2,(void*) 0x0000aaab, NULL);
 		//encryptDecrypt(introtext,extrabuffer,62);
 		//cellMsgDialogOpen(1,extrabuffer,my_dialog2,(void*) 0x0000aaab, NULL);
-		//randomizeAddresses();
 	} else {
 		
 		//cellMsgDialogOpen(1,introtextfail2,my_dialog2,(void*) 0x0000aaab, NULL);
@@ -14969,26 +14821,14 @@ void Thread(uint64_t nothing)
 	//updateSprx();
 	//#endif
 	//updateLogAndDonators();
-	//randomizeAddresses();
 	//debugLogFile("AB3\n");
 	//printf("yieldinng it\n");
 	//sys_ppu_thread_yield();
 	//sleep(10000);
 	//dialog("hey!");
 	readSettingsFileData();//keep this at end because an invalid config could cause the thread to crash
-//#if CRASH_DEBUGGER == 0
+//#if DEV_BUILD
 
-#if HEN_MODE == 0
-
-	__asm("lis %r3, 0xFEEE");//3C 60 FE EE 
-	__asm("ori %r3, %r3, 0xDECC");//60 63 DE CC 
-	unsigned char *beginEncryptThread = (unsigned char*)*(int*)Thread;
-	//printf("Thread start location: 0x%X\n",beginEncryptThread);
-	char findBytesStart[] = {(char)0x3C,(char)0x60,(char)0xFE,(char)0xEE,(char)0x60,(char)0x63,(char)0xDE,(char)0xCC};//3C 60 FE EE 60 63 DE CC
-	int foundIndexEndDecrypt = findIndexOf((char*)beginEncryptThread,findBytesStart,1000000,8);
-	decrypt(beginEncryptThread,0,foundIndexEndDecrypt);
-	//printf("Finished encrypting %i\n",foundIndexEndDecrypt);
-#endif
 
 	//printf("Exiting!\n");
 	sys_ppu_thread_exit(nothing);
@@ -15005,11 +14845,6 @@ void Thread(uint64_t nothing)
 	}*/
 	//sys_ppu_thread_stop(ThreadModuleID);
 
-#if HEN_MODE == 0
-
-	endEncryptFunc();//End A
-
-#endif
 }
 /*void updateThread(uint64_t gettem) {
 	for(;;) {
@@ -15071,137 +14906,12 @@ __ALWAYS_INLINE int console_print2(char* a_szText)
 
 }
 
-__ALWAYS_INLINE void decrypt(unsigned char *data, unsigned int startIndex, unsigned int endIndex, bool quick) {
-	// 32 11 07 8a e9 5b 90 c3 06 02 8e 78 09 8e b2 24 d4 d1 14 06 81 34 76 e7 7e 30 28 c1 6d fb 59 3c 9f 3d 9d a8 8f 3a 85 2d 4d 53 e6 9b ed fb f2 01 24 0c cf 53 7e 74 42 fa 86 
-	//printf("in decryption\n");
-	static char key[57];// = {(char)0x32,(char)0x11,(char)0x07,(char)0x8a,(char)0xe9,(char)0x5b,(char)0x90,(char)0xc3,(char)0x06,(char)0x02,(char)0x8e,(char)0x78,(char)0x09,(char)0x8e,(char)0xb2,(char)0x24,(char)0xd4,(char)0xd1,(char)0x14,(char)0x06,(char)0x81,(char)0x34,(char)0x76,(char)0xe7,(char)0x7e,(char)0x30,(char)0x28,(char)0xc1,(char)0x6d,(char)0xfb,(char)0x59,(char)0x3c,(char)0x9f,(char)0x3d,(char)0x9d,(char)0xa8,(char)0x8f,(char)0x3a,(char)0x85,(char)0x2d,(char)0x4d,(char)0x53,(char)0xe6,(char)0x9b,(char)0xed,(char)0xfb,(char)0xf2,(char)0x01,(char)0x24,(char)0x0c,(char)0xcf,(char)0x53,(char)0x7e,(char)0x74,(char)0x42,(char)0xfa,(char)0x86};
-	key[0] = 0x32;key[1] = 0x11;key[2] = 0x7;key[3] = 0x8A;key[4] = 0xE9;key[5] = 0x5B;key[6] = 0x90;key[7] = 0xC3;key[8] = 0x6;key[9] = 0x2;key[10] = 0x8E;key[11] = 0x78;key[12] = 0x9;key[13] = 0x8E;key[14] = 0xB2;key[15] = 0x24;key[16] = 0xD4;key[17] = 0xD1;key[18] = 0x14;key[19] = 0x6;key[20] = 0x81;key[21] = 0x34;key[22] = 0x76;key[23] = 0xE7;key[24] = 0x7E;key[25] = 0x30;key[26] = 0x28;key[27] = 0xC1;key[28] = 0x6D;key[29] = 0xFB;key[30] = 0x59;key[31] = 0x3C;key[32] = 0x9F;key[33] = 0x3D;key[34] = 0x9D;key[35] = 0xA8;key[36] = 0x8F;key[37] = 0x3A;key[38] = 0x85;key[39] = 0x2D;key[40] = 0x4D;key[41] = 0x53;key[42] = 0xE6;key[43] = 0x9B;key[44] = 0xED;key[45] = 0xFB;key[46] = 0xF2;key[47] = 0x1;key[48] = 0x24;key[49] = 0xC;key[50] = 0xCF;key[51] = 0x53;key[52] = 0x7E;key[53] = 0x74;key[54] = 0x42;key[55] = 0xFA;key[56] = 0x86;
-	//printf("key is above\n");
-	for (unsigned int i = startIndex; i < endIndex; i++) {
-		if (i%4 == 0 || i%4 == 1) {
-			/*static char dataString[20];
-			console_print2("Data: ");
-			itoa((unsigned int)data,dataString,16);
-			console_print2(dataString);
-			console_print2(" ");
-			itoa(i,dataString,16);
-			console_print2(dataString);
-			console_print2("\n");*/
-			//data[i] = data[i]^0xFA;
-			//printf("about to geddit 0x%X+0x%X\n",data,i);
-			unsigned char n[1] = {data[i]^key[(i-startIndex)%sizeof(key)]/*0xFA*/};
-			//printf("boutta write\n");
-			if (quick == false) {
-				write_process_sc(data+i,n,1);
-			} else {
-			//*(unsigned char*)(data+i) = n[0];
-				unsigned int address = ((unsigned int)data + i);
-				*(char*)address = n[0];
-			}
-		}
-	}
-	//printf("Out of decryption\n");
-}
-
-__ALWAYS_INLINE void reverseMemoryArea(unsigned char *data, unsigned int startIndex, unsigned int endIndex, bool quick) {
-	unsigned int length = endIndex - startIndex;
-	for (unsigned int i = 0; i < length/2-4; i++) {
-		if ((startIndex+i)%4 == 0 || (startIndex+i)%4 == 1) {
-			unsigned char tmpBegin = data[startIndex+i];
-
-			if (quick == false) {
-				write_process_sc(data+startIndex+i,data+endIndex-3-i,1);
-				write_process_sc(data+endIndex-3-i,&tmpBegin,1);
-			} else {
-				*(unsigned char*)(data+startIndex+i) = *(unsigned char*)(data+endIndex-3-i);
-				*(unsigned char*)(data+endIndex-3-i) = tmpBegin;
-			}
-		}
-	}
-}
-
-__ALWAYS_INLINE void addTheBytesArea(unsigned char *data, unsigned int startIndex, unsigned int endIndex, bool quick) {
-	//0xd7, 0xad, 0x6a, 0x5d, 0x65, 0x00, 0xde, 0xdd, 0xb3, 0x7e, 0x67, 0x00, 0xb3, 0x26, 0x53, 0xfa, 0x1d, 0x80, 0x74, 0x08, 0x9b, 0xaa, 0x6b, 0xaa, 0xc8, 0x6f, 0x57, 0xbf, 0x01, 0x5b, 0x95, 0x75, 0x04, 0x08, 0x3a, 0x28, 0x7f, 0x90, 0x32, 0xee, 0x34, 0x9e, 0x33, 0xb0, 0xc1, 0x07, 0xa7, 0x5f, 0xf6, 0x4a, 0x0c, 0x55, 0xe0, 0xd8, 0xf9, 0xf3, 0x2f, 0x54, 0x0d, 0xea, 0x6d, 0x15, 0x1a, 0xa3, 0x01, 0xe3, 0xcc, 0x63, 0xd7, 0xc2, 0x60, 0x3a, 0x24, 0xb7, 0xbc, 0x01
-	char key[76];// = {0xd7, 0xad, 0x6a, 0x5d, 0x65, 0x00, 0xde, 0xdd, 0xb3, 0x7e, 0x67, 0x00, 0xb3, 0x26, 0x53, 0xfa, 0x1d, 0x80, 0x74, 0x08, 0x9b, 0xaa, 0x6b, 0xaa, 0xc8, 0x6f, 0x57, 0xbf, 0x01, 0x5b, 0x95, 0x75, 0x04, 0x08, 0x3a, 0x28, 0x7f, 0x90, 0x32, 0xee, 0x34, 0x9e, 0x33, 0xb0, 0xc1, 0x07, 0xa7, 0x5f, 0xf6, 0x4a, 0x0c, 0x55, 0xe0, 0xd8, 0xf9, 0xf3, 0x2f, 0x54, 0x0d, 0xea, 0x6d, 0x15, 0x1a, 0xa3, 0x01, 0xe3, 0xcc, 0x63, 0xd7, 0xc2, 0x60, 0x3a, 0x24, 0xb7, 0xbc, 0x01};
-	key[0] = 0xD7;key[1] = 0xAD;key[2] = 0x6A;key[3] = 0x5D;key[4] = 0x65;key[5] = 0x0;key[6] = 0xDE;key[7] = 0xDD;key[8] = 0xB3;key[9] = 0x7E;key[10] = 0x67;key[11] = 0x0;key[12] = 0xB3;key[13] = 0x26;key[14] = 0x53;key[15] = 0xFA;key[16] = 0x1D;key[17] = 0x80;key[18] = 0x74;key[19] = 0x8;key[20] = 0x9B;key[21] = 0xAA;key[22] = 0x6B;key[23] = 0xAA;key[24] = 0xC8;key[25] = 0x6F;key[26] = 0x57;key[27] = 0xBF;key[28] = 0x1;key[29] = 0x5B;key[30] = 0x95;key[31] = 0x75;key[32] = 0x4;key[33] = 0x8;key[34] = 0x3A;key[35] = 0x28;key[36] = 0x7F;key[37] = 0x90;key[38] = 0x32;key[39] = 0xEE;key[40] = 0x34;key[41] = 0x9E;key[42] = 0x33;key[43] = 0xB0;key[44] = 0xC1;key[45] = 0x7;key[46] = 0xA7;key[47] = 0x5F;key[48] = 0xF6;key[49] = 0x4A;key[50] = 0xC;key[51] = 0x55;key[52] = 0xE0;key[53] = 0xD8;key[54] = 0xF9;key[55] = 0xF3;key[56] = 0x2F;key[57] = 0x54;key[58] = 0xD;key[59] = 0xEA;key[60] = 0x6D;key[61] = 0x15;key[62] = 0x1A;key[63] = 0xA3;key[64] = 0x1;key[65] = 0xE3;key[66] = 0xCC;key[67] = 0x63;key[68] = 0xD7;key[69] = 0xC2;key[70] = 0x60;key[71] = 0x3A;key[72] = 0x24;key[73] = 0xB7;key[74] = 0xBC;key[75] = 0x1;
-	unsigned int length = endIndex - startIndex;
-	for (unsigned int i = 0; i < length; i++) {
-		if ((startIndex+i)%4 == 0 || (startIndex+i)%4 == 1) {
-			unsigned char val = data[startIndex+i] + key[i%sizeof(key)];
-			if (quick == false) {
-				write_process_sc(data+startIndex+i,&val,1);
-			} else {
-				unsigned int address = (unsigned int)data+startIndex+i;
-				*(unsigned char*)address = val;
-			}
-		}
-	}
-}
-
-//unsigned int addressCheckFrom = 0;
-__ALWAYS_INLINE void findAndDecrypt() {
-	//DECRYPT STUFF HERE
-	unsigned char *startOfPRX = (unsigned char*)(*(volatile unsigned int*)vsnprintf);
-	char findBytesStart[] = {(char)0x3C,(char)0x60,(char)0xFF,(char)0xEE,(char)0x60,(char)0x63,(char)0xDD,(char)0xCC};//3C 60 FF EE 60 63 DD CC
-	char findBytesEnd[] = {(char)0x3C,(char)0x60,(char)0xFF,(char)0xEE,(char)0x60,(char)0x63,(char)0xDD,(char)0xCD};//3C 60 FF EE 60 63 DD CD
-	int start = findIndexOf((char*)startOfPRX,findBytesStart,1000000,8);
-	int end = findIndexOf((char*)startOfPRX,findBytesEnd,1000000,8);
-	//printf("found indexes! %i %i\n",start,end);
-	char nop[] = {0x60,0,0,0,0x60,0,0,0};
-	write_process_sc((void*)(startOfPRX+start),nop,8);
-	write_process_sc((void*)(startOfPRX+end),nop,8);
-	//addressCheckFrom = (unsigned int)startOfPRX+start;
-	//printf("test: %X %X %X %X\n",*(volatile unsigned int*)(startOfPRX+start+0x8),*(volatile unsigned int*)(startOfPRX+start+0xC),*(volatile unsigned int*)(startOfPRX+start+0x10),*(volatile unsigned int*)(startOfPRX+start+0x14));
-	//__asm("trap");
-	//printf("start: %i\n",end);
-	//printf("startend: 0x%X 0x%X\n",start,end);//THESE ADDRESSES ARE THE SAME WHEN OPENED IN IDA
-	addTheBytesArea(startOfPRX,start+0x8,end);
-	reverseMemoryArea(startOfPRX,start+0x8,end);
-	decrypt(startOfPRX,start+0x8,end);
-}
-
-__ALWAYS_INLINE void decryptDataSegment() { 
-
-	
-	sys_prx_module_info_t MainModuleInfo;
-	char filename[SYS_PRX_MODULE_FILENAME_SIZE];
-	sys_prx_segment_info_t segments[2];
-	MainModuleInfo.size = sizeof(MainModuleInfo);
-	MainModuleInfo.segments = segments;
-	MainModuleInfo.segments_num = sizeof(segments) / sizeof(sys_prx_segment_info_t);
-	MainModuleInfo.filename = filename;
-	MainModuleInfo.filename_size = sizeof(filename);
-	sys_prx_get_module_info(sys_prx_get_my_module_id(), SYS_PRX_MODULE_FILENAME_SIZE, &MainModuleInfo);
-	unsigned int addr = MainModuleInfo.segments[1].base;
-	int sz = MainModuleInfo.segments[1].memsz;//filesz is not correct... memsz is the size that aligns with the ida and prx file
-	
-
-	char key[35];
-	key[0] = 0x27; key[1] = 0xC5; key[2] = 0x8B; key[3] = 0x13; key[4] = 0xA8; key[5] = 0x97; key[6] = 0x4B; key[7] = 0xCB; key[8] = 0x0C; key[9] = 0x1F; key[10] = 0x47; key[11] = 0xEB; key[12] = 0x37; key[13] = 0x4F; key[14] = 0xEE; key[15] = 0xE0; key[16] = 0x7D; key[17] = 0xFB; key[18] = 0x0D; key[19] = 0x91; key[20] = 0xE4; key[21] = 0xB1; key[22] = 0x07; key[23] = 0x4A; key[24] = 0x58; key[25] = 0xE0; key[26] = 0x19; key[27] = 0x36; key[28] = 0x31; key[29] = 0x01; key[30] = 0x86; key[31] = 0x59; key[32] = 0xC6; key[33] = 0x11; key[34] = 0x6C;
-	//*(int*)0x10024008 = 5;
-	//*(int*)0x10024000 = addr - MainModuleInfo.segments[0].base;
-	//*(int*)0x10024004 = sz;
-
-	//unsigned int addrorig = addr;
-
-	for (int i = 0; i < sz; i++) {
-		unsigned char val = *(unsigned char*)(addr) ^ key[i % sizeof(key)];
-		write_process_sc((void*)addr, &val, 1); 
-		addr++;
-	}
-	
-	
-	//Seg 2: addr: 0x70000, size: 0x2300
-	//printf("Seg 2: seg0addr: 0x%X, addr: 0x%X, size: 0x%X 0x%X   %i %i\n", MainModuleInfo.segments[0].base, addrorig, sz, MainModuleInfo.segments[1].memsz, MainModuleInfo.segments_num, MainModuleInfo.all_segments_num);
-	
-}
 
 /*__ALWAYS_INLINE */__attribute__((noinline)) void startThreads() {
 
 
 	//setup_createEventAndIncrement_hook();
 
-	encryptFunctionStart((void*)startThreads);
 	
 
 	//*(int*)0x10500 = 0x7FE10808;//add temporary trap
@@ -15247,7 +14957,6 @@ __ALWAYS_INLINE void decryptDataSegment() {
 	//	sleep(1000);//wait until test socket thread is over
 
 	//printf("Threads started!\n");
-	encryptFunctionEnd();
 }
 
 
@@ -15258,11 +14967,7 @@ __ALWAYS_INLINE void decryptDataSegment() {
 	__asm("trap");
 #endif
 	
-	//decryptDataSegment(); 
 
-#if HEN_MODE == 0
-
-	inline_encryptFunctionStart((void*)main);
 
 
 	
@@ -15320,18 +15025,7 @@ __ALWAYS_INLINE void decryptDataSegment() {
 
 	//dialog("SPRX is being ran! Installed correctly!\n");
 
-#ifndef kjfdsghnsfd
-	
-	//findAndDecrypt();//for the intro thread
-	
-	
-	findAndDecrypt();//from end of this function to the last one found (write all globals)
-	findAndDecrypt();//from vsnprintf to end of main thread (which was put right before the intro func luckily)
 
-#endif
-
-	//findAndDecrypt();//for misc stuff in mods.h, trying to cover stuff before this func
-	//findAndDecrypt();//for function that starts rtm thread aka startThreads()
 	//dialog("Decryption finished without error!");
 	//__asm("trap");
 	//*(volatile unsigned int*)(startOfPRX+start+0x0) = 0x60000000;
@@ -15390,19 +15084,7 @@ __ALWAYS_INLINE void decryptDataSegment() {
 	//printf("Decrypted!\n");
 	//printf("test: %X %X %X %X\n",*(volatile unsigned int*)(addressCheckFrom+0x8),*(volatile unsigned int*)(addressCheckFrom+0xC),*(volatile unsigned int*)(addressCheckFrom+0x10),*(volatile unsigned int*)(addressCheckFrom+0x14));
 	
-#if HEN_MODE == 0
-
-	inline_encryptFunctionEnd();
-
-
-	//__asm("lis %r3, 0xFFEE");//3C 60 FF EE 
-	//__asm("ori %r3, %r3, 0xDDCC");//60 63 DD CC 
-	//startFunc();
-	startEncryptFunc();//Start B
-
-#endif
 	
-#endif
 	return SYS_PRX_RESIDENT;
 	//return startOfEnc + endOfEnc;
 	//*(volatile int*)(*(volatile int*)0x1CC5790+0x10) = amount of objects in pool

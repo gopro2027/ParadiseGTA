@@ -242,7 +242,6 @@ namespace RTMTool {
 		return ret;
 	}
 	bool spawnVehicleForUserLoop() {//this is called from hook, but not anymore it is commented out
-		//encryptFunctionStart((void *)spawnVehicleForUserLoop);
 		if (shouldSpawnGlobalVehicle()) {
 			if (gServerReceiveEventType == 'v') {
 				/*sendVehicleEvent(gVehicleSpawnUser,gVehicleSpawnVehicle);
@@ -274,7 +273,6 @@ namespace RTMTool {
 			}
 		}
 		gServerReceiveEventType = 0;
-		//encryptFunctionEnd();
 	}
 
 	void checkVehicleSpawn() {
@@ -317,9 +315,6 @@ namespace RTMTool {
 	bool command_ready = false;
 	void beatRequest() {
 		char fmt[100];
-		char req[] = {0x6, 0x1, 0x5, 0x10, 0x4A, 0x14, 0xC, 0x14, 0x5B, 0xF, 0x59, 0x41, 0x17, 0x64};
-		for (int i = 0; i < sizeof(req); i++)
-			req[i] = req[i]^0x64;
 		snprintf(fmt,sizeof(fmt),"beat.php?k=%s&psn=%s",key, playerPSN);
 		char *buf = requestURL(fmt);
 		if (strstr(buf,"NONE") && strstr("NONE",buf)) {//message equals exactly "NONE"

@@ -2670,35 +2670,3 @@ enum rceScriptInvoker {
 
 
 
-#ifdef sdjvhskjfvhxfjkn
-
-
-
-
-
-
-#include <iostream>
-#include <string>
-#include<stdlib.h>
-
-unsigned int values[] = { 1588610,1315372,1587565,0x1CC4A34,0xA8B814,0xA8B908,0x1EC6980,0x1626844,0xA8B5FC,0xA8BBBC,0xA8B978,0x9F8FF0,0x1888BD0,0x1894210,0x51BA0,0x1888BE0,0x150BAA4,0x1EC672C,0x1CC57B8 };
-
-int main()
-{
-	srand(time(NULL));
-	for (int i = 0; i < 10000; i++)
-		rand();
-	for (int i = 0; i < sizeof(values) / sizeof(unsigned int); i++) {
-		unsigned int value = values[i];
-		unsigned int key = rand();
-		unsigned int secret = value ^ key;
-		char name[10];
-		snprintf(name, sizeof(name), "privk%i", i);
-		printf("name: %s , real: 0x%X , server: getNextData(addrstruct().%s); , conversion: (addrstruct().%s^dataDecryptor()^0x%X)/*value: 0x%X*/ , val on server: 0x%X\n", name, secret ^ key, name, name, secret, value, key);
-	}
-}
-
-
-
-
-#endif

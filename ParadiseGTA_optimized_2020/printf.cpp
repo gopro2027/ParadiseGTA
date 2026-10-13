@@ -293,12 +293,8 @@ static int convert(UINTMAX_T, char *, size_t, int, int);
 
 //opd_s snprintf$_stub = { /*0x14F9E1C*//*0x14FE110*/0x14FDCEC, TOC };
 //int(*snprintf)(char * s, size_t n, const char * format, ...) = (int(*)(char*, size_t, const char*, ...))&snprintf$_stub;
-#include "security.h"
 int vsnprintf(char *str, size_t size, const char *format, va_list args)
 {
-#if HEN_MODE == 0
-	startEncryptFunc();//Start A
-#endif
 	//startFunc();
 	//__asm("lis %r3, 0xFFEE");//3C 60 FF EE 
 	//__asm("ori %r3, %r3, 0xDDCC");//60 63 DD CC 

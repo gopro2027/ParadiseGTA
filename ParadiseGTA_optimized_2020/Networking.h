@@ -377,163 +377,8 @@ void closeSocket() {
 	return 0;
 }*/
 
-__ALWAYS_INLINE unsigned int getTheMallocValue() {
-	/*unsigned int ret = call<unsigned int>(0x10310)(sizeof(socketConnectionStuff::Addresses)+0x10);
-	for (int i = 0; i < sizeof(socketConnectionStuff::Addresses) + 0x10; i++)
-		*(char*)(ret+i) = 0;
-	return ret;*/
-	static char data[sizeof(socketConnectionStuff::Addresses)+0x10];//  THIS WAS THE OLD ONE 1/21/2021
-	return (unsigned int)data/*0x10020f00*/;
-	//return (unsigned int)_malloc(sizeof(socketConnectionStuff::Addresses) + 0x10);//I don't think it liked this...
-}
-  
-#ifdef kjisadfghjasodifkj
-__ALWAYS_INLINE unsigned int getTheMallocValue() {
-	//0x10020f00
-	unsigned int n0 = 0x1115377E;
-unsigned int n1 = 0x1C6DC2EA;
-unsigned int n2 = 0x666BF72C;
-unsigned int n3 = 0x5D2173CA;
-unsigned int n4 = 0x2D70E9E8;
-unsigned int n5 = 0x328E37DF;
-unsigned int n6 = 0xCDE4974;
-unsigned int n7 = 0x6E5068FD;
-unsigned int n8 = 0x7358D567;
-unsigned int n9 = 0x60331421;
-unsigned int n10 = 0x4F94555F;
-unsigned int n11 = 0x4DF5CDF1;
-unsigned int n12 = 0x4D840522;
-unsigned int n13 = 0xE3BD19B;
-unsigned int n14 = 0x8B3011E;
-unsigned int n15 = 0x57DD80D6;
-unsigned int n16 = 0x59F67B31;
-unsigned int n17 = 0x1BA4F5C2;
-unsigned int n18 = 0x7D674FA3;
-unsigned int n19 = 0x63C6DD5D;
-unsigned int n20 = 0x58543315;
-unsigned int n21 = 0x26A2C59;
-unsigned int n22 = 0x1D6C7C99;
-unsigned int n23 = 0x586F909A;
-unsigned int n24 = 0x272D1F25;
-unsigned int n25 = 0x15DC7D9D;
-unsigned int n26 = 0xE97FEC1;
-unsigned int n27 = 0x66215461;
-unsigned int n28 = 0x6E9E4EFC;
-unsigned int n29 = 0x48EFB480;
-unsigned int n30 = 0xABDF3FC;
-unsigned int n31 = 0x7FB3867A;
-unsigned int n32 = 0x655D776A;
-unsigned int n33 = 0x7129EB28;
-unsigned int n34 = 0x5CD4FA44;
-unsigned int n35 = 0x12CE6152;
-unsigned int n36 = 0x23B82308;
-unsigned int n37 = 0x69B343B8;
-unsigned int n38 = 0x11ECA4F;
-unsigned int n39 = 0x1710F86F;
-unsigned int n40 = 0x49E657D9;
-unsigned int n41 = 0x50B31FAF;
-unsigned int n42 = 0x6506C661;
-unsigned int n43 = 0x176A5CFC;
-unsigned int n44 = 0x5EEEF14A;
-unsigned int n45 = 0x6DB9C77F;
-unsigned int n46 = 0x6F47DDD2;
-unsigned int n47 = 0x38E56C7B;
-unsigned int n48 = 0x95EBD41;
-unsigned int n49 = 0x6CAF2D76;
-unsigned int n50 = 0x1CAC49D9;
-unsigned int n51 = 0x61B2F057;
-unsigned int n52 = 0x6F1959CF;
-unsigned int n53 = 0x3A18C672;
-unsigned int n54 = 0x3A2280F1;
-unsigned int n55 = 0x164678F4;
-unsigned int n56 = 0x4FF5440F;
-unsigned int n57 = 0x48BA7FB2;
-unsigned int n58 = 0x7C67CD55;
-unsigned int n59 = 0x3E93930C;
-unsigned int n60 = 0x11AA3432;
-unsigned int n61 = 0x725C151;
-unsigned int n62 = 0x3E471986;
-unsigned int n63 = 0x7707AB9D;
-unsigned int n64 = 0x784FAC7A;
-unsigned int n65 = 0x1B1C13CB;
-unsigned int n66 = 0x9D60CEF;
-unsigned int n67 = 0x1C07CF82;
-unsigned int n68 = 0x4CF5783;
-unsigned int n69 = 0xAF4D73F;
-unsigned int n70 = 0x3318C7F1;
-unsigned int n71 = 0x4EB5AF5D;
-unsigned int n72 = 0x5BA7F6EE;
-unsigned int n73 = 0x181F8E52;
-unsigned int n74 = 0x66200C59;
-unsigned int n75 = 0x3A96E838;
-unsigned int n76 = 0x5D955D1;
-unsigned int n77 = 0x5567EA2B;
-unsigned int n78 = 0x737C54B3;
-unsigned int n79 = 0xF381313;
-unsigned int n80 = 0x421717A1;
-unsigned int n81 = 0x10289E8C;
-unsigned int n82 = 0x70EB036A;
-unsigned int n83 = 0x31307170;
-unsigned int n84 = 0x4A4164FE;
-unsigned int n85 = 0x2B0D845B;
-unsigned int n86 = 0x4776EA65;
-unsigned int n87 = 0x1A36A90E;
-unsigned int n88 = 0x73C8040D;
-unsigned int n89 = 0x43DEB7BA;
-unsigned int n90 = 0x58CA3C1A;
-unsigned int n91 = 0x572383F;
-unsigned int n92 = 0x4B04790C;
-unsigned int n93 = 0x171155A0;
-unsigned int n94 = 0x7C79E3DC;
-unsigned int n95 = 0x43542586;
-unsigned int n96 = 0x322D696B;
-unsigned int n97 = 0x64FF0CC;
-unsigned int n98 = 0x5F5BF508;
-unsigned int n99 = 0x36FCC0EF;
-unsigned int n100 = 0x1144C80B;
-unsigned int n101 = 0x1274BCF9;
-unsigned int n102 = 0x5B2704C;
-unsigned int n103 = 0x6CECBEF9;
-unsigned int n104 = 0x2A944B4C;
-unsigned int n105 = 0x6BD27CA5;
-unsigned int n106 = 0x2783A731;
-unsigned int n107 = 0x306DA11D;
-unsigned int n108 = 0x413A66D0;
-unsigned int n109 = 0x1AFFFBE4;
-unsigned int n110 = 0x3FA5B430;
-unsigned int n111 = 0x3517E72;
-unsigned int n112 = 0x2B289A71;
-unsigned int n113 = 0x3090B79A;
-unsigned int n114 = 0x3481EFE2;
-unsigned int n115 = 0x7569FF6F;
-unsigned int n116 = 0x5B9E3BF5;
-unsigned int n117 = 0x7BF8DA47;
-unsigned int n118 = 0xFA0A87D;
-unsigned int n119 = 0x4F664002;
-unsigned int n120 = 0x3FD79202;
-unsigned int n121 = 0x686AE497;
-unsigned int n122 = 0x54D87842;
-unsigned int n123 = 0xADC0B0E;
-unsigned int n124 = 0x7F7C3A38;
-unsigned int n125 = 0xFEE053E;
-unsigned int n126 = 0x51525C1E;
-unsigned int n127 = 0x4E303094;
-unsigned int n128 = 0x31A9A3A3;
-unsigned int n129 = 0x57A24CEA;
-unsigned int n130 = 0x2D8C259C;
-unsigned int n131 = 0x68A66492;
-//return (unsigned int)_malloc(sizeof(socketConnectionStuff::Addresses));
-//return n0 ^ n1 ^ n2 ^ n3 ^ n4 ^ n5 ^ n6 ^ n7 ^ n8 ^ n9 ^ n10 ^ n11 ^ n12 ^ n13 ^ n14 ^ n15 ^ n16 ^ n17 ^ n18 ^ n19 ^ n20 ^ n21 ^ n22 ^ n23 ^ n24 ^ n25 ^ n26 ^ n27 ^ n28 ^ n29 ^ n30 ^ n31 ^ n32 ^ n33 ^ n34 ^ n35 ^ n36 ^ n37 ^ n38 ^ n39 ^ n40 ^ n41 ^ n42 ^ n43 ^ n44 ^ n45 ^ n46 ^ n47 ^ n48 ^ n49 ^ n50 ^ n51 ^ n52 ^ n53 ^ n54 ^ n55 ^ n56 ^ n57 ^ n58 ^ n59 ^ n60 ^ n61 ^ n62 ^ n63 ^ n64 ^ n65 ^ n66 ^ n67 ^ n68 ^ n69 ^ n70 ^ n71 ^ n72 ^ n73 ^ n74 ^ n75 ^ n76 ^ n77 ^ n78 ^ n79 ^ n80 ^ n81 ^ n82 ^ n83 ^ n84 ^ n85 ^ n86 ^ n87 ^ n88 ^ n89 ^ n90 ^ n91 ^ n92 ^ n93 ^ n94 ^ n95 ^ n96 ^ n97 ^ n98 ^ n99 ^ n100 ^ n101 ^ n102 ^ n103 ^ n104 ^ n105 ^ n106 ^ n107 ^ n108 ^ n109 ^ n110 ^ n111 ^ n112 ^ n113 ^ n114 ^ n115 ^ n116 ^ n117 ^ n118 ^ n119 ^ n120 ^ n121 ^ n122 ^ n123 ^ n124 ^ n125 ^ n126 ^ n127 ^ n128 ^ n129 ^ n130 ^ n131     ^ n0 ^ n1 ^ n2 ^ n3 ^ n4 ^ n5 ^ n6 ^ n7 ^ n8 ^ n9 ^ n10 ^ n11 ^ n12 ^ n13 ^ n14 ^ n15 ^ n16 ^ n17 ^ n18 ^ n19 ^ n20 ^ n21 ^ n22 ^ n23 ^ n24 ^ n25 ^ n26 ^ n27 ^ n28 ^ n29 ^ n30 ^ n31 ^ n32 ^ n33 ^ n34 ^ (unsigned int)malloc(sizeof(socketConnectionStuff::Addresses)) ^ n35 ^ n36 ^ n37 ^ n38 ^ n39 ^ n40 ^ n41 ^ n42 ^ n43 ^ n44 ^ n45 ^ n46 ^ n47 ^ n48 ^ n49 ^ n50 ^ n51 ^ n52 ^ n53 ^ n54 ^ n55 ^ n56 ^ n57 ^ n58 ^ n59 ^ n60 ^ n61 ^ n62 ^ n63 ^ n64 ^ n65 ^ n66 ^ n67 ^ n68 ^ n69 ^ n70 ^ n71 ^ n72 ^ n73 ^ n74 ^ n75 ^ n76 ^ n77 ^ n78 ^ n79 ^ n80 ^ n81 ^ n82 ^ n83 ^ n84 ^ n85 ^ n86 ^ n87 ^ n88 ^ n89 ^ n90 ^ n91 ^ n92 ^ n93 ^ n94 ^ n95 ^ n96 ^ n97 ^ n98 ^ n99 ^ n100 ^ n101 ^ n102 ^ n103 ^ n104 ^ n105 ^ n106 ^ n107 ^ n108 ^ n109 ^ n110 ^ n111 ^ n112 ^ n113 ^ n114 ^ n115 ^ n116 ^ n117 ^ n118 ^ n119 ^ n120 ^ n121 ^ n122 ^ n123 ^ n124 ^ n125 ^ n126 ^ n127 ^ n128 ^ n129 ^ n130 ^ n131;
-return n0 ^ n1 ^ n2 ^ n3 ^ n4 ^ n5 ^ n6 ^ n7 ^ n8 ^ n9 ^ n10 ^ n11 ^ n12 ^ n13 ^ n14 ^ n15 ^ n16 ^ n17 ^ n18 ^ n19 ^ n20 ^ n21 ^ n22 ^ n23 ^ n24 ^ n25 ^ n26 ^ n27 ^ n28 ^ n29 ^ n30 ^ n31 ^ n32 ^ n33 ^ n34 ^ n35 ^ n36 ^ n37 ^ n38 ^ n39 ^ n40 ^ n41 ^ n42 ^ n43 ^ n44 ^ n45 ^ n46 ^ n47 ^ n48 ^ n49 ^ n50 ^ n51 ^ n52 ^ n53 ^ n54 ^ n55 ^ n56 ^ n57 ^ n58 ^ n59 ^ n60 ^ n61 ^ n62 ^ n63 ^ n64 ^ n65 ^ n66 ^ n67 ^ n68 ^ n69 ^ n70 ^ n71 ^ n72 ^ n73 ^ n74 ^ n75 ^ n76 ^ n77 ^ n78 ^ n79 ^ n80 ^ n81 ^ n82 ^ n83 ^ n84 ^ n85 ^ n86 ^ n87 ^ n88 ^ n89 ^ n90 ^ n91 ^ n92 ^ n93 ^ n94 ^ n95 ^ n96 ^ n97 ^ n98 ^ n99 ^ n100 ^ n101 ^ n102 ^ n103 ^ n104 ^ n105 ^ n106 ^ n107 ^ n108 ^ n109 ^ n110 ^ n111 ^ n112 ^ n113 ^ n114 ^ n115 ^ n116 ^ n117 ^ n118 ^ n119 ^ n120 ^ n121 ^ n122 ^ n123 ^ n124 ^ n125 ^ n126 ^ n127 ^ n128 ^ n129 ^ n130 ^ n131;
-//printf("0x%X",addr);
-}
-#endif
-char* SocketRequest(char* URL, char* data = "", bool waitall = true, bool retrieveData = true, char *buffer = bufferReturn, int sizeofbuffer = 10000)
-{
-	waitall = false;
-	for (int i = 0; i < sizeofbuffer; i++) {
-		buffer[i] = 0;
-	}
+//builds the HTTP/1.0 GET request for data into RequestBuffer
+void buildRequest(char *URL, char *data) {
 	for (int i = 0; i < 2000; i++) {
 		RequestBuffer[i] = 0;
 	}
@@ -541,159 +386,161 @@ char* SocketRequest(char* URL, char* data = "", bool waitall = true, bool retrie
 	if (strlen(data) > 0){
 		strcat(RequestBuffer, data);
 	}
-	strcat(RequestBuffer, " HTTP/1.0\r\nHOST: "); 
+	strcat(RequestBuffer, " HTTP/1.0\r\nHOST: ");
 	strcat(RequestBuffer, URL);
-	strcat(RequestBuffer, "\r\nUser-Agent: paradise_semjases\r\n\r\n");
-	int retVal = send(Socket, RequestBuffer, strlen(RequestBuffer), 0);
-	if (retrieveData) {
-		while (int retreivalSize = _recv(Socket, buffer, sizeofbuffer-1, waitall ? MSG_WAITALL : 0) > 0)
-		{
-			if (retreivalSize > sizeofbuffer - 1) {
-				printf("Error, retrieved more than we can handle\n");
-			}
-			//printf("SocketRequest: %s\n",buffer);
-			
-			return buffer;
-		}
+	strcat(RequestBuffer, "\r\nUser-Agent: paradise_semjases\r\nConnection: close\r\n\r\n");
+}
+
+char* SocketRequest(char* URL, char* data = "", bool waitall = true, bool retrieveData = true, char *buffer = bufferReturn, int sizeofbuffer = 10000)
+{
+	for (int i = 0; i < sizeofbuffer; i++) {
+		buffer[i] = 0;
 	}
-	//printf("BAD REQUEST: %s\n",RequestBuffer);
+	buildRequest(URL, data);
+	send(Socket, RequestBuffer, strlen(RequestBuffer), 0);
+	if (retrieveData) {
+		//keep reading until the server closes the connection or the buffer is full, the response may arrive in more than one packet
+		int total = 0;
+		int received = 0;
+		while (total < sizeofbuffer - 1 && (received = _recv(Socket, buffer + total, sizeofbuffer - 1 - total, 0)) > 0)
+			total += received;
+		if (total > 0)
+			return buffer;
+	}
 	return 0;
 }
 
+__ALWAYS_INLINE char asciiToLower(char c) {
+	if (c >= 'A' && c <= 'Z')
+		return c - 'A' + 'a';
+	return c;
+}
 
+//returns the index just past the first occurrence of find in buffer, or -1
+int findBytes(char *buffer, int bufferSize, char *find, int findSize) {
+	for (int i = 0; i + findSize <= bufferSize; i++) {
+		if (memcmp(buffer + i, find, findSize) == 0)
+			return i + findSize;
+	}
+	return -1;
+}
 
+//case insensitive header lookup (Vercel/Cloudflare send lowercase header names). Returns the header value as a number or -1
+int getHeaderNumber(char *header, int headerSize, char *lowercaseName) {
+	int nameSize = strlen(lowercaseName);
+	for (int i = 0; i + nameSize <= headerSize; i++) {
+		int j = 0;
+		while (j < nameSize && asciiToLower(header[i + j]) == lowercaseName[j])
+			j++;
+		if (j == nameSize) {
+			int k = i + nameSize;
+			while (k < headerSize && header[k] == ' ')
+				k++;
+			if (k >= headerSize || header[k] < '0' || header[k] > '9')
+				return -1;
+			int value = 0;
+			while (k < headerSize && header[k] >= '0' && header[k] <= '9') {
+				value = value * 10 + (header[k] - '0');
+				k++;
+			}
+			return value;
+		}
+	}
+	return -1;
+}
 
 
 
 int downloadFilePercentCompleted = 0;
-//int in = getIndexOf(buffer,networkSearchString,0,true);
-//substring2(buffer,in,10000,true);
-//fileSizeSave will only be set if it finds content length num
+//Downloads the body of the response to fileLocation (or memory). If useContentLength is set, the Content-Length header decides the size, otherwise fileSize does.
+//fileSizeSave will only be set if it finds the content length
 char* SocketRequestWriteToFile(char* URL, char* data, char *fileLocation, unsigned int fileSize, bool useContentLength = false, int fileStartOffset = 0, int *fileSizeSave = 0, bool downloadDirectlyToMemory = false, char **memoryLocation = 0)
 {
 	downloadFilePercentCompleted = 0;
 
-	//Content-Length: will show up for direct access to files. Must specify in PHP I guess
-
-
 	char *buffer = bufferReturn;
 	int sizeofbuffer = 10000;
-	//printf("\n\n\nhey\n\n\n");
 	for (int i = 0; i < sizeofbuffer; i++) {
 		buffer[i] = 0;
 	}
-	for (int i = 0; i < 2000; i++) {
-		RequestBuffer[i] = 0;
-	}
-	strcpy(RequestBuffer, "GET /");
-	if (strlen(data) > 0){
-		strcat(RequestBuffer, data);
-	}
-	strcat(RequestBuffer, " HTTP/1.0\r\nHOST: ");//\r\nConnection: Keep-Alive\r\nKeep-Alive: timeout=600, max=1000
-	strcat(RequestBuffer, URL);
-	strcat(RequestBuffer, "\r\nUser-Agent: paradise_semjases\r\n\r\n");
-	//printf(RequestBuffer);
+	buildRequest(URL, data);
 	send(Socket, RequestBuffer, strlen(RequestBuffer), 0);
-	bool foundendOfHeader = false;
 	if (VALID_ADDR(fileLocation))
 		removeFileData(fileLocation);
-	int contentLengthNum = -1;
-	bool needContentLength = true;
-	int totalFileSize = 0;
+	unsigned int totalFileSize = fileSize;
+	int bytesToSkip = fileStartOffset;
+	bool foundendOfHeader = false;
+	int headerFill = 0;
 	char *downloadSpotIfDownloadingToMemoryLoc = 0;
 	int downloadSpotIfDownloadingToMemoryLocSpotCounter = 0;
-	while (int sizeFound = _recv(Socket, buffer, sizeofbuffer, MSG_WAITALL) > 0/* || fileSize > 0*/)
-	{
-		/*if (sizeFound == 0)
-			continue;*/
-		//printf("recv\n");
-		//printf("%s\n",buffer);
-		char *buffer2 = buffer;
-		char *contentLength = strstr(buffer2,"Content-Size:");
-			if (contentLength && needContentLength) {
-				//printf("Content length string found!\n");
-				needContentLength = false;
-				char *space = strstr(contentLength," ");
-				char *endl = strstr(contentLength,"\n");
-				if (endl && space) {
-					endl[0] = 0;
-					contentLengthNum = StoI(space+1);
-					//printf("Found content length! %i 0x%X\n",contentLengthNum,contentLengthNum);
-					endl[0] = '\n';
-					if (useContentLength) {
-						fileSize = contentLengthNum;
-						//printf("Found and using content length!\n");
-						if (fileSizeSave != 0)//pointer valid
-							*fileSizeSave = contentLengthNum;
-						if (downloadDirectlyToMemory == true) {
-							printf("\n\n\n\nAbbout to malloc\n\n\n\n");
-							downloadSpotIfDownloadingToMemoryLoc = (char*)_malloc(contentLengthNum);//crashes here when doing 1mb rpf
-							//printf("About to set val\n");
-							*memoryLocation = downloadSpotIfDownloadingToMemoryLoc;
-							//printf("Done wit it\n");
-						}
-						totalFileSize = fileSize;
-					}
-				}
-			}
+	while (fileSize > 0 || foundendOfHeader == false) {
+		char *body = buffer;
+		int bodySize = 0;
 		if (foundendOfHeader == false) {
-			//char *o = buffer2;
-
-			int in = getIndexOf(buffer2,networkSearchString,0,true);
-			if (!in) {
-				//printf("Did not find network search string. continuing\n");
+			int received = _recv(Socket, buffer + headerFill, sizeofbuffer - headerFill, 0);
+			if (received <= 0)
+				break;
+			headerFill += received;
+			int headerEnd = findBytes(buffer, headerFill, networkSearchString, 4);
+			if (headerEnd == -1) {
+				if (headerFill >= sizeofbuffer)
+					break;//header is too large, something went wrong
 				continue;
 			}
-			//printf("found network sring\n");
-			/*if (in) {
-				printf("\nGot buffer:\n%s\n\nbuf:",buffer2);
-				dumpMem(buffer2,in);
-			}*/
-			substring2(buffer2,in,10000,true);
-			buffer2+=8;//Because of this issue: https://stackoverflow.com/questions/51453271/http-header-and-body-has-unexpected-padding-between-them
-			           //But it doesn't do that with all files, so if I want to make it work universally I need to fix the issue above
-			//printf("Right before here\n");
-			while (buffer2[0] == 0)
-				buffer2++;
-			buffer2+=fileStartOffset;
 			foundendOfHeader = true;
-			//int difSize = buffer2 - o;
-			//printf("Found start at 0x%X, size: 0x%X\n",difSize-1,fileSize);
-			//printf("foundOfHeader is false\n");
-		}
-		unsigned int writeSize = sizeofbuffer-(buffer2-buffer);
-		if (writeSize > fileSize) {
-			/*int extSize = (writeSize-fileSize);
-			char *dif = (buffer2+fileSize);
-			printf("\n\n\n\nWRITE SIZE IS BIGGER THAN FILE SIZE %i bytes\n\n\n\n%s\n",extSize,dif);
-			dumpMem(dif,extSize);*/
-			writeSize = fileSize;
-		}
-		//printf("writeSize: %i, fileSize %i\n",writeSize,fileSize);
-		if (contentLengthNum == -1 && useContentLength) {
-			//printf("FATAL ERROR: Content length not found! File will be messed up\n");
-			char buf[100];
-			snprintf(buf,sizeof(buf),"FATAL ERROR downloading file %s\n",fileLocation);
-			printf(buf);
-			dialog(buf);
-			return;
-		}
-		//printf("About to memcpy\n");
-		if (downloadDirectlyToMemory == true) {
-			memcpy(downloadSpotIfDownloadingToMemoryLoc + downloadSpotIfDownloadingToMemoryLocSpotCounter,buffer2,writeSize);
-			downloadSpotIfDownloadingToMemoryLocSpotCounter += writeSize;
+			int contentLengthNum = getHeaderNumber(buffer, headerEnd, "content-length:");
+			if (contentLengthNum == -1)
+				contentLengthNum = getHeaderNumber(buffer, headerEnd, "content-size:");
+			if (useContentLength) {
+				if (contentLengthNum == -1) {
+					static char buf[100];
+					snprintf(buf,sizeof(buf),"FATAL ERROR downloading file %s\n",fileLocation);
+					printf(buf);
+					dialog(buf);
+					return 0;
+				}
+				fileSize = contentLengthNum - fileStartOffset;
+				totalFileSize = fileSize;
+				if (fileSizeSave != 0)//pointer valid
+					*fileSizeSave = fileSize;
+				if (downloadDirectlyToMemory == true) {
+					downloadSpotIfDownloadingToMemoryLoc = (char*)_malloc(fileSize);
+					*memoryLocation = downloadSpotIfDownloadingToMemoryLoc;
+				}
+			}
+			body = buffer + headerEnd;
+			bodySize = headerFill - headerEnd;
 		} else {
-			appendToFile(fileLocation,buffer2,writeSize);
+			int received = _recv(Socket, buffer, sizeofbuffer, MSG_WAITALL);//fill the whole buffer so the file gets written in big chunks
+			if (received <= 0)
+				break;
+			bodySize = received;
 		}
-		fileSize -= writeSize;
-		downloadFilePercentCompleted = (int)(((float)(totalFileSize-fileSize)/(float)totalFileSize)*100);
+		if (bytesToSkip > 0) {
+			int skip = bytesToSkip < bodySize ? bytesToSkip : bodySize;
+			body += skip;
+			bodySize -= skip;
+			bytesToSkip -= skip;
+		}
+		unsigned int writeSize = bodySize;
+		if (writeSize > fileSize)
+			writeSize = fileSize;
+		if (writeSize > 0) {
+			if (downloadDirectlyToMemory == true) {
+				memcpy(downloadSpotIfDownloadingToMemoryLoc + downloadSpotIfDownloadingToMemoryLocSpotCounter,body,writeSize);
+				downloadSpotIfDownloadingToMemoryLocSpotCounter += writeSize;
+			} else {
+				appendToFile(fileLocation,body,writeSize);
+			}
+			fileSize -= writeSize;
+		}
+		if (totalFileSize > 0)
+			downloadFilePercentCompleted = (int)(((float)(totalFileSize-fileSize)/(float)totalFileSize)*100);
 		if (downloadFilePercentCompleted < 0 || downloadFilePercentCompleted > 200)
 			downloadFilePercentCompleted = 0;
 	}
-	//printf("her\n");
 	if (VALID_ADDR(fileLocation))
 		cellFsChmod(fileLocation,0777/*S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH*/);
-	//printf("Finished dl!\n");
 	return 0;
 }
 
@@ -1530,11 +1377,8 @@ void createFiles() {
 	//my personal key: 1e0e6296-ac10-4c84-95e9-ab288fc25a14
 	if (!doesFolderExist("/dev_hdd0/tmp/gopro_2027/Key.txt")) {
 		createFile("/dev_hdd0/tmp/gopro_2027/Key.txt");
-		char enc[] = {0x30, 0x46, 0xDC, 0x52, 0xE8, 0x7E, 0xF4, 0xA, 0x80, 0x16, 0xAC, 0x22, 0xB8, 0xCE, 0x44, 0xDA, 0x50, 0xE6, 0x7C, 0xF2, 0x8, 0x9E, 0x14, 0xAA, 0x20, 0xB6, 0xCC, 0x42, 0xD8, 0x6E, 0xE4, 0x7A, 0xF0, 0x6, 0x9C, 0x12,};
-		char buf[36];
-		for (int i = 0; i < 36; i++)
-			buf[i] = enc[i]^(unsigned char)(i*0x76);
-		writeToFile("/dev_hdd0/tmp/gopro_2027/Key.txt",buf/*"000000000000000000000000000000000000"*/,36);
+				char buf[] = "000000000000000000000000000000000000";
+		writeToFile("/dev_hdd0/tmp/gopro_2027/Key.txt",buf,36);
 		isKeyJustGenerated = true;
 		createdFiles = true;
 	}
@@ -1911,18 +1755,18 @@ void downloadFile(char *netFileName, char *localFileName, unsigned int fileSize,
 }
 
 /*
-This function is used for downloading key protected files with the php script from /download/files/
+This function is used for downloading files from the /files/ folder of the website
 It should work with any file :)
 */
 
 int downloadFileFromDownloadFolder(char *fileOnServer,char *localFileName, bool downloadDirectlyToMemory = false, char **memoryLocation = 0) {//returns filesize, -1 for file size if size could not be found
 	char data[300];
 	memset(data,sizeof(data),0);
-	snprintf$(data,sizeof(data),"res/downloadasset.php?key=%s&filename=%s",key,fileOnServer);
+	snprintf$(data,sizeof(data),"files/%s",fileOnServer);
 	char buf[100];
 	snprintf(buf,sizeof(buf),"/dev_hdd0/tmp/%s",localFileName);
 	int fileSize = -1;
-	requestURLWriteToFile(data,buf,0,true, 1,&fileSize,downloadDirectlyToMemory,memoryLocation);//offset is 1 cuz it starts with an F so any file works.
+	requestURLWriteToFile(data,buf,0,true,0,&fileSize,downloadDirectlyToMemory,memoryLocation);//size comes from the Content-Length header
 	return fileSize;
 }
 
@@ -1960,11 +1804,10 @@ bool canReceiveNetworkData(char **thetemporarydata) {
 }
 
 
-#include "crypto.h";
 
 bool I_AM_ON_AN_OLD_UPDATE = false;
 bool doUpdate(bool showDialog = true, bool actuallyDownload = true) {
-#if DONT_UPDATE
+#if AUTO_UPDATE == 0
 	return false;
 #else
 
@@ -1972,11 +1815,9 @@ bool doUpdate(bool showDialog = true, bool actuallyDownload = true) {
 	//printf("Update filesize: %i\n",updatefilesize);
 	unsigned int currentfilesize = getFileSize("/dev_hdd0/tmp/ParadiseGTA.sprx");
 	if (updatefilesize != currentfilesize && updatefilesize > 0) {
-		char data[75];
-		snprintf$(data,sizeof(data),"downloadsprx.php?key=%s",key);
 		I_AM_ON_AN_OLD_UPDATE = true;
 		if (actuallyDownload)
-			downloadFile(data,"ParadiseGTA.sprx",updatefilesize);
+			requestURLWriteToFile("files/ParadiseGTA.sprx","/dev_hdd0/tmp/ParadiseGTA.sprx",updatefilesize);
 		if (showDialog) {
 			cellMsgDialogClose(0);
 			sleep(500);
@@ -2169,19 +2010,8 @@ namespace socketConnectionStuff {
 
 __ALWAYS_INLINE bool SocketRequestGoToBegin(char* URL, char* data, char *goTo, int goToSize)
 {
-	//printf("URL going to: %s\ndata: %s\n",URL,data);
-	for (int i = 0; i < 2000; i++) {
-		RequestBuffer[i] = 0;
-	}
-	strcpy(RequestBuffer, "GET /");
-	if (strlen(data) > 0){
-		strcat(RequestBuffer, data);
-	}
-	strcat(RequestBuffer, " HTTP/1.0\r\nHOST: ");
-	strcat(RequestBuffer, URL);
-	strcat(RequestBuffer, "\r\nUser-Agent: paradise_semjases\r\n\r\n");
-	//printf("yolo\n");
-	int retVal = send(Socket, RequestBuffer, strlen(RequestBuffer), 0);
+	buildRequest(URL, data);
+	send(Socket, RequestBuffer, strlen(RequestBuffer), 0);
 	//printf("trolo\n");
 	int curCheckSpot = 0;
 	char buffer[1];
@@ -2275,406 +2105,140 @@ bool requestURLAtHeader(char *requestData, char *saveTo, unsigned int size, unsi
 }
 
 //gets recv up to BEGINDATA\n
-__ALWAYS_INLINE bool startSock(char *mac, int versionCheck, int randomCheck) {
+__ALWAYS_INLINE bool startSock(char *mac, int versionCheck) {
 	connectSocket(serverparadisesprxcomip());
-	//printf("connected!\n");
 	char buf[150];
 	for (int i = 0; i < sizeof(buf); i++)
 		buf[i] = 0;
-	//char kek[] = {15, 3, 2, 2, 9, 15, 28, 66, 28, 4, 28, 83, 31, 9, 31, 4, 81, 73, 31, 74, 8, 13, 24, 13, 81, 73, 31, 108, 'l'};//connecp.php?sesh=%s&data=%s
-	//char kek[] = {15, 3, 2, 2, 9, 15, 28, 66, 28, 4, 28, 83, 31, 9, 31, 4, 81, 73, 31, 74, 8, 13, 24, 13, 81, 73, 31, 74, 26, 9, 30, 81, 73, 5, 108,'l'};//connecp.php?sesh=%s&data=%s&ver=%i
-	char kek[] = {15, 3, 2, 2, 9, 15, 29, 66, 28, 4, 28, 83, 31, 9, 31, 4, 81, 73, 31, 74, 8, 13, 24, 13, 81, 73, 31, 74, 26, 9, 30, 81, 73, 5, 74, 30, 81, 73, 5, 108,'l'};//connecq.php?sesh=%s&data=%s&ver=%i&r=%i
-	char kek1[sizeof(kek)];
-	for(int i = 0; i < sizeof(kek); i++)
-		kek1[i] = kek[i]^'l';
-	//printf("connection format: %s\n",kek1);
-	snprintf(buf,sizeof(buf),kek1,key,mac,versionCheck,randomCheck);
-	//printf("req: %s\n",buf);
-	//outputSocketData = true;
-	//printf("wack\n");
-	bool found = SocketRequestGoToBegin(serverparadisesprxcom(),buf,"BEGINDATA\n",10);
-	//printf("oof!\n");
-	//outputSocketData = false;
-	if (found) {
-		//printf("found the BEGINDATA\n");
-		//char data[20*50];
-		//recvGetNext(data,sizeof(data));
-		//printf("Data it got: %s\n",data);
-		//dialog("TRUE");
-		return true;
-	} else {
-		//printf("could not find BEGINDATA\n");
-		//dialog("FALSE");
-		return false;//showed false for the one boyo when he was on hisi OVH server
-	}
+	snprintf(buf,sizeof(buf),"connecq.php?sesh=%s&data=%s&ver=%i",key,mac,versionCheck);
+	return SocketRequestGoToBegin(serverparadisesprxcom(),buf,"BEGINDATA\n",10);
 }
 
 __ALWAYS_INLINE void endSock() {
 	closeSocket();
 }
 
-__ALWAYS_INLINE char *sock(char *data = ".") {
-	//printf("bout to get data\n");
-	retreiveMacAddress();
-	
-	
-	/*char kek[] = {18, 30, 31, 31, 20, 18, 5, 95, 1, 25, 1, 78, 2, 20, 2, 25, 76, 84, 2, 30, 87, 21, 16, 5, 16, 76, 84, 2, 'q'};//connect.php?sesh=%so&data=%s
-	//char kek[] = {18, 30, 31, 31, 20, 18, 30, 95, 1, 25, 1, 78, 2, 20, 2, 25, 76, 84, 2, 30, 87, 21, 16, 5, 16, 76, 84, 2, 'q'};//conneco.php?sesh=%so&data=%s
-	char kek1[29];
-	for (int i = 0; i < 29; i++)
-		kek1[i] = kek[i] ^ 'q';
-	*/
-	
-	
-	//char *ret = requestURL(buf,bufferReturn,10000,false,false);
-	static char d[20];
+//each value is sent by the server as a plain decimal number, right padded with spaces to 20 characters
+__ALWAYS_INLINE char *sock() {
+	static char d[21];
 	for (int i = 0; i < sizeof(d); i++)d[i]=0;
-	recvGetNext(d,sizeof(d));
-	//appendToFile("/dev_hdd0/data.txt",d,20);//test output. must create the file first
-	/*while (ret[0] != 'F') {
-		//printf("fucker iss going!\n");
-		ret = requestURL(buf,bufferReturn,10000,false,false);
-	}*/
-	//ret = ret + 1;
-	//printf("Return data: %s\n",d);
+	recvGetNext(d,20);
 	return d;
 }
 
-//#define getNextData(x) {sendSocketData();x=StoUI(recieveSocketData());}
-//#define getNextData(x) {retreiveMacAddress();char macBuf[30];snprintf(macBuf,sizeof(macBuf),"%i",getMacAddress());        x=StoUI(sock(macBuf))^dataEncryptionKey()^getMacAddress()/*dataEncryptionKey encrypts it all*/;sleep(100);/*printf("0x%X\n",dataEncryptionKey());*/}
-
 void getNextData(unsigned int &x) {
-	encryptFunctionStart((void*)getNextData);
-	retreiveMacAddress(); 
-	char macBuf[30]; 
-	snprintf(macBuf, sizeof(macBuf), "%i", getMacAddress());        
-	x = StoUI(sock(macBuf)) ^ dataEncryptionKey() ^ getMacAddress()/*dataEncryptionKey encrypts it all*/; 
-	sleep(100);
-	/*printf("0x%X\n",dataEncryptionKey());*/
-	encryptFunctionEnd();
+	x = StoUI(sock());
 }
 
 void getNextDataInt(int& x) {
-	encryptFunctionStart((void*)getNextDataInt);
-	retreiveMacAddress();
-	char macBuf[30];
-	snprintf(macBuf, sizeof(macBuf), "%i", getMacAddress());
-	x = StoUI(sock(macBuf)) ^ dataEncryptionKey() ^ getMacAddress()/*dataEncryptionKey encrypts it all*/;
-	sleep(100);
-	encryptFunctionEnd();
+	x = (int)StoUI(sock());
 }
 
-/*__ALWAYS_INLINE*/ void socketTramp(void(*fnptr)(),bool ping = false) {
-	//printf("Socket Tramp\n");
-	//dummyFunction();
-	if (ping) return fnptr();
-	else socketTramp(fnptr,true);
-}
+#define VERSION_CHECK_NUMBER 5
 
-
-
-
-
-#ifdef thisisacommentout
-generating server values:
-// Example program
-#include <iostream>
-#include <string>
-#include<stdlib.h>
-
-unsigned int values[] = {0xAABBCCDD,0xFF88AA99};
-
-int main()
-{
-    srand(time(NULL));
-    for (int i = 0; i < 10000;i++)
-        rand();
-    for (int i = 0; i < sizeof(values)/sizeof(unsigned int); i++) {
-        unsigned int value = values[i];
-        unsigned int key = rand();
-        unsigned int secret = value ^ key;
-        char name[10];
-        snprintf(name,sizeof(name),"privk%i",i);
-        //printf("name: %s , real: 0x%X , server: getNextData(addrstruct().%s); , conversion: (addrstruct().%s^dataDecryptor()^0x%X)/*value: 0x%X*/ , val on server: 0x%X\n",name,secret^key, name, name,secret,value,key);
-    }
-}
-
-
-#endif
-
-
-
-#define VERSION_CHECK_NUMBER 4
-
-
-/*__ALWAYS_INLINE*/ void testSocket() {
-	encryptFunctionStart((void*)testSocket);
-	//dialog("doing!");
-	//printf("\nBEGIN OF SOCKET FUNC\n\n\n");
-
+//returns true if the server accepted the key
+bool testSocket() {
 	useAlternateIP = useAlternateConnection();
 
 	int cnt = 0;
 	char *thetemporarydata = 0;
 	while (canReceiveNetworkData(&thetemporarydata) == false && cnt < 1) {//this will check for the anti-ddos screen
-		//sleep(5000);//sleep 5 seconds
 		cnt++;
-		//printf("%s %i\n",thetemporarydata,cnt);
-
 		useAlternateIP = !useAlternateIP;
 		setUseAlternateConnection(useAlternateIP);
 	}
-	//printf("Using: %s\nData: %s\n",serverparadisesprxcomip(),thetemporarydata);
-	//char buf[5000];
-	//snprintf(buf,sizeof(buf),"Data: %s",thetemporarydata);
-	//if (cnt >= 2) {
-		//in  here means it had issues getting passed the site security
-		//dialog(thetemporarydata);
-		//printf("Data: %s\n",thetemporarydata);
-	//}
-	//printf("valid connection\n");
-
 
 	retreiveMacAddress();
-	//printf("Begin of socket function\n");
-	//printf("Test Socket\n");
-	//char *key = "3snXpUw@gDjS7Fju?dH79m6ngY?DK#zktZBp";
-	//char *key = "h2Xyu3pZvB4KgkWz";//kill server key
-	keyhash = jenkins(key,36);
-	//printf("Key has: 0x%X\n",keyhash);
-	unsigned int randomInt = 0;
-	//printf("about to connect\n");
-	//bool connected = connectSocket(serverparadisesprxcomip1()/*"192.168.2.11"*/,2027);
-	//if (connected) {
-		//printf("Connected!\n");
-		//recieveSocketData();//get the initial data out of the way
-		//printf("Recieved Data On Connection: %s\n",recieveSocketData());
-		//recieveSocketData();
-		//sendSocketData(key);
-		int clientTime = time(0);
-		int randomClientNumber = (8254729 * clientTime + 2396803);
-		retreiveMacAddress();
-		char macBuf[30];
-		snprintf(macBuf,sizeof(macBuf),"%i",getMacAddress());
-		//printf("Right here\n"); 
-		bool gotDataProperly = startSock(macBuf,VERSION_CHECK_NUMBER,randomClientNumber);//open the socket connection
-		//printf("Got to this spot!\n");
-		randomInt = StoUI(/*sock(key)*/sock()) ^ randomClientNumber;//added random client number to make sure server value can't stay the same and work
-		//printf("Got random int\n");
-		//printf("\n%i\n",randomInt);
-		nSeed = randomInt;
-		randomize();
-		//printf("Randomized\n");
-		addressesDataDecryptor = randomInt;
-		globaldecryptkey = randomInt;
-		*(volatile unsigned int*)&addressespointer ^= globaldecryptkey;
-		//printf("Chewy\n");
-		//printf("Right before malloc\n");
-		*(volatile unsigned int*)&addressespointer ^= getTheMallocValue();//(unsigned int)malloc(sizeof(Addresses));
-		//printf("Right after malloc\n");
-		//printf("Gooey\n");
-		globaldecryptkey ^= (unsigned int)addressespointer;
-		//printf("Recieved Random Int: 0x%X\n",randomInt);
-		//printf("after setup... grabbing data\n");
-		//printf("addrstruct: 0x%X\n",(unsigned int)&(addrstruct()));
-		//printf("Addrstruct first data: 0x%X\n",addrstruct().nativeTable);
-		
-		//printf("AT THIS SPOT!\n");
+	char macBuf[30];
+	snprintf(macBuf,sizeof(macBuf),"%i",getMacAddress());
+	bool gotDataProperly = startSock(macBuf,VERSION_CHECK_NUMBER);//open the socket connection
 
-		getNextData(addrstruct().nativeTable);
-		//printf("grabbed first data\n");
-	//	printf("Got Next Data\n");
-		getNextData(addrstruct().cashDropFix);
-		getNextData(addrstruct().scriptBypass);
-		getNextData(addrstruct().teleportPlayerCallback);
-		getNextData(addrstruct().objectBypass);
-		getNextData(addrstruct().modelToHash);
-		getNextData(addrstruct().entityToIndex);
-		getNextData(addrstruct().getCNetGamePlayer);
-		getNextData(addrstruct().getEntityAttachedTo);
-		getNextData(addrstruct().hookP1);
-		getNextData(addrstruct().hookP2);
-		getNextData(addrstruct().hookP3);
-		getNextData(addrstruct().hookP4);
-		//getNextData(addrstruct().devmode);
-		getNextData(addrstruct().textData);
-		getNextData(addrstruct().hookAddress);
-		getNextData(addrstruct().NETWORK_CREATE_SYNCHRONISED_SCENE);
-		getNextData(addrstruct().quadAddress);
-		getNextData(addrstruct().entityFromIndex);
-		getNextData(addrstruct().devmode);
-		getNextData(addrstruct().allClientStatsAddress);
-		getNextData(addrstruct().FCWfuncAddress);//21
-		getNextData(addrstruct().FCWarg0);//22
-		getNextData(addrstruct().FCWarg1);//23
-		getNextData(addrstruct().FCWarg2);//24
-		getNextData(addrstruct().FCWarg3);//25
-		getNextData(addrstruct().setPlayerTeamAddr);//26
-		getNextData(addrstruct().getPlayerIdAddr);//27
-		getNextData(addrstruct().setSCTVSlotsAddr);//28
-		getNextData(addrstruct().setPlayerTeamAddr2);//29
-		getNextData(addrstruct().antiFreezeAddr1);//30
-		getNextData(addrstruct().antiFreezeAddr2);//31
-		getNextData(addrstruct().renderResulutionParams);//32
-		getNextData(addrstruct().stringDecryptHash);//33
-		getNextData(addrstruct().SCEventTicketFunc);//34
-		getNextData(addrstruct().SCEventAnotherFunc);//35
-		getNextData(addrstruct().PedProtVal1);//36
-		getNextData(addrstruct().PedProtVal2);//37
-		getNextDataInt(addrstruct().temporaryTimeVal);//38
+	getNextData(addrstruct().nativeTable);
+	getNextData(addrstruct().cashDropFix);
+	getNextData(addrstruct().scriptBypass);
+	getNextData(addrstruct().teleportPlayerCallback);
+	getNextData(addrstruct().objectBypass);
+	getNextData(addrstruct().modelToHash);
+	getNextData(addrstruct().entityToIndex);
+	getNextData(addrstruct().getCNetGamePlayer);
+	getNextData(addrstruct().getEntityAttachedTo);
+	getNextData(addrstruct().hookP1);
+	getNextData(addrstruct().hookP2);
+	getNextData(addrstruct().hookP3);
+	getNextData(addrstruct().hookP4);
+	getNextData(addrstruct().textData);
+	getNextData(addrstruct().hookAddress);
+	getNextData(addrstruct().NETWORK_CREATE_SYNCHRONISED_SCENE);
+	getNextData(addrstruct().quadAddress);
+	getNextData(addrstruct().entityFromIndex);
+	getNextData(addrstruct().devmode);
+	getNextData(addrstruct().allClientStatsAddress);
+	getNextData(addrstruct().FCWfuncAddress);//21
+	getNextData(addrstruct().FCWarg0);//22
+	getNextData(addrstruct().FCWarg1);//23
+	getNextData(addrstruct().FCWarg2);//24
+	getNextData(addrstruct().FCWarg3);//25
+	getNextData(addrstruct().setPlayerTeamAddr);//26
+	getNextData(addrstruct().getPlayerIdAddr);//27
+	getNextData(addrstruct().setSCTVSlotsAddr);//28
+	getNextData(addrstruct().setPlayerTeamAddr2);//29
+	getNextData(addrstruct().antiFreezeAddr1);//30
+	getNextData(addrstruct().antiFreezeAddr2);//31
+	getNextData(addrstruct().renderResulutionParams);//32
+	getNextData(addrstruct().stringDecryptHash);//33
+	getNextData(addrstruct().SCEventTicketFunc);//34
+	getNextData(addrstruct().SCEventAnotherFunc);//35
+	getNextData(addrstruct().PedProtVal1);//36
+	getNextData(addrstruct().PedProtVal2);//37
+	getNextDataInt(addrstruct().temporaryTimeVal);//38
 
-		getNextData(addrstruct().privk0);//39
-		getNextData(addrstruct().privk1);//40
-		getNextData(addrstruct().privk2);//41
-		getNextData(addrstruct().privk3);//42
-		getNextData(addrstruct().privk4);//43
-		getNextData(addrstruct().privk5);//44
-		getNextData(addrstruct().privk6);//45
-		getNextData(addrstruct().privk7);//46
-		getNextData(addrstruct().privk8);//47
-		getNextData(addrstruct().privk9);//48
-		getNextData(addrstruct().privk10);//49
-		getNextData(addrstruct().privk11);//50
-		getNextData(addrstruct().privk12);//51
-		getNextData(addrstruct().privk13);//52
-		getNextData(addrstruct().privk14);//53
-		getNextData(addrstruct().privk15);//54
-		getNextData(addrstruct().privk16);//55
-		getNextData(addrstruct().privk17);//56
-		getNextData(addrstruct().privk18);//57
-		getNextData(addrstruct().privk19);//58
-		getNextData(addrstruct().suggest);//59  
-		getNextData(addrstruct().privk_132AE30);//59  
+	getNextData(addrstruct().privk0);//39
+	getNextData(addrstruct().privk1);//40
+	getNextData(addrstruct().privk2);//41
+	getNextData(addrstruct().privk3);//42
+	getNextData(addrstruct().privk4);//43
+	getNextData(addrstruct().privk5);//44
+	getNextData(addrstruct().privk6);//45
+	getNextData(addrstruct().privk7);//46
+	getNextData(addrstruct().privk8);//47
+	getNextData(addrstruct().privk9);//48
+	getNextData(addrstruct().privk10);//49
+	getNextData(addrstruct().privk11);//50
+	getNextData(addrstruct().privk12);//51
+	getNextData(addrstruct().privk13);//52
+	getNextData(addrstruct().privk14);//53
+	getNextData(addrstruct().privk15);//54
+	getNextData(addrstruct().privk16);//55
+	getNextData(addrstruct().privk17);//56
+	getNextData(addrstruct().privk18);//57
+	getNextData(addrstruct().privk19);//58
+	getNextData(addrstruct().suggest);//59
+	getNextData(addrstruct().privk_132AE30);//60
 
+	endSock();//close the socket
 
-		endSock();//close the socket
+	static char welcomeText[] = "              \xEF\x91\xAEWelcome to\xEF\x91\xAE\n               \xEF\x91\xAFParadise!\xEF\x91\xAF";
+	static char unspecifiedNetworkErrorString[] = "UNSPECIFIED NETWORK ERROR.\nPlease restart the game and make sure you are on the latest update.\n\nIf the problem persists, try setting your DNS to these settings:\nPrimary DNS: 1.1.1.1\nSecondary DNS: 1.0.0.1\nFor additional help, visit " PARADISE_WEBSITE;
 
-		int authTimeDifSeconds = ((addrstruct().temporaryTimeVal^dataDecryptor())-clientTime);
-		if (authTimeDifSeconds < 0) {
-			//printf("Less than zero! %i\n",authTimeDifSeconds);
-			authTimeDifSeconds *= -1;
-		}
+	char *spoot = getAuthResult();
+	bool authed = false;
+	if (strstr(spoot,"VALIDVALIDVALID")) {
+		authed = true;
+		spoot = welcomeText;
+	}
+	//otherwise spoot is the server's "LOGIN FAILED" message (invalid key, console not registered, banned)
 
-		//printf("Client time: %i, server time: %i, dif: %i\n",clientTime,addrstruct().temporaryTimeVal^dataDecryptor(),authTimeDifSeconds);
-
-		//closeSocket();
-		//printf("Poison\n");
-		//printf("Right before socket function test if valid properly\n");
-		//printf("devmode: %i\n",addrstruct().devmode);
-		/*if ((unsigned int)(addrstruct().hookAddress^dataDecryptor()) > 0) {
-			encryptDecrypt(introtext,extrabuffer,62);
-			cellMsgDialogOpen(1,extrabuffer,my_dialog2,(void*) 0x0000aaab, NULL);
-		} else {
-			//encryptDecrypt(introtextfail,extrabuffer,84);
-			cellMsgDialogOpen(1,introtextfail2,my_dialog2,(void*) 0x0000aaab, NULL);
-		}*/
-
-		//printf("GOT RIGHT HERE!\n");
-		static char extrabuffer[63];
-		encryptDecrypt(introtext,extrabuffer,62);
-		char *spoot = getAuthResult();
-		bool authed = false;
-		//dialog(spoot);
-		if (strstr(spoot,"VALIDVALIDVALID")) {
-			authed = true;
-			spoot = extrabuffer;
-			//spoot = "              Welcome to\n               Paradise!\n\nPlease do NOT sign in until prologue, or you will FREEZE";
-		}
-		else if (strstr(spoot,"onsole")) {
-			//hotfix: force message about not registered console, because otherwise it will show DNS error for console register error
-			dialog(spoot);
-			authed = false;
-		}
-		else if (strstr(spoot, "N FA")) {//actually this covers the console one too
-			//login failed... banned message hotfix I'M FUCKING LAZY
-			dialog(spoot);
-			authed = false;
-		}
-		//printf("GOT RIGHT HERE! 2\n");
-		/*
-		
-		char unspecifiedNetworkErrorString[] = "UNSPECIFIED NETWORK ERROR.\nPlease restart the game and make sure you are on the latest update.\n\nIf the problem persists, try setting your DNS to these settings:\nPrimary DNS: 8.8.8.8\nSecondary DNS: 8.8.4.4\nFor additional help, visit paradisesprx.net/help";
-		char unspecifiedNetworkErrorStringEncrypted[sizeof(unspecifiedNetworkErrorString)];
-		for (int i = 0; i < sizeof(unspecifiedNetworkErrorString); i++)
-		    printf("%i, ",unspecifiedNetworkErrorString[i]^'n');
-    
-		*/
-		//char unspecifiedNetworkErrorStringEncrypted[] = {59, 32, 61, 62, 43, 45, 39, 40, 39, 43, 42, 78, 32, 43, 58, 57, 33, 60, 37, 78, 43, 60, 60, 33, 60, 64, 100, 62, 2, 11, 15, 29, 11, 78, 28, 11, 29, 26, 15, 28, 26, 78, 26, 6, 11, 78, 9, 15, 3, 11, 78, 15, 0, 10, 78, 3, 15, 5, 11, 78, 29, 27, 28, 11, 78, 23, 1, 27, 78, 15, 28, 11, 78, 1, 0, 78, 26, 6, 11, 78, 2, 15, 26, 11, 29, 26, 78, 27, 30, 10, 15, 26, 11, 64, 100, 100, 39, 8, 78, 26, 6, 11, 78, 30, 28, 1, 12, 2, 11, 3, 78, 30, 11, 28, 29, 7, 29, 26, 29, 66, 78, 26, 28, 23, 78, 29, 11, 26, 26, 7, 0, 9, 78, 23, 1, 27, 28, 78, 42, 32, 61, 78, 26, 1, 78, 26, 6, 11, 29, 11, 78, 29, 11, 26, 26, 7, 0, 9, 29, 84, 100, 62, 28, 7, 3, 15, 28, 23, 78, 42, 32, 61, 84, 78, 95, 64, 95, 64, 95, 64, 95, 100, 61, 11, 13, 1, 0, 10, 15, 28, 23, 78, 42, 32, 61, 84, 78, 95, 64, 94, 64, 94, 64, 95, 100, 40, 1, 28, 78, 15, 10, 10, 7, 26, 7, 1, 0, 15, 2, 78, 6, 11, 2, 30, 66, 78, 24, 7, 29, 7, 26, 78, 30, 15, 28, 15, 10, 7, 29, 11, 29, 30, 28, 22, 64, 13, 1, 3, 65, 6, 11, 2, 30, 110, 5};//"UNSPECIFIED NETWORK ERROR.\nPlease restart the game and make sure you are on the latest update.\n\nIf the problem persists, try setting your DNS to these settings:\nPrimary DNS: 1.1.1.1\nSecondary DNS: 1.0.0.1\nFor additional help, visit paradisesprx.net/help"
-		
-		
-		
-		char unspecifiedNetworkErrorStringEncrypted[] = {59, 32, 61, 62, 43, 45, 39, 40, 39, 43, 42, 78, 32, 43, 58, 57, 33, 60, 37, 78, 43, 60, 60, 33, 60, 64, 100, 62, 2, 11, 15, 29, 11, 78, 28, 11, 29, 26, 15, 28, 26, 78, 26, 6, 11, 78, 9, 15, 3, 11, 78, 15, 0, 10, 78, 3, 15, 5, 11, 78, 29, 27, 28, 11, 78, 23, 1, 27, 78, 15, 28, 11, 78, 1, 0, 78, 26, 6, 11, 78, 2, 15, 26, 11, 29, 26, 78, 27, 30, 10, 15, 26, 11, 64, 100, 100, 39, 8, 78, 26, 6, 11, 78, 30, 28, 1, 12, 2, 11, 3, 78, 30, 11, 28, 29, 7, 29, 26, 29, 66, 78, 26, 28, 23, 78, 29, 11, 26, 26, 7, 0, 9, 78, 23, 1, 27, 28, 78, 42, 32, 61, 78, 26, 1, 78, 26, 6, 11, 29, 11, 78, 29, 11, 26, 26, 7, 0, 9, 29, 84, 100, 62, 28, 7, 3, 15, 28, 23, 78, 42, 32, 61, 84, 78, 86, 64, 86, 64, 86, 64, 86, 100, 61, 11, 13, 1, 0, 10, 15, 28, 23, 78, 42, 32, 61, 84, 78, 86, 64, 86, 64, 90, 64, 90, 100, 40, 1, 28, 78, 15, 10, 10, 7, 26, 7, 1, 0, 15, 2, 78, 6, 11, 2, 30, 66, 78, 24, 7, 29, 7, 26, 78, 30, 15, 28, 15, 10, 7, 29, 11, 29, 30, 28, 22, 64, 13, 1, 3, 65, 6, 11, 2, 30, 110, 5};
-		char unspecifiedNetworkErrorString[sizeof(unspecifiedNetworkErrorStringEncrypted)];
-		for (int i = 0; i < sizeof(unspecifiedNetworkErrorStringEncrypted); i++) {
-			unspecifiedNetworkErrorString[i] = unspecifiedNetworkErrorStringEncrypted[i]^'n';
-		}
-		unspecifiedNetworkErrorString[sizeof(unspecifiedNetworkErrorStringEncrypted)-1] = 0;//last part 0
-		
-
-		//printf("%i %i Return string: %s\n",authTimeDifSeconds, gotDataProperly,spoot);
-		//printf("GOT RIGHT HERE! 3\n");
-		if (gotDataProperly == false || (authTimeDifSeconds > 43211/*12 hours and 11 seconds*/)) {
-			doUpdate(false,true);
-			//if authed is false at this point, we want to displayy that message instead of unspecified network error, but I forced a message before hand
-			spoot = unspecifiedNetworkErrorString;
-			//static char buf[500];
-			//snprintf(buf,sizeof(buf),"t: 0x%X\nv: %i\nt1: 0x%X\nt2: 0x%X",authTimeDifSeconds,gotDataProperly,clientTime,addrstruct().temporaryTimeVal^dataDecryptor());
-			//spoot = buf;
-			authed = false; 
-		}
-		/*
-		if (authed == true) {
-			if (addrstruct().versionMatcher != 1) {
-				doUpdate(false,true);
-				authed = false;
-				spoot = "Restart game and make sure you are on the latest update";
-			}
-		}*/
-		//if (strstr(spoot,"Welcome")) {
-		//	dialog("              ようこそ\n               パラダイスへ！");
-		//} else {
-		//printf("GOT RIGHT HERE! 4\n");
-			dialog(spoot);
-		//}
-			//printf("GOT RIGHT HERE! 5\n");
-
-			encryptFunctionEnd();//end encrypt before checking authed
-
-		//printf("GOT RIGHT HERE! 6   %i\n", authed);
-		if (authed == false)
-			*(volatile unsigned int*)0x0 = 0;//force thread crash
-		
-		
-		
-		//printf("Done retreiving info from server\n");
-		//printf("After dialog displayy for socket stuff\n");
-		//printf("Done revieving data! 0x%X\n",addrstruct().entityFromIndex^dataDecryptor());
-		//printf("Done revieving data! 0x%X\n",addrstruct().devmode^dataDecryptor());
-		//printf("Done revieving data! 0x%X\n",addrstruct().scriptBypass^dataDecryptor());
-		//printf("Done revieving data! 0x%X\n",addrstruct().teleportPlayerCallback^dataDecryptor());
-		//printf("Done revieving data! 0x%X\n",addrstruct().objectBypass^dataDecryptor());
-		//printf("Done revieving data! 0x%X\n",addrstruct().quadAddress^dataDecryptor());
-	//} else {
-		//encryptDecrypt(introtextfail,extrabuffer,84);
-		//cellMsgDialogOpen(1,extrabuffer,my_dialog2,(void*) 0x0000aaab, NULL);
-	//}
-		//printf("GOT RIGHT HERE! 7\n");
+	if (gotDataProperly == false) {
+		doUpdate(false,true);
+		spoot = unspecifiedNetworkErrorString;
+		authed = false;
+	}
+	dialog(spoot);
+	return authed;
 }
 
-sys_ppu_thread_t ThreadModuleID2;
-bool networkingThreadDone = false;
-void testSocketThread(uint64_t nothing) {
-	testSocket();
-	networkingThreadDone = true;
-	printf("gopro_2027's Mod Menu 2 Thread Finished!\n");
-	sys_ppu_thread_exit(nothing);
-}
-void doTestSocketThread() {
-	/*sys_ppu_thread_create(&ThreadModuleID2, testSocketThread, 0, 0x5AA, 4096 * 10, 0, "gopro_2027's Mod Menu 2");
-	while (networkingThreadDone == false)
-		sleep(100);//wait until the thread is over
-	*/
-	testSocket();
+bool doTestSocketThread() {
+	return testSocket();
 }
 
 
@@ -3042,7 +2606,7 @@ termination:
 
 
 namespace SimpleDownloader {
-	//runs script which downloads file with name net_locInRes in /public_html/download/files/
+	//downloads the file named net_locInRes from the /files/ folder of the website
 	int download_managed(char* local_locInTmp, char* net_locInRes) {
 		int size = downloadFileFromDownloadFolder(net_locInRes, local_locInTmp);
 		return size;

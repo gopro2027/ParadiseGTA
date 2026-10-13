@@ -103,7 +103,6 @@ void func_6175(var uParam0)
 //set global 2 to 2 to force join a new session
 __attribute((noinline)) void executeRCEV1(int player, int global, int valueToAdd) {
 
-	encryptFunctionStart((void*)executeRCEV1);
 
 	unsigned int playerBit = (1 << player);
 
@@ -126,11 +125,9 @@ __attribute((noinline)) void executeRCEV1(int player, int global, int valueToAdd
 	//the end value range set much be between 0 and 60000 (int), if it's less than 0 it goes up to 0, greater than 60000 and idk the behavior
 	SCRIPT::TRIGGER_SCRIPT_EVENT(1, args, 4, playerBit);
 
-	encryptFunctionEnd();
 }
 
 __attribute((noinline)) void executeRCEV2(int player, int global, int value) {
-	encryptFunctionStart((void*)executeRCEV2);
 	int index = global - 2428901;
 	int arrayIndex = index;
 	int valueToMatch = Read_Global(2428620 + 241);//0 usually I think
@@ -139,7 +136,6 @@ __attribute((noinline)) void executeRCEV2(int player, int global, int value) {
 	//sets Global_2428620.imm_241.imm_40[Var0.imm_1] = Var0.imm_4;//array is size of 18
 	unsigned int playerBit = (1 << player);
 	SCRIPT::TRIGGER_SCRIPT_EVENT(1, args, 5, playerBit);
-	encryptFunctionEnd();
 }
 
 
@@ -210,7 +206,6 @@ Searching "Global_1591180":
 
 //line 306506 test
 __attribute((noinline)) void executeRCEV3(int player, int global, int valueToAdd) {
-	encryptFunctionStart((void*)executeRCEV3);
 	//first, take control of Global_1666034
 	if (!assureHostOfFreemode())
 		return;
@@ -227,13 +222,11 @@ __attribute((noinline)) void executeRCEV3(int player, int global, int valueToAdd
 
 	unsigned int playerBit = (1 << player);
 	SCRIPT::TRIGGER_SCRIPT_EVENT(1, args, 4, playerBit);
-	encryptFunctionEnd();
 }
 
 //line 313644
 //This works but I'm abandoning it for V5 which allows me to choose the value also
 __attribute((noinline)) void executeRCEV4(int player, int global) {
-	encryptFunctionStart((void*)executeRCEV4);
 	//using index 1215752191 on this (so global 1215752191 + 2390071+1=1218142263 it tried to write to address 0x0558DBAEC  )
 
 
@@ -254,14 +247,12 @@ __attribute((noinline)) void executeRCEV4(int player, int global) {
 
 	unsigned int playerBit = (1 << player);
 	SCRIPT::TRIGGER_SCRIPT_EVENT(1, args, 4, playerBit);
-	encryptFunctionEnd();
 }
 
 bool readyForRCEReadValue = false;
 
 //Line: 305690
 __attribute((noinline)) void initRCEV6() {
-	encryptFunctionStart((void*)initRCEV6);
 	//this one is for bit writing
 	//first, take control of Global_1572928
 	if (!assureHostOfFreemode()) {
@@ -281,7 +272,6 @@ __attribute((noinline)) void initRCEV6() {
 
 	readyForRCEReadValue = true;//make it say it's ready in case it gets messed up
 
-	encryptFunctionEnd();
 }
 
 /*
@@ -316,7 +306,6 @@ void executeRCEV5(int player, int global, int value);
 void((*callbackOnResultValue)(int)) = 0;
 __attribute((noinline)) void testPrintResultValue(int) {
 
-	encryptFunctionStart((void*)testPrintResultValue);
 
 	//try fiinding address 0x1891568 which is 0x744E6577
 	//assume the value is greater than Global_262145.imm_6760 so it hits the neat one
@@ -342,7 +331,6 @@ __attribute((noinline)) void testPrintResultValue(int) {
 		pleaseWaitASecond = false;
 	}
 
-	encryptFunctionEnd();
 
 }
 
@@ -375,7 +363,6 @@ void echoStartValueOfIt_loop() {
 
 __attribute((noinline)) void echoStartValueOfIt(int player, int global, void (*callback)(int) = 0) {
 
-	encryptFunctionStart((void*)echoStartValueOfIt);
 
 	if (readyForRCEReadValue == false) {
 		//printf("Not ready to read yet!\n");
@@ -431,7 +418,6 @@ __attribute((noinline)) void echoStartValueOfIt(int player, int global, void (*c
 
 	}
 
-	encryptFunctionEnd();
 
 }
 
@@ -440,7 +426,6 @@ __attribute((noinline)) void echoStartValueOfIt(int player, int global, void (*c
 __attribute((noinline)) void RCEV6(int player, int global, int bit) {
 
 
-	encryptFunctionStart((void*)RCEV6);
 
 	//Global_1572928 is on the same section as the other one
 
@@ -473,12 +458,10 @@ __attribute((noinline)) void RCEV6(int player, int global, int bit) {
 		}
 	}
 
-	encryptFunctionEnd();
 }
 
 
 __attribute((noinline)) void giveHostToPlayer(int player) {
-	encryptFunctionStart((void*)giveHostToPlayer);
 	//printf("Requesting host...\n"); 
 	if (freemodeScriptCGameScriptHandlerNetwork != 0) {
 		suggestHost(0);//make it so host gets transferred to the other guy now
@@ -497,11 +480,9 @@ __attribute((noinline)) void giveHostToPlayer(int player) {
 		}
 	}
 	//printf("Requested host...\n");
-	encryptFunctionEnd();
 }
 
 __attribute((noinline)) void crashScriptHost(int player) {
-	encryptFunctionStart((void*)crashScriptHost);
 
 	
 	//freezePlayerEvent(player);//i have no idea if this works but fake it
@@ -524,12 +505,10 @@ __attribute((noinline)) void crashScriptHost(int player) {
 	
 	//freezePlayerBy16Event(player);//this one doesn't seem to work but why not, fake it
 
-	encryptFunctionEnd();
 }
 
 __attribute((noinline)) void crashScriptHostStart(int player) {
 
-	encryptFunctionStart((void*)crashScriptHostStart);
 
 	CNetGamePlayer* cnet = getCNetGamePlayer(player);
 	if (!assureHostOfFreemode() || cnet == 0) {
@@ -544,11 +523,9 @@ __attribute((noinline)) void crashScriptHostStart(int player) {
 		runlater::runlater(200, crashScriptHost, player);
 		print2("~g~Player Frozen!");
 	}
-	encryptFunctionEnd();
 }
 
 __attribute((noinline)) void initRCEV5Finalize(int player) {
-	encryptFunctionStart((void*)initRCEV5Finalize);
 
 	suggestHost(0);//make it so host gets transferred to the other guy now
 						//okay so this can stay as suggest because we don't reaaallly care about the host changing until phase 2. This is phase 1. This only only assists in the host change by suggestHost(0)
@@ -567,12 +544,10 @@ __attribute((noinline)) void initRCEV5Finalize(int player) {
 	print2("~g~Ready! Time for 'Phase 2'", 60000);
 	readyForRCEReadValue = true;
 
-	encryptFunctionEnd();
 }
 
 __attribute((noinline)) void initRCEV5(int player = 0) {
 
-	encryptFunctionStart((void*)initRCEV5);
 
 	//first, take control of Global_1666034
 	CNetGamePlayer* cnet = getCNetGamePlayer(player);
@@ -593,7 +568,6 @@ __attribute((noinline)) void initRCEV5(int player = 0) {
 		runlater::runlater(100,initRCEV5Finalize,player);
 
 	}
-	encryptFunctionEnd();
 }
 
 
@@ -602,7 +576,6 @@ bool doRCEV5NegativeFix = true;
 __attribute((noinline)) void executeRCEV5(int player, int global, int value) {
 
 
-	encryptFunctionStart((void*)executeRCEV5);
 
 	//2147483646 will give 1 behind the array aka 0x7FFFFFFE
 
@@ -659,19 +632,14 @@ __attribute((noinline)) void executeRCEV5(int player, int global, int value) {
 			//SCRIPT::TRIGGER_SCRIPT_EVENT(1,rargs,3,playerBit);
 		}
 	}
-	encryptFunctionEnd();
 }
 
 __attribute((noinline)) void executeRCEV5Offset(int player, int offset, int value) {
-	encryptFunctionStart((void*)executeRCEV5Offset);
 	executeRCEV5(player, (1666041 + 1) + offset, value);
-	encryptFunctionEnd();
 }
 
 __attribute((noinline)) void echoStartValueOfItOffset(int player, int offset, void (*callback)(int) = 0) {
-	encryptFunctionStart((void*)echoStartValueOfItOffset);
 	echoStartValueOfIt(player, (1666035 + 1) + offset, callback);
-	encryptFunctionEnd();
 }
 
 int addressToIndexForExploit(int addressToGoTo, int addressOfArray) {
