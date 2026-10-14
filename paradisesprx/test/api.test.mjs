@@ -16,6 +16,7 @@ import getprop from '../api/getprop.js';
 import downloadasset2 from '../api/downloadasset2.js';
 import generate from '../api/generate.js';
 import keyInfo from '../api/key-info.js';
+import health from '../api/health.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 process.chdir(root);
@@ -100,9 +101,6 @@ test('keyStatus responses', async () => {
   assert.match((await call(keyStatus, `/keyStatus.php?key=${key}&id=1`)).text, /^LOGIN FAILED\nThis console is not registered on the server!/);
   assert.match((await call(keyStatus, `/keyStatus.php?key=abc&id=1`)).text, /^LOGIN FAILED\nInvalid key!/);
   assert.equal((await call(keyStatus, `/keyStatus.php?key=${key}`)).text, 'LOGIN FAILED\nNo info');
-  await updateKey(store, key, { banned: 'true', banReason: 'Testing' });
-  assert.equal((await call(keyStatus, `/keyStatus.php?key=${key}&id=${MAC}`)).text, 'LOGIN FAILED\nYou are banned.\nReason: Testing');
-  assert.ok(parseFields((await call(connecq, `/connecq.php?sesh=${key}&data=${MAC}&ver=5`)).text).every((v) => v === 0));
 });
 
 test('beat stores the psn name and answers NONE', async () => {
@@ -232,7 +230,7 @@ test('key-info status and console reset', async () => {
   const key = await createKey(store);
   await call(connecq, `/connecq.php?sesh=${key}&data=${MAC}&ver=5`);
   const info = JSON.parse((await call(keyInfo, `/api/key-info?key=${key}`)).text);
-  assert.equal(info.status, 'active');
+  assert.equal(info.chatName, null);
   assert.equal(info.consoleBound, true);
   assert.equal((await call(keyInfo, '/api/key-info?key=nope')).statusCode, 404);
 
@@ -244,4 +242,25 @@ test('key-info status and console reset', async () => {
   assert.equal((await call(keyStatus, `/keyStatus.php?key=${key}&id=777`)).text, 'VALIDVALIDVALID');
   // only once per day
   assert.equal((await call(keyInfo, '/api/key-info', { method: 'POST', body: { key, action: 'reset' } })).statusCode, 429);
+});
+
+test('chat name can be set from the user panel and shows up in chat', async () => {
+  const key = await createKey(store);
+  const setName = (name) => call(keyInfo, '/api/key-info', { method: 'POST', body: { key, action: 'name', name } });
+  assert.equal((await setName('ab')).statusCode, 400);
+  assert.equal((await setName('~r~colors')).statusCode, 400);
+  const ok = await setName('Old_School.1');
+  assert.equal(ok.statusCode, 200);
+  assert.equal(JSON.parse((await call(keyInfo, `/api/key-info?key=${key}`)).text).chatName, 'Old_School.1');
+  const b64 = Buffer.from('hello').toString('base64');
+  const out = (await call(chat, `/chat/chat.php?function=rw&key=${key}&psn=Tester&message=${b64}`)).text;
+  assert.ok(out.includes('hello :Old_School.1'));
+  // one change per 10 minutes
+  assert.equal((await setName('Another')).statusCode, 429);
+});
+
+test('health reports the store round trip', async () => {
+  const res = await call(health, '/api/health');
+  assert.equal(res.statusCode, 200);
+  assert.deepEqual(JSON.parse(res.text), { store: 'memory', ok: true });
 });

@@ -4,7 +4,7 @@
 //   gtartm.php?setData=true&RTMKey=<rtm>&RTMData=.. (web)   queues a command for the menu
 // Command format: functionid;data;data;...;\n  (max 200 characters queued)
 import { getStore } from '../lib/store.js';
-import { getKey, isUsable, updateKey, setRtmKey, keyForRtmKey } from '../lib/keys.js';
+import { getKey, updateKey, setRtmKey, keyForRtmKey } from '../lib/keys.js';
 import { getQuery, sendText, sanitize } from '../lib/http.js';
 
 const MAX_DATA = 200;
@@ -17,21 +17,21 @@ export default async function handler(req, res) {
 
   if (q.retreiveData !== undefined && q.Key !== undefined) {
     const record = await getKey(store, q.Key);
-    if (!isUsable(record)) return sendText(res, '');
+    if (!record) return sendText(res, '');
     await updateKey(store, q.Key, { rtmLastRetrieve: now, rtmData: '' });
     return sendText(res, record.rtmData || '');
   }
 
   if (q.generateRTMKey !== undefined && q.Key !== undefined) {
     const record = await getKey(store, q.Key);
-    if (!isUsable(record)) return sendText(res, '!');
+    if (!record) return sendText(res, '!');
     return sendText(res, await setRtmKey(store, q.Key, record));
   }
 
   if (q.setData !== undefined && q.RTMKey !== undefined && q.RTMData !== undefined) {
     const key = await keyForRtmKey(store, q.RTMKey);
     const record = key ? await getKey(store, key) : null;
-    if (!isUsable(record) || record.rtmKey !== q.RTMKey) return sendText(res, 'Not valid Key!');
+    if (!record || record.rtmKey !== q.RTMKey) return sendText(res, 'Not valid Key!');
     if (now - Number(record.rtmLastRetrieve || 0) >= MENU_ONLINE_SECONDS) return sendText(res, 'Not valid Key!');
     const data = sanitize(q.RTMData).replace(/,/g, ' ');
     const queued = (record.rtmData || '') + data + '\n';

@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>User Panel - Paradise SPRX</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap">
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    .tabs { display: flex; flex-wrap: wrap; gap: 4px 18px; margin: 8px 0 18px; }
+    .tabs a { font-size: 14px; letter-spacing: 4px; text-transform: uppercase; color: #fff; padding: 2px 4px 4px; }
+    .tabs a:hover, .tabs a.active { background: #fff; color: #2d3436; }
+    .panel { display: none; }
+    .panel.active { display: block; }
+    .creations { display: grid; gap: 24px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+    .creations img { width: 100%; display: block; border: 1px solid rgba(255, 255, 255, 0.4); }
+    .creations a { text-transform: uppercase; letter-spacing: 4px; }
+    ol, ul { padding-left: 22px; }
+    li { margin-bottom: 6px; }
+  </style>
+</head>
+<body>
+  <div class="background"></div>
+  <div class="tint"></div>
+  <div id="particles-js"></div>
+
+  <div class="page">
+    <h1 class="title"><a href="/" style="text-decoration:none">Welcome To Paradise</a></h1>
+    <nav>
+      <a class="link" href="/gta.html">GTA</a>
+      <a class="link" href="/key">Free Key</a>
+      <a class="link" href="/rtm/">RTM</a>
+      <a class="link" href="/news.html">News</a>
+      <a class="link" href="/user/" aria-current="page">User Panel</a>
+      <a class="link" href="https://github.com/gopro2027/ParadiseGTA">Source</a>
+    </nav>
+
+    <h1>User Panel</h1>
+    <div class="tabs" role="tablist">
+      <a href="#key" data-tab="key">Key Status</a>
+      <a href="#name" data-tab="name">Chat Name</a>
+      <a href="#downloads" data-tab="downloads">Downloads</a>
+      <a href="#install" data-tab="install">Installation</a>
+      <a href="#creations" data-tab="creations">Creations</a>
+    </div>
+
+    <section class="panel" id="panel-key">
+      <p>Check your key, download its <code>Key.txt</code> again, or move it to a new console.</p>
+      <label for="key-input">Your key</label>
+      <input type="text" id="key-input" placeholder="36 characters" maxlength="36" autocomplete="off" spellcheck="false">
+      <div>
+        <button class="text-button" id="check" type="button">Check Status</button>
+        <button class="text-button" id="download-key" type="button">Download Key.txt</button>
+        <button class="text-button" id="reset" type="button">Reset Console</button>
+      </div>
+      <table class="status" id="status" hidden>
+        <tr><td>Status</td><td id="st-status"></td></tr>
+        <tr><td>Console</td><td id="st-console"></td></tr>
+        <tr><td>Chat name</td><td id="st-name"></td></tr>
+        <tr><td>Created</td><td id="st-created"></td></tr>
+        <tr><td>Last online</td><td id="st-seen"></td></tr>
+      </table>
+      <p class="msg" id="key-msg" role="status"></p>
+      <p class="muted">Keys never expire. A console reset lets the key register to the next console that uses it, once a day.<br>
+      Lost your key? Keys aren't tied to an email, but this browser remembers the last key you used. Otherwise, <a href="/key">generate a new one</a>.</p>
+    </section>
+
+    <section class="panel" id="panel-name">
+      <p>Pick the name other players see next to your messages in the in-game Paradise chat. It used to cost $1, now it's free.</p>
+      <label for="name-key">Your key</label>
+      <input type="text" id="name-key" placeholder="36 characters" maxlength="36" autocomplete="off" spellcheck="false">
+      <label for="name-input">New name</label>
+      <input type="text" id="name-input" placeholder="3 to 16 letters, numbers, _ or ." maxlength="16" autocomplete="off" spellcheck="false">
+      <div>
+        <button class="text-button" id="save-name" type="button">Set Name</button>
+        <button class="text-button" id="clear-name" type="button">Use PSN Name</button>
+      </div>
+      <p class="msg" id="name-msg" role="status"></p>
+    </section>
+
+    <section class="panel" id="panel-downloads">
+      <h4>GTA Downloads</h4>
+      <p>
+        <a href="/files/ParadiseGTA.sprx" download>ParadiseGTA.sprx</a> (if a build has been uploaded, otherwise build it from the <a href="https://github.com/gopro2027/ParadiseGTA">source code</a>)<br>
+        Key.txt: get it from the Key Status tab or the <a href="/key">free key page</a>.<br>
+        <a href="/files/default_settings.xml" download>default_settings.xml</a> and <a href="/files/strings.txt" download>strings.txt</a> (the menu downloads these itself).
+      </p>
+      <p>
+        Please use the default GTA update.rpf with Paradise.<br>
+        This website doesn't host EBOOTs or an update.rpf.
+      </p>
+    </section>
+
+    <section class="panel" id="panel-install">
+      <h4>Paradise GTA</h4>
+      <p>Notes before you install:</p>
+      <ul>
+        <li>Make sure Cobra mode is enabled. This is needed for all Paradise named mod menus to run.</li>
+        <li>Language support instructions can be found <a href="https://pastebin.com/raw/UEkm6m7j">here</a>.</li>
+      </ul>
+      <p>HEN specific installation notes:</p>
+      <ul>
+        <li>Make sure you are on the latest HEN version with the <a href="https://github.com/aldostools/webMAN-MOD/releases">latest version of webMAN</a>. Some old versions may not work.</li>
+        <li>If you patch syscalls and delete history with webMAN, please leave PS3MAPI enabled like in this picture, or you will blackscreen on load.<br>
+        <img src="/img/ps3mapi.png" alt="webMAN setting with PS3MAPI left enabled" style="max-width:100%;margin-top:6px"></li>
+      </ul>
+      <p>Install (DEX and HEN):</p>
+      <ol>
+        <li>Get the SPRX from the Downloads tab and your Key.txt from the <a href="/key">free key page</a>.</li>
+        <li>Put an EBOOT.BIN that loads SPRX plugins at <code>/dev_hdd0/game/BLES01807/USRDIR/EBOOT.BIN</code> (delete or rename/backup the old EBOOT.BIN).</li>
+        <li>Put the ParadiseGTA.sprx and Key.txt in your <code>/dev_hdd0/tmp/</code> folder. Key.txt also works in <code>/dev_hdd0/tmp/gopro_2027/</code>.</li>
+        <li>Run GTA V and it should say "Welcome To Paradise!" (along with some other messages on the first load).<br>
+        If it says "Key length short!" just reload the game. Sometimes that happens on the first run.</li>
+      </ol>
+      <p>Post-installation freeze issues help:</p>
+      <ul>
+        <li>Paradise, by default, is incompatible with some update.rpf's. If you get a freeze during the loading screens, try signing out of PSN, then loading GTA. If that fixes the freeze, go to the settings submenu and select 'Un-Install Paradise Script Menus'. A more technical fix is to modify gameconfig.xml.</li>
+        <li>Make sure you are on DEX (or HEN, CEX should convert to DEX). Run the 'Rebug Toolbox' homebrew and click 'System Information'. Make sure 'LV2 Kernel' and 'Target Type' both say 'DEX'.</li>
+        <li>Furthermore, make sure you are using BLES and have COBRA enabled.</li>
+      </ul>
+      <p><a href="https://www.youtube.com/watch?v=hclz-3x-GRE">Video tutorial</a></p>
+    </section>
+
+    <section class="panel" id="panel-creations">
+      <p>Prebuilt structures for the Forge Menu.</p>
+      <p>How to spawn a creation file:</p>
+      <ol>
+        <li>Download the creation file and put it in the <code>/dev_hdd0/tmp/gopro_2027/</code> folder.</li>
+        <li>Go in GTA to your desired location.</li>
+        <li>Go to Forge Menu -&gt; Creation Menu.</li>
+        <li>Click Load Creation and type the filename (without the .creation part).</li>
+        <li>Click Spawn Creation and wait a moment for all the objects to spawn.</li>
+      </ol>
+      <div class="creations">
+        <div><a href="/creations/base.creation" download><img src="/img/creations/base.jpg" alt="base creation" loading="lazy">base</a></div>
+        <div><a href="/creations/base2.creation" download><img src="/img/creations/base2.jpg" alt="base2 creation" loading="lazy">base2</a></div>
+        <div><a href="/creations/base3.creation" download><img src="/img/creations/base3.jpg" alt="base3 creation" loading="lazy">base3</a></div>
+        <div><a href="/creations/carkour.creation" download><img src="/img/creations/carkour.jpg" alt="carkour creation" loading="lazy">carkour</a></div>
+        <div><a href="/creations/dirtbike.creation" download><img src="/img/creations/dirtbike.jpg" alt="dirtbike creation" loading="lazy">dirtbike</a></div>
+        <div><a href="/creations/mazeramp.creation" download><img src="/img/creations/mazeramp.jpg" alt="mazeramp creation" loading="lazy">mazeramp</a></div>
+        <div><a href="/creations/planet.creation" download><img src="/img/creations/planet.jpg" alt="planet creation" loading="lazy">planet</a></div>
+      </div>
+    </section>
+  </div>
+
+  <footer>Paradise SPRX by gopro_2027. Free and open source.</footer>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    // tabs, like the old bootstrap user panel
+    const tabs = document.querySelectorAll('.tabs a');
+    function showTab(name) {
+      if (!$('panel-' + name)) name = 'key';
+      tabs.forEach((t) => t.classList.toggle('active', t.dataset.tab === name));
+      document.querySelectorAll('.panel').forEach((p) => p.classList.toggle('active', p.id === 'panel-' + name));
+    }
+    tabs.forEach((t) => t.addEventListener('click', (e) => {
+      e.preventDefault();
+      history.replaceState(null, '', '#' + t.dataset.tab);
+      showTab(t.dataset.tab);
+    }));
+    showTab(location.hash.slice(1));
+
+    function setMsg(el, text, kind) {
+      el.textContent = text;
+      el.className = 'msg' + (kind ? ' ' + kind : '');
+    }
+    function remembered() {
+      try { return localStorage.getItem('paradise-key') || ''; } catch (e) { return ''; }
+    }
+    function remember(key) {
+      try { localStorage.setItem('paradise-key', key); } catch (e) {}
+    }
+    function readKey(input, msgEl) {
+      const key = input.value.trim();
+      if (key.length !== 36) {
+        setMsg(msgEl, 'Keys are 36 characters long.', 'error');
+        return null;
+      }
+      return key;
+    }
+    async function post(body) {
+      const res = await fetch('/api/key-info', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Something went wrong');
+      return data;
+    }
+
+    $('key-input').value = $('name-key').value = remembered();
+    const fmtDate = (s) => (s ? new Date(s * 1000).toLocaleString() : 'Never');
+
+    $('check').addEventListener('click', async () => {
+      const key = readKey($('key-input'), $('key-msg'));
+      if (!key) return;
+      $('status').hidden = true;
+      setMsg($('key-msg'), 'Checking...');
+      try {
+        const res = await fetch('/api/key-info?key=' + encodeURIComponent(key));
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Something went wrong');
+        $('st-status').textContent = 'Valid';
+        $('st-console').textContent = data.consoleBound ? 'Registered' : 'Not registered yet';
+        $('st-name').textContent = data.chatName || 'PSN name';
+        $('st-created').textContent = fmtDate(data.created);
+        $('st-seen').textContent = fmtDate(data.lastSeen);
+        $('status').hidden = false;
+        remember(key);
+        $('name-key').value = key;
+        setMsg($('key-msg'), '');
+      } catch (err) {
+        setMsg($('key-msg'), err.message, 'error');
+      }
+    });
+
+    $('download-key').addEventListener('click', () => {
+      const key = readKey($('key-input'), $('key-msg'));
+      if (!key) return;
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([key], { type: 'text/plain' }));
+      a.download = 'Key.txt';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    });
+
+    $('reset').addEventListener('click', async () => {
+      const key = readKey($('key-input'), $('key-msg'));
+      if (!key) return;
+      if (!confirm('Unregister the console from this key? The next console that uses it will be registered.')) return;
+      try {
+        const data = await post({ key, action: 'reset' });
+        setMsg($('key-msg'), data.message, 'ok');
+        $('status').hidden = true;
+      } catch (err) {
+        setMsg($('key-msg'), err.message, 'error');
+      }
+    });
+
+    async function saveName(name) {
+      const key = readKey($('name-key'), $('name-msg'));
+      if (!key) return;
+      try {
+        const data = await post({ key, action: 'name', name });
+        remember(key);
+        setMsg($('name-msg'), data.message, 'ok');
+      } catch (err) {
+        setMsg($('name-msg'), err.message, 'error');
+      }
+    }
+    $('save-name').addEventListener('click', () => saveName($('name-input').value));
+    $('clear-name').addEventListener('click', () => saveName(''));
+  </script>
+  <script src="/js/particles.min.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>

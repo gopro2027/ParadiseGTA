@@ -22,6 +22,7 @@
       <a class="link" href="/key" aria-current="page">Free Key</a>
       <a class="link" href="/rtm/">RTM</a>
       <a class="link" href="/news.html">News</a>
+      <a class="link" href="/user/">User Panel</a>
       <a class="link" href="https://github.com/gopro2027/ParadiseGTA">Source</a>
     </nav>
 
@@ -46,20 +47,8 @@
       </section>
 
       <section>
-        <p class="section">{ Key Status }</p>
-        <label for="lookup-key">Your key</label>
-        <input type="text" id="lookup-key" placeholder="36 characters" maxlength="36" autocomplete="off" spellcheck="false">
-        <div>
-          <button class="text-button" id="check" type="button">Check Status</button>
-          <button class="text-button" id="reset" type="button">Reset Console</button>
-        </div>
-        <table class="status" id="status" hidden>
-          <tr><td>Status</td><td id="st-status"></td></tr>
-          <tr><td>Console</td><td id="st-console"></td></tr>
-          <tr><td>Created</td><td id="st-created"></td></tr>
-          <tr><td>Last online</td><td id="st-seen"></td></tr>
-        </table>
-        <p class="msg" id="lookup-msg" role="status"></p>
+        <p class="section">{ Already Have A Key? }</p>
+        <p>Check its status, download its Key.txt again, reset its console or set your chat name in the <a href="/user/">User Panel</a>.</p>
       </section>
     </div>
   </div>
@@ -87,7 +76,6 @@
       $('key').textContent = key;
       $('result').hidden = false;
       $('generator').hidden = true;
-      $('lookup-key').value = key;
       rememberKey(key);
       setMsg($('generate-msg'), message, 'ok');
     }
@@ -157,54 +145,6 @@
       }
     });
 
-    const fmtDate = (s) => (s ? new Date(s * 1000).toLocaleString() : 'Never');
-
-    async function check() {
-      const key = $('lookup-key').value.trim();
-      $('status').hidden = true;
-      if (key.length !== 36) return setMsg($('lookup-msg'), 'Keys are 36 characters long.', 'error');
-      setMsg($('lookup-msg'), 'Checking...');
-      try {
-        const res = await fetch('/api/key-info?key=' + encodeURIComponent(key));
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Something went wrong');
-        $('st-status').textContent = data.status === 'active' ? 'Active' : 'Banned' + (data.banReason ? ' (' + data.banReason + ')' : '');
-        $('st-console').textContent = data.consoleBound ? 'Registered' : 'Not registered yet';
-        $('st-created').textContent = fmtDate(data.created);
-        $('st-seen').textContent = fmtDate(data.lastSeen);
-        $('status').hidden = false;
-        rememberKey(key);
-        setMsg($('lookup-msg'), '');
-      } catch (err) {
-        setMsg($('lookup-msg'), err.message, 'error');
-      }
-    }
-
-    $('check').addEventListener('click', check);
-
-    $('reset').addEventListener('click', async () => {
-      const key = $('lookup-key').value.trim();
-      if (key.length !== 36) return setMsg($('lookup-msg'), 'Keys are 36 characters long.', 'error');
-      if (!confirm('Unregister the console from this key? The next console that uses it will be registered.')) return;
-      try {
-        const res = await fetch('/api/key-info', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ key, action: 'reset' }),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Something went wrong');
-        setMsg($('lookup-msg'), data.message, 'ok');
-        $('status').hidden = true;
-      } catch (err) {
-        setMsg($('lookup-msg'), err.message, 'error');
-      }
-    });
-
-    try {
-      const saved = localStorage.getItem('paradise-key');
-      if (saved) $('lookup-key').value = saved;
-    } catch (e) {}
   </script>
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=onTurnstileLoad" async defer></script>
   <script src="/js/particles.min.js"></script>

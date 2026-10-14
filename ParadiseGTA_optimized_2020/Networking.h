@@ -2226,7 +2226,7 @@ bool testSocket() {
 		authed = true;
 		spoot = welcomeText;
 	}
-	//otherwise spoot is the server's "LOGIN FAILED" message (invalid key, console not registered, banned)
+	//otherwise spoot is the server's "LOGIN FAILED" message (invalid key or console not registered)
 
 	if (gotDataProperly == false) {
 		doUpdate(false,true);

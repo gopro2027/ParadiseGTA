@@ -3,7 +3,7 @@
 //   NONE           nothing to do
 //   PRINT:message  show a message on screen
 import { getStore } from '../lib/store.js';
-import { getKey, isUsable, updateKey } from '../lib/keys.js';
+import { getKey, updateKey } from '../lib/keys.js';
 import { getQuery, sendText } from '../lib/http.js';
 
 export default async function handler(req, res) {
@@ -11,7 +11,7 @@ export default async function handler(req, res) {
   if (q.k !== undefined && q.psn !== undefined) {
     const store = getStore();
     const record = await getKey(store, q.k);
-    if (isUsable(record)) {
+    if (record) {
       let psn = q.psn.slice(0, 20);
       if (!/^[A-Za-z0-9_-]+$/.test(psn)) psn = 'NO_PSN';
       const now = Math.floor(Date.now() / 1000);

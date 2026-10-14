@@ -20,9 +20,6 @@ export default async function handler(req, res) {
       'dev_hdd0/tmp/gopro_2027/Key.txt\ndev_hdd0/tmp/gopro_2027/key.txt\ndev_hdd0/tmp/Key.txt\ndev_hdd0/tmp/key.txt\n' +
       'Get a free key at ' + WEBSITE);
   }
-  if (record.banned !== 'false') {
-    return sendText(res, 'LOGIN FAILED\nYou are banned.\nReason: ' + (record.banReason || ''));
-  }
   if (normalizeMac(q.id) !== record.mac) {
     return sendText(res,
       'LOGIN FAILED\nThis console is not registered on the server!\n' +

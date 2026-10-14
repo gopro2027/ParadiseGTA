@@ -28,8 +28,6 @@ export async function createKey(store, meta = {}) {
     await store.hset(keyName(key), {
       created: Math.floor(Date.now() / 1000),
       mac: '0',
-      banned: 'false',
-      banReason: '',
       dev: '0',
       createdIp: meta.ip || '',
     });
@@ -45,10 +43,6 @@ export async function getKey(store, key) {
 
 export function updateKey(store, key, fields) {
   return store.hset(keyName(key), fields);
-}
-
-export function isUsable(record) {
-  return !!record && record.banned === 'false';
 }
 
 // The SPRX sends the console MAC (bytes 1-4 of the ethernet address) printed with %i

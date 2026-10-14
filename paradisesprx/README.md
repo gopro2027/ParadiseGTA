@@ -20,7 +20,7 @@ Open source replacement for the old paradisesprx.net backend, built to run on Ve
 | Request | Response |
 |---|---|
 | `GET /check.html` | `READYFORCONNECTION` |
-| `GET /connecq.php?sesh=<key>&data=<mac>&ver=5` | `BEGINDATA\n` then 60 plain decimal values, each padded with spaces to 20 characters (game addresses, see `lib/offsets.js`). The first console to use a key is registered to it. Invalid keys, banned keys and other consoles get zeros |
+| `GET /connecq.php?sesh=<key>&data=<mac>&ver=5` | `BEGINDATA\n` then 60 plain decimal values, each padded with spaces to 20 characters (game addresses, see `lib/offsets.js`). The first console to use a key is registered to it. Unknown keys and other consoles get zeros |
 | `GET /keyStatus.php?key=<key>&id=<mac>` | `VALIDVALIDVALID`, or a `LOGIN FAILED` message the menu shows |
 | `GET /beat.php?k=<key>&psn=<name>` | `NONE`, or `PRINT:<message>` if `BEAT_MESSAGE` is set |
 | `GET /gtartm.php?...` | Web RTM relay (`generateRTMKey`, `retreiveData`, `setData`) |
@@ -92,9 +92,8 @@ Build `ParadiseGTA.sprx` from `../ParadiseGTA_optimized_2020` (Visual Studio 201
 
 ## Managing keys
 
-Keys are Redis hashes named `key:<KEY>` with these fields: `mac` (`0` = no console yet), `banned` (`"true"`/`"false"`), `banReason`, `dev`, `psn`, `beatTime`, `rtmKey`, `rtmData`. Use the Upstash data browser to manage them:
+Keys are Redis hashes named `key:<KEY>` with these fields: `mac` (`0` = no console yet), `dev`, `customName` (chat name), `psn`, `beatTime`, `rtmKey`, `rtmData`. Use the Upstash data browser to manage them:
 
-- Ban a key: set `banned` to `true` and `banReason` to the message the user should see.
 - Dev mode (unlocks the dev-only menu features and FCW values): set `dev` to `1`.
 - Free a key's console: set `mac` to `0`. Users can also do this themselves once a day on the key page.
 

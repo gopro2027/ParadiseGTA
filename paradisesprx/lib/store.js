@@ -164,6 +164,10 @@ export function getStore() {
   return store;
 }
 
+export function storeKind() {
+  return getStore() instanceof RedisStore ? 'redis' : 'memory';
+}
+
 // tests swap in a fresh store
 export function setStore(s) {
   store = s;

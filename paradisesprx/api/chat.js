@@ -4,7 +4,7 @@
 //   chat/chat.php?function=msg&key=<key>[&psn=<name>]&message=<base64>  send only
 import { createHash } from 'node:crypto';
 import { getStore } from '../lib/store.js';
-import { getKey, isUsable } from '../lib/keys.js';
+import { getKey } from '../lib/keys.js';
 import { getQuery, sendText, sanitize } from '../lib/http.js';
 
 const NUM_LINES = 5;
@@ -34,7 +34,7 @@ export default async function handler(req, res) {
   if (q.function === undefined || q.key === undefined) return sendText(res, '');
   const store = getStore();
   const record = await getKey(store, q.key);
-  if (!isUsable(record)) return sendText(res, 'Invalid key');
+  if (!record) return sendText(res, 'Invalid key');
 
   const name = username(q.key, q.psn, record);
   if (name.length < 3 || name.length > 16) return sendText(res, repeatLine('invalid name'));
