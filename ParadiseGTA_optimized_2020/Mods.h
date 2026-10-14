@@ -14578,12 +14578,10 @@ __ALWAYS_INLINE void setScriptLoadLocation(const char *loc) {
 }
 
 __ALWAYS_INLINE char *getScriptLoadLocation() {
+	//the game reads the script rpf path from here; the menu downloads script_vary.rpf to this path
 	char *loc = (char*)0x188CCD4;
-	char enc[] = {0xD4, 0xD8, 0x18, 0x48, 0xA0, 0xA8, 0xE5, 0x26, 0x33, 0xEB, 0xF1, 0x2B, 0x77, 0xE7, 0xEE, 0x25, 0x7B, 0xBE, 0xE2, 0x11, 0x3D, 0xE0, 0xA3, 0x65, 0x3C, 0xA7, 0xF6, 0x24, 0x7E, 0xA8, 0xED, 0x74, 0x69, 0xAC, 0xFB, 0x5E};
-	strncpy(loc,enc,sizeof(enc)/*"/dev_hdd0/tmp/gopro_2027/script.rpf"*/);
-	for (int i = 0; i < sizeof(enc); i++)
-        loc[i] = (unsigned char)(loc[i]^(193*i-5));
-	//printf("%s\n",loc);
+	static const char path[] = "/dev_hdd0/tmp/gopro_2027/script.rpf";
+	strncpy(loc,path,sizeof(path));
 	return loc;
 }
 #define scriptLoadLocationString (char*)0x188CCD4
