@@ -40,6 +40,8 @@ The website uses `POST /api/generate` and `GET/POST /api/key-info`.
 2. Name the project `paradisesprx`.
 3. Add storage: **Storage → Marketplace → Upstash (Redis)** and connect it to the project. This sets `UPSTASH_REDIS_REST_URL`/`UPSTASH_REDIS_REST_TOKEN` (`KV_REST_API_URL`/`KV_REST_API_TOKEN` also work). Without these the API falls back to in-memory storage, and keys won't survive between requests.
 4. The `.rpf` files are stored with **Git LFS**. Turn on *Settings → Git → Git Large File Storage* so Vercel checks them out.
+5. Under *Settings → Environments → Production*, set branch tracking to `offline-version` so pushes to that branch deploy to production.
+6. Under *Settings → Deployment Protection*, limit Vercel Authentication to preview deployments. Otherwise `paradisesprx.vercel.app` asks visitors to log in to Vercel.
 
 Optional environment variables:
 
@@ -51,7 +53,16 @@ Optional environment variables:
 
 ### 2. Plain HTTP in front of Vercel (required for the PS3)
 
-The SPRX sends plain HTTP/1.0 on port 80 over raw sockets, with no TLS. Vercel redirects every HTTP request to HTTPS (308), and that can't be turned off. The PS3 can't follow that redirect. So the console has to talk to a domain proxied by **Cloudflare**, which accepts plain HTTP and forwards to Vercel over HTTPS:
+The SPRX sends plain HTTP/1.0 on port 80 over raw sockets, with no TLS. Vercel redirects every HTTP request to HTTPS (308), and that can't be turned off. The PS3 can't follow that redirect. So the console talks to something on **Cloudflare** that accepts plain HTTP and forwards to Vercel over HTTPS.
+
+**Option A, used now: Cloudflare Worker on workers.dev.** No domain needed.
+
+1. Create a Worker named `paradisesprx-proxy` with the code in `cloudflare-worker/worker.js` and enable its `workers.dev` route. The current deployment is `paradisesprx-proxy.gopro2027.workers.dev`.
+2. The Worker passes requests straight through to `https://paradisesprx.vercel.app`. It only buffers small compressed responses, so the PS3 always gets a `Content-Length`. The RPFs stream through unchanged.
+3. `PARADISE_SERVER_HOST` in `ParadiseGTA_optimized_2020/prx.cpp` is set to the Worker hostname.
+4. The Workers free plan allows 100,000 requests per day.
+
+**Option B: your own domain proxied by Cloudflare.**
 
 1. Add a domain (e.g. `paradisesprx.example.com`) to the Vercel project.
 2. In Cloudflare DNS, point it at Vercel (`CNAME cname.vercel-dns.com`) with the proxy **on** (orange cloud).
@@ -63,7 +74,7 @@ The SPRX sends plain HTTP/1.0 on port 80 over raw sockets, with no TLS. Vercel r
 Check it from a PC:
 
 ```bash
-node scripts/ps3-sim.mjs --host paradisesprx.example.com
+node scripts/ps3-sim.mjs --host paradisesprx-proxy.gopro2027.workers.dev
 ```
 
 ### 3. The SPRX file

@@ -25,10 +25,10 @@ __attribute__ ((naked)) int obfStart() {//size = 6*0x4
   
 #define netlogfunc 1
 
-//Host the SPRX connects to over plain HTTP (port 80). This must be a domain proxied through Cloudflare
-//(SSL mode "Full", "Always Use HTTPS" off) in front of the paradisesprx Vercel deployment, because Vercel
-//itself redirects every plain HTTP request to HTTPS, which the PS3 socket code can't follow. See paradisesprx/README.md
-#define PARADISE_SERVER_HOST "paradisesprx.example.com"
+//Host the SPRX connects to over plain HTTP (port 80). Vercel itself redirects every plain HTTP request to HTTPS,
+//which the PS3 socket code can't follow, so this is a Cloudflare Worker (paradisesprx/cloudflare-worker) that
+//accepts plain HTTP and forwards to the paradisesprx Vercel deployment. See paradisesprx/README.md
+#define PARADISE_SERVER_HOST "paradisesprx-proxy.gopro2027.workers.dev"
 //Website shown to users in help messages
 #define PARADISE_WEBSITE "paradisesprx.vercel.app"
 
