@@ -46,6 +46,7 @@
 
     <h1>Install Wizard</h1>
     <p>Installs your Key.txt, ParadiseGTA.sprx and the EBOOT.BIN onto your PS3 over your home network. Your PC and PS3 need to be on the same network.</p>
+    <p>Alternatively you can <a href="/user/#install">download and install the files manually</a>.</p>
 
     <section class="step">
       <p class="section">{ 1. Your Key }</p>
@@ -87,7 +88,10 @@
 
       <div class="mode active" id="mode-webman">
         <p>Uses webMAN MOD's web commands, so nothing gets installed on your PC. Each step opens your PS3's webMAN page in a small window. Do them in order.</p>
-        <p class="muted">The PS3 has to be on the XMB (not in a game) with webMAN MOD running. If nothing happens when you click a step, check that your browser allows popups for this site.</p>
+        <p><b>First, turn on webMAN's admin mode.</b> webMAN starts in a restricted mode that answers these commands with "400 Bad Request ... ADMIN disabled". On the PS3, hold <b>L2 + R2</b> and press <b>TRIANGLE</b>. One beep and an "ADMIN enabled" message means it's on. Two beeps means you just turned it off, so press the combo again. It switches back off when the PS3 restarts.</p>
+        <label for="wm-pwd">webMAN FTP password (optional)</label>
+        <input type="text" id="wm-pwd" placeholder="Only if you set one in webMAN's setup, instead of using the button combo" maxlength="20" autocomplete="off" spellcheck="false">
+        <p class="muted">The PS3 has to be on the XMB (not in a game) with webMAN MOD running. If nothing happens when you click a step, check that your browser allows popups for this site. If webMAN keeps refusing, use the FTP installer tab instead, which doesn't need admin mode.</p>
         <ol class="actions" id="webman-steps"></ol>
         <p class="muted">The commands, if you'd rather paste them into your browser yourself:</p>
         <pre class="cmd" id="webman-urls"></pre>
@@ -158,15 +162,21 @@
     // ---- webMAN mode ----
     function webmanSteps(f) {
       const ps3 = 'http://' + f.ip;
-      return [
-        ['Clear the install folder', 'Removes files left from an earlier run.', `${ps3}/delete.ps3${STAGING}`],
+      // webMAN accepts the FTP password on any command as &pwd= instead of the L2+R2+TRIANGLE admin mode
+      const pwd = $('wm-pwd') && $('wm-pwd').value.trim();
+      const auth = pwd ? '&pwd=' + encodeURIComponent(pwd) : '';
+      const steps = [
+        ['Clear the wizard\'s download folder', `Removes leftovers from an earlier run in ${STAGING}. Nothing else is touched.`, `${ps3}/delete.ps3${STAGING}`],
         ['Write Key.txt', 'Saves your key to /dev_hdd0/tmp/Key.txt.', `${ps3}/write.ps3/dev_hdd0/tmp/Key.txt&t=${f.key}`],
         ['Download ParadiseGTA.sprx', 'The PS3 downloads it in the background. Wait for the download complete notification.', `${ps3}/xmb.ps3/download.ps3?to=${STAGING}&url=${PS3_FILES}/ParadiseGTA.sprx`],
         [`Download the ${EBOOTS[f.eboot]}`, 'About 15 to 30 MB. Wait for the download complete notification.', `${ps3}/xmb.ps3/download.ps3?to=${STAGING}/eboot&url=${PS3_FILES}/eboot/${f.eboot}/EBOOT.BIN`],
         ['Back up your current EBOOT.BIN', 'Renames it to EBOOT.BIN.bak. If a backup already exists this does nothing, so your original stays safe.', `${ps3}/rename.ps3${f.dir}/EBOOT.BIN&to=${f.dir}/EBOOT.BIN.bak`],
         ['Install ParadiseGTA.sprx', 'Copies it to /dev_hdd0/tmp/ParadiseGTA.sprx.', `${ps3}/copy_ps3${STAGING}/ParadiseGTA.sprx&to=/dev_hdd0/tmp/ParadiseGTA.sprx`],
         ['Install EBOOT.BIN', `Copies it to ${f.dir}/EBOOT.BIN. Then start GTA V!`, `${ps3}/copy_ps3${STAGING}/eboot/EBOOT.BIN&to=${f.dir}/EBOOT.BIN`],
-      ];
+      ].map(([title, note, url]) => [title, note, url + auth]);
+      // works even when admin mode is off, so it's safe as the first step
+      steps.unshift(['Check admin mode', 'Shows "ADMIN enabled" or "ADMIN disabled". If it says disabled, press L2 + R2 + TRIANGLE on the PS3 and check again.', `${ps3}/admin.ps3`]);
+      return steps;
     }
 
     function renderWebman() {
