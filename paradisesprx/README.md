@@ -114,6 +114,12 @@ npm run dev
 node scripts/ps3-sim.mjs --host localhost:3000
 ```
 
+Check that every file the menu downloads comes through byte-identical (uses the same HTTP/1.0 parsing as the SPRX):
+
+```bash
+node scripts/download-check.mjs --host paradisesprx-proxy.gopro2027.workers.dev
+```
+
 `npm run dev` serves the site at http://localhost:3000 with in-memory storage. Set the Upstash variables in your shell to use the real database.
 
 ## Note about the old backup
