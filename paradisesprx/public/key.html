@@ -4,63 +4,67 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Free Key - Paradise SPRX</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23e74c3c'/%3E%3Ctext x='16' y='23' font-size='20' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'%3EP%3C/text%3E%3C/svg%3E">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap">
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-  <header>
-    <a class="brand" href="/">Paradise <span>SPRX</span></a>
+  <div class="background"></div>
+  <div class="tint"></div>
+  <div id="particles-js"></div>
+
+  <div class="page">
+    <h1 class="title"><a href="/" style="text-decoration:none">Welcome To Paradise</a></h1>
     <nav>
-      <a href="/">Home</a>
-      <a href="/key" aria-current="page">Free Key</a>
-      <a href="/rtm">RTM</a>
+      <a class="link" href="/gta.html">GTA</a>
+      <a class="link" href="/key" aria-current="page">Free Key</a>
+      <a class="link" href="/rtm/">RTM</a>
+      <a class="link" href="/news.html">News</a>
+      <a class="link" href="https://github.com/gopro2027/ParadiseGTA">Source</a>
     </nav>
-  </header>
 
-  <main>
-    <section class="hero" style="padding-bottom:8px">
-      <h1>Free key</h1>
-      <p>Generate a key, save it as <code>Key.txt</code> and copy it to <code>/dev_hdd0/tmp/gopro_2027/Key.txt</code> on your PS3.</p>
-    </section>
+    <h1>Free Paradise Key</h1>
+    <p>Generate a key, save it as <code>Key.txt</code> and copy it to <code>/dev_hdd0/tmp/gopro_2027/Key.txt</code> on your PS3.</p>
 
-    <div class="grid">
-      <section class="card">
-        <h2>Generate a key</h2>
+    <div class="columns">
+      <section>
+        <p class="section">{ Generate }</p>
         <div id="generator">
           <p class="muted">One key per visit. Complete the check below, then generate your key.</p>
-          <div id="captcha" style="min-height:65px;margin-bottom:12px"></div>
-          <button class="btn" id="generate" type="button" disabled>Generate free key</button>
+          <div id="captcha" style="min-height:65px;margin-bottom:16px"></div>
+          <button class="big-button" id="generate" type="button" disabled>Generate Free Paradise Key</button>
         </div>
         <div id="result" hidden>
-          <span class="key" id="key"></span>
-          <div class="row">
-            <button class="btn" id="download" type="button">Download Key.txt</button>
-            <button class="btn secondary" id="copy" type="button">Copy</button>
-          </div>
-          <p class="muted">Keep this key. It is registered to the first console that uses it.</p>
+          <span class="key" id="key"></span><br>
+          <button class="text-button" id="download" type="button">Download Key.txt</button>
+          <button class="text-button" id="copy" type="button">Copy</button>
+          <p class="muted" style="margin-top:10px">Keep this key. It is registered to the first console that uses it.</p>
         </div>
         <p class="msg" id="generate-msg" role="status"></p>
       </section>
 
-      <section class="card">
-        <h2>Check or reset a key</h2>
-        <input type="text" id="lookup-key" placeholder="Your 36 character key" maxlength="36" autocomplete="off" spellcheck="false">
-        <div class="row">
-          <button class="btn secondary" id="check" type="button">Check status</button>
-          <button class="btn secondary" id="reset" type="button">Reset console</button>
+      <section>
+        <p class="section">{ Key Status }</p>
+        <label for="lookup-key">Your key</label>
+        <input type="text" id="lookup-key" placeholder="36 characters" maxlength="36" autocomplete="off" spellcheck="false">
+        <div>
+          <button class="text-button" id="check" type="button">Check Status</button>
+          <button class="text-button" id="reset" type="button">Reset Console</button>
         </div>
-        <table id="status" hidden>
+        <table class="status" id="status" hidden>
           <tr><td>Status</td><td id="st-status"></td></tr>
-          <tr><td>Console registered</td><td id="st-console"></td></tr>
+          <tr><td>Console</td><td id="st-console"></td></tr>
           <tr><td>Created</td><td id="st-created"></td></tr>
-          <tr><td>Last seen online</td><td id="st-seen"></td></tr>
+          <tr><td>Last online</td><td id="st-seen"></td></tr>
         </table>
         <p class="msg" id="lookup-msg" role="status"></p>
       </section>
     </div>
-  </main>
+  </div>
 
-  <footer>Paradise SPRX by gopro_2027. Open source, no payments, no warranty.</footer>
+  <footer>Paradise SPRX by gopro_2027. Free and open source.</footer>
 
   <script>
     const $ = (id) => document.getElementById(id);
@@ -165,7 +169,7 @@
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Something went wrong');
         $('st-status').textContent = data.status === 'active' ? 'Active' : 'Banned' + (data.banReason ? ' (' + data.banReason + ')' : '');
-        $('st-console').textContent = data.consoleBound ? 'Yes' : 'Not yet';
+        $('st-console').textContent = data.consoleBound ? 'Registered' : 'Not registered yet';
         $('st-created').textContent = fmtDate(data.created);
         $('st-seen').textContent = fmtDate(data.lastSeen);
         $('status').hidden = false;
@@ -203,5 +207,7 @@
     } catch (e) {}
   </script>
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=onTurnstileLoad" async defer></script>
+  <script src="/js/particles.min.js"></script>
+  <script src="/js/app.js"></script>
 </body>
 </html>

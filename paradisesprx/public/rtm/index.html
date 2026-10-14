@@ -4,83 +4,90 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>RTM - Paradise SPRX</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23e74c3c'/%3E%3Ctext x='16' y='23' font-size='20' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'%3EP%3C/text%3E%3C/svg%3E">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap">
   <link rel="stylesheet" href="/style.css">
   <style>
-    .card .btn { width: 100%; margin-bottom: 8px; }
-    hr { border: 0; border-top: 1px solid var(--border); margin: 16px 0; }
+    .rtm .text-button { display: block; margin-bottom: 6px; text-align: left; letter-spacing: 3px; }
+    .rtm input { max-width: 100%; }
   </style>
 </head>
 <body>
-  <header>
-    <a class="brand" href="/">Paradise <span>SPRX</span></a>
+  <div class="background"></div>
+  <div class="tint"></div>
+  <div id="particles-js"></div>
+
+  <div class="page">
+    <h1 class="title"><a href="/" style="text-decoration:none">Welcome To Paradise</a></h1>
     <nav>
-      <a href="/">Home</a>
-      <a href="/key">Free Key</a>
-      <a href="/rtm" aria-current="page">RTM</a>
+      <a class="link" href="/gta.html">GTA</a>
+      <a class="link" href="/key">Free Key</a>
+      <a class="link" href="/rtm/" aria-current="page">RTM</a>
+      <a class="link" href="/news.html">News</a>
+      <a class="link" href="https://github.com/gopro2027/ParadiseGTA">Source</a>
     </nav>
-  </header>
 
-  <main>
-    <section class="hero" style="padding-bottom:8px">
-      <h1>RTM</h1>
-      <p>Control a lobby through someone's Paradise menu. They turn on the RTM option in the menu and give you the 4 character RTM key it shows.</p>
-      <p class="msg" id="response" role="status"></p>
-    </section>
+    <h1>RTM</h1>
+    <p>Control a lobby through someone's Paradise menu. They turn on the RTM option in the menu and give you the 4 character RTM key it shows.</p>
+    <p class="msg" id="response" role="status"></p>
 
-    <div class="grid">
-      <section class="card">
-        <h3>RTM key</h3>
+    <div class="columns rtm">
+      <section>
+        <p class="section">{ RTM Key }</p>
         <input id="RTMKey" type="text" placeholder="4 characters, from the modder" maxlength="4" autocomplete="off">
-        <button class="btn" type="button" onclick="connect()">Connect</button>
-        <hr>
-        <h3>Message the host</h3>
+        <button class="text-button" type="button" onclick="connect()">Connect</button>
+
+        <p class="section">{ Message The Host }</p>
         <input id="dialog-msg" type="text" placeholder="Message" maxlength="100">
-        <button class="btn secondary" type="button" onclick="dialog(getValue('dialog-msg'))">Send message</button>
-        <hr>
-        <h3>Players</h3>
+        <button class="text-button" type="button" onclick="dialog(getValue('dialog-msg'))">Send Message</button>
+
+        <p class="section">{ Players }</p>
         <input id="player1" type="text" placeholder="Player 1 name ('ALL' for everyone)" maxlength="32">
         <input id="player2" type="text" placeholder="Player 2 name ('ALL' for everyone)" maxlength="32">
       </section>
 
-      <section class="card">
-        <h3>Mods</h3>
-        <button class="btn secondary" type="button" onclick="teleportPlayerToPlayer(player1(), player2())">Teleport player 1 to player 2</button>
-        <button class="btn secondary" type="button" onclick="killPlayerAnonymous(player1())">Kill player 1 anonymously</button>
-        <button class="btn secondary" type="button" onclick="killPlayer(player1(), player2())">Make player 2 kill player 1</button>
-        <button class="btn secondary" type="button" onclick="moneyDrop(player1(), 1)">Player 1 money drop on</button>
-        <button class="btn secondary" type="button" onclick="moneyDrop(player1(), 0)">Player 1 money drop off</button>
-        <button class="btn secondary" type="button" onclick="moneyDrop(player1(), 2)">Toggle player 1 money drop</button>
-        <button class="btn secondary" type="button" onclick="removeWantedLevel(player1())">Remove player 1 wanted level</button>
-        <button class="btn secondary" type="button" onclick="kickPlayer(player1())">Kick player 1</button>
-        <hr>
+      <section>
+        <p class="section">{ Mods }</p>
+        <button class="text-button" type="button" onclick="teleportPlayerToPlayer(player1(), player2())">Teleport Player 1 To Player 2</button>
+        <button class="text-button" type="button" onclick="killPlayerAnonymous(player1())">Kill Player 1 Anonymously</button>
+        <button class="text-button" type="button" onclick="killPlayer(player1(), player2())">Make Player 2 Kill Player 1</button>
+        <button class="text-button" type="button" onclick="moneyDrop(player1(), 1)">Player 1 Money Drop On</button>
+        <button class="text-button" type="button" onclick="moneyDrop(player1(), 0)">Player 1 Money Drop Off</button>
+        <button class="text-button" type="button" onclick="moneyDrop(player1(), 2)">Toggle Player 1 Money Drop</button>
+        <button class="text-button" type="button" onclick="removeWantedLevel(player1())">Player 1 Remove Wanted Level</button>
+        <button class="text-button" type="button" onclick="kickPlayer(player1())">Player 1 Kick</button>
+
+        <p class="section">{ Teleport }</p>
         <input type="number" id="XCOORD" placeholder="X">
         <input type="number" id="YCOORD" placeholder="Y">
         <input type="number" id="ZCOORD" placeholder="Z">
-        <button class="btn secondary" type="button" onclick="teleportPlayer(player1(), getValue('XCOORD'), getValue('YCOORD'), getValue('ZCOORD'))">Teleport player 1 to coordinate</button>
+        <button class="text-button" type="button" onclick="teleportPlayer(player1(), getValue('XCOORD'), getValue('YCOORD'), getValue('ZCOORD'))">Teleport Player 1 To Coordinate</button>
       </section>
 
-      <section class="card">
-        <h3>More</h3>
+      <section>
+        <p class="section">{ Rank And Money }</p>
         <input type="number" id="RANK" placeholder="Rank 0 to 8000">
-        <button class="btn secondary" type="button" onclick="setRank()">Set player 1 rank</button>
-        <button class="btn secondary" type="button" onclick="giveMoney()">Give player 1 100 million</button>
-        <hr>
+        <button class="text-button" type="button" onclick="setRank()">Set Player 1 Rank</button>
+        <button class="text-button" type="button" onclick="giveMoney()">Player 1 Give 100 Million</button>
+
+        <p class="section">{ Spawning }</p>
         <input id="OBJECT_NAME" type="text" placeholder="Object name" maxlength="100">
-        <button class="btn secondary" type="button" onclick="spawnObjectOnPlayerWithOffset(getValue('OBJECT_NAME'), 0, 0, 0, player1())">Spawn object on player 1</button>
-        <hr>
+        <button class="text-button" type="button" onclick="spawnObjectOnPlayerWithOffset(getValue('OBJECT_NAME'), 0, 0, 0, player1())">Spawn Object On Player 1</button>
         <input id="VEHICLE_NAME" type="text" placeholder="Vehicle name" maxlength="100">
-        <button class="btn secondary" type="button" onclick="spawnVehicle(player1(), getValue('VEHICLE_NAME'))">Spawn vehicle on player 1</button>
-        <hr>
+        <button class="text-button" type="button" onclick="spawnVehicle(player1(), getValue('VEHICLE_NAME'))">Spawn Vehicle On Player 1</button>
+
+        <p class="section">{ Animations }</p>
         <input id="ANIM_DICT" type="text" placeholder="Animation dictionary" maxlength="100">
         <input id="ANIM_NAME" type="text" placeholder="Animation name" maxlength="100">
-        <button class="btn secondary" type="button" onclick="playerAnimation(player1(), getValue('ANIM_DICT'), getValue('ANIM_NAME'))">Start animation on player 1</button>
-        <button class="btn secondary" type="button" onclick="clearTask(player1())">Stop player 1 animation</button>
+        <button class="text-button" type="button" onclick="playerAnimation(player1(), getValue('ANIM_DICT'), getValue('ANIM_NAME'))">Start Animation On Player 1</button>
+        <button class="text-button" type="button" onclick="clearTask(player1())">Stop Player 1 Animation</button>
       </section>
     </div>
-  </main>
+  </div>
 
-  <footer>Paradise SPRX by gopro_2027. Open source, no payments, no warranty.</footer>
+  <footer>Paradise SPRX by gopro_2027. Free and open source.</footer>
 
   <script src="/rtm/rtmlib.js"></script>
   <script>
@@ -119,5 +126,7 @@
       sendText(player1(), 'Join a new lobby for $');
     }
   </script>
+  <script src="/js/particles.min.js"></script>
+  <script src="/js/app.js"></script>
 </body>
 </html>
