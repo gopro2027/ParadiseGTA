@@ -1,2 +1,4 @@
 public/files/* -text
+public/files/**/* -text
 public/files/*.rpf filter=lfs diff=lfs merge=lfs -text
+public/files/eboot/**/*.BIN filter=lfs diff=lfs merge=lfs -text
