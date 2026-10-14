@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Install Wizard - Paradise SPRX</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap">
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    .step { margin-bottom: 26px; }
+    .choice { display: block; margin: 6px 0; letter-spacing: 2px; cursor: pointer; }
+    .choice input { margin-right: 10px; accent-color: #fff; }
+    .choice small { color: rgba(255, 255, 255, 0.65); letter-spacing: 1px; }
+    .tabs { display: flex; flex-wrap: wrap; gap: 4px 18px; margin: 8px 0 18px; }
+    .tabs button { background: none; border: 0; color: #fff; font: inherit; font-size: 14px; letter-spacing: 4px; text-transform: uppercase; text-decoration: underline; padding: 2px 4px 4px; cursor: pointer; }
+    .tabs button:hover, .tabs button.active { background: #fff; color: #2d3436; }
+    .mode { display: none; }
+    .mode.active { display: block; }
+    ol.actions { padding-left: 22px; }
+    ol.actions li { margin-bottom: 14px; }
+    ol.actions .text-button { padding-left: 0; }
+    .done { color: #55efc4; margin-left: 8px; }
+    pre.cmd { white-space: pre-wrap; word-break: break-all; background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.4); padding: 10px 12px; font-size: 13px; letter-spacing: 0; }
+    #summary { margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <div class="background"></div>
+  <div class="tint"></div>
+  <div id="particles-js"></div>
+
+  <div class="page">
+    <h1 class="title"><a href="/" style="text-decoration:none">Welcome To Paradise</a></h1>
+    <nav>
+      <a class="link" href="/gta.html">GTA</a>
+      <a class="link" href="/key">Free Key</a>
+      <a class="link" href="/install" aria-current="page">Install</a>
+      <a class="link" href="/rtm/">RTM</a>
+      <a class="link" href="/news.html">News</a>
+      <a class="link" href="/user/">User Panel</a>
+      <a class="link" href="https://github.com/gopro2027/ParadiseGTA">Source</a>
+    </nav>
+
+    <h1>Install Wizard</h1>
+    <p>Installs your Key.txt, ParadiseGTA.sprx and the EBOOT.BIN onto your PS3 over your home network. Your PC and PS3 need to be on the same network.</p>
+
+    <section class="step">
+      <p class="section">{ 1. Your Key }</p>
+      <input type="text" id="key" placeholder="Your 36 character key" maxlength="36" autocomplete="off" spellcheck="false">
+      <p class="muted">Don't have one? <a href="/key">Get a free key</a>.</p>
+    </section>
+
+    <section class="step">
+      <p class="section">{ 2. Your Firmware }</p>
+      <label class="choice"><input type="radio" name="eboot" value="hen-a" checked>HEN / CEX, EBOOT A <small>(start here)</small></label>
+      <label class="choice"><input type="radio" name="eboot" value="hen-b">HEN / CEX, EBOOT B <small>(if A black screens or freezes)</small></label>
+      <label class="choice"><input type="radio" name="eboot" value="hen-c">HEN / CEX, EBOOT C <small>(if B doesn't work either)</small></label>
+      <label class="choice"><input type="radio" name="eboot" value="dex">DEX</label>
+    </section>
+
+    <section class="step">
+      <p class="section">{ 3. Where Is GTA V (BLES01807) Installed? }</p>
+      <label class="choice"><input type="radio" name="location" value="/dev_hdd0/game/BLES01807/USRDIR" checked>Internal hard drive <small>/dev_hdd0/game/BLES01807/USRDIR</small></label>
+      <label class="choice"><input type="radio" name="location" value="/dev_usb001/game/BLES01807/USRDIR">External USB drive <small>/dev_usb001/game/BLES01807/USRDIR</small></label>
+      <label class="choice"><input type="radio" name="location" value="custom">Somewhere else</label>
+      <input type="text" id="custom-location" placeholder="/dev_usb000/game/BLES01807/USRDIR" hidden autocomplete="off" spellcheck="false">
+      <p class="muted">Your current EBOOT.BIN is backed up there as EBOOT.BIN.bak the first time.</p>
+    </section>
+
+    <section class="step">
+      <p class="section">{ 4. Your PS3's IP Address }</p>
+      <input type="text" id="ip" placeholder="192.168.1.20" autocomplete="off" spellcheck="false">
+      <p class="muted">On the PS3: Settings &gt; Network Settings &gt; Settings and Connection Status List.</p>
+    </section>
+
+    <p class="msg" id="form-msg" role="status"></p>
+
+    <section class="step">
+      <p class="section">{ 5. Install }</p>
+      <div class="tabs">
+        <button type="button" data-mode="webman" class="active">webMAN (no download)</button>
+        <button type="button" data-mode="ftp">FTP installer</button>
+      </div>
+
+      <div class="mode active" id="mode-webman">
+        <p>Uses webMAN MOD's web commands, so nothing gets installed on your PC. Each step opens your PS3's webMAN page in a small window. Do them in order.</p>
+        <p class="muted">The PS3 has to be on the XMB (not in a game) with webMAN MOD running. If nothing happens when you click a step, check that your browser allows popups for this site.</p>
+        <ol class="actions" id="webman-steps"></ol>
+        <p class="muted">The commands, if you'd rather paste them into your browser yourself:</p>
+        <pre class="cmd" id="webman-urls"></pre>
+      </div>
+
+      <div class="mode" id="mode-ftp">
+        <p>Downloads a small installer that copies the files over your PS3's FTP server (user <code>anonymous</code>, no password), the same way you would with an FTP program. It works with any PS3 FTP server, webMAN or not.</p>
+        <p>
+          <button class="text-button" type="button" id="ftp-bat">Download installer for Windows (.bat)</button><br>
+          <button class="text-button" type="button" id="ftp-sh">Download installer for Mac / Linux (.sh)</button>
+        </p>
+        <p class="muted">
+          Windows: double click <code>install-paradise.bat</code>. If Windows SmartScreen warns about it, click "More info" then "Run anyway". Needs Windows 10 or 11 (it uses the built in <code>curl</code>).<br>
+          Mac / Linux: open a terminal in the download folder and run <code>sh install-paradise.sh</code>.<br>
+          Make sure the FTP server is running on the PS3 (webMAN and multiMAN have one built in).
+        </p>
+      </div>
+    </section>
+  </div>
+
+  <footer>Paradise SPRX by gopro_2027. Free and open source.</footer>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    // files are pulled by the PS3 over plain HTTP, which it can do reliably, through the Cloudflare Worker
+    const PS3_FILES = 'http://paradisesprx-proxy.gopro2027.workers.dev/files';
+    const SITE_FILES = location.origin + '/files';
+    const STAGING = '/dev_hdd0/tmp/paradise_install';
+    const EBOOTS = { 'hen-a': 'HEN/CEX EBOOT A', 'hen-b': 'HEN/CEX EBOOT B', 'hen-c': 'HEN/CEX EBOOT C', dex: 'DEX EBOOT' };
+
+    function setMsg(text, kind) {
+      $('form-msg').textContent = text;
+      $('form-msg').className = 'msg' + (kind ? ' ' + kind : '');
+    }
+
+    function remembered(name) {
+      try { return localStorage.getItem(name) || ''; } catch (e) { return ''; }
+    }
+    function remember(name, value) {
+      try { localStorage.setItem(name, value); } catch (e) {}
+    }
+
+    // everything the steps need, or an error message
+    function readForm() {
+      const key = $('key').value.trim();
+      const ip = $('ip').value.trim();
+      const eboot = document.querySelector('input[name=eboot]:checked').value;
+      let dir = document.querySelector('input[name=location]:checked').value;
+      if (dir === 'custom') dir = $('custom-location').value.trim();
+      dir = dir.replace(/\/+$/, '').replace(/\/EBOOT\.BIN$/i, '');
+      if (!/^[A-Za-z0-9]{36}$/.test(key)) return { error: 'Enter your 36 character key in step 1.' };
+      if (!/^(\d{1,3}\.){3}\d{1,3}$/.test(ip) && !/^[A-Za-z0-9.-]+$/.test(ip)) return { error: "Enter your PS3's IP address in step 4." };
+      if (!/^\/dev_[A-Za-z0-9_]+(\/[A-Za-z0-9_. -]+)+$/.test(dir)) return { error: 'The game folder should look like /dev_hdd0/game/BLES01807/USRDIR.' };
+      remember('paradise-key', key);
+      remember('paradise-ps3-ip', ip);
+      return { key, ip, eboot, dir };
+    }
+
+    async function keyExists(key) {
+      try {
+        const res = await fetch('/api/key-info?key=' + encodeURIComponent(key));
+        return res.status !== 404;
+      } catch (e) {
+        return true; // don't block the install if the check itself fails
+      }
+    }
+
+    // ---- webMAN mode ----
+    function webmanSteps(f) {
+      const ps3 = 'http://' + f.ip;
+      return [
+        ['Clear the install folder', 'Removes files left from an earlier run.', `${ps3}/delete.ps3${STAGING}`],
+        ['Write Key.txt', 'Saves your key to /dev_hdd0/tmp/Key.txt.', `${ps3}/write.ps3/dev_hdd0/tmp/Key.txt&t=${f.key}`],
+        ['Download ParadiseGTA.sprx', 'The PS3 downloads it in the background. Wait for the download complete notification.', `${ps3}/xmb.ps3/download.ps3?to=${STAGING}&url=${PS3_FILES}/ParadiseGTA.sprx`],
+        [`Download the ${EBOOTS[f.eboot]}`, 'About 15 to 30 MB. Wait for the download complete notification.', `${ps3}/xmb.ps3/download.ps3?to=${STAGING}/eboot&url=${PS3_FILES}/eboot/${f.eboot}/EBOOT.BIN`],
+        ['Back up your current EBOOT.BIN', 'Renames it to EBOOT.BIN.bak. If a backup already exists this does nothing, so your original stays safe.', `${ps3}/rename.ps3${f.dir}/EBOOT.BIN&to=${f.dir}/EBOOT.BIN.bak`],
+        ['Install ParadiseGTA.sprx', 'Copies it to /dev_hdd0/tmp/ParadiseGTA.sprx.', `${ps3}/copy_ps3${STAGING}/ParadiseGTA.sprx&to=/dev_hdd0/tmp/ParadiseGTA.sprx`],
+        ['Install EBOOT.BIN', `Copies it to ${f.dir}/EBOOT.BIN. Then start GTA V!`, `${ps3}/copy_ps3${STAGING}/eboot/EBOOT.BIN&to=${f.dir}/EBOOT.BIN`],
+      ];
+    }
+
+    function renderWebman() {
+      const f = readForm();
+      const list = $('webman-steps');
+      list.innerHTML = '';
+      $('webman-urls').textContent = '';
+      if (f.error) {
+        list.innerHTML = '<li class="muted">Fill in steps 1 to 4 to see the install steps.</li>';
+        return;
+      }
+      const steps = webmanSteps(f);
+      steps.forEach(([title, note, url]) => {
+        const li = document.createElement('li');
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'text-button';
+        btn.textContent = title;
+        const done = document.createElement('span');
+        done.className = 'done';
+        btn.addEventListener('click', async () => {
+          if (title === 'Write Key.txt' && !(await keyExists(f.key))) {
+            return setMsg("That key doesn't exist. Check it for typos, or get a new one on the free key page.", 'error');
+          }
+          // one small window, reused for every step
+          const win = window.open(url, 'paradise-ps3', 'width=520,height=420');
+          if (!win) return setMsg('Your browser blocked the popup. Allow popups for this site, or paste the command below into your browser.', 'error');
+          setMsg('');
+          done.textContent = 'sent';
+        });
+        const p = document.createElement('div');
+        p.className = 'muted';
+        p.textContent = note;
+        li.append(btn, done, p);
+        list.append(li);
+      });
+      $('webman-urls').textContent = steps.map(([, , url]) => url).join('\n');
+    }
+
+    // ---- FTP installer ----
+    function batScript(f) {
+      const lines = [
+        '@echo off',
+        'setlocal',
+        'title Paradise SPRX installer',
+        'rem Generated by the Paradise SPRX install wizard. Copies Key.txt, ParadiseGTA.sprx and EBOOT.BIN',
+        'rem to your PS3 over FTP (user anonymous, no password) using the curl built into Windows 10/11.',
+        `set "PS3=${f.ip}"`,
+        `set "KEY=${f.key}"`,
+        `set "EBOOT_URL=${SITE_FILES}/eboot/${f.eboot}/EBOOT.BIN"`,
+        `set "SPRX_URL=${SITE_FILES}/ParadiseGTA.sprx"`,
+        `set "GAME_DIR=${f.dir}"`,
+        'set "WORK=%TEMP%\\paradise-install"',
+        'set "FTP=curl --silent --show-error --disable-epsv --connect-timeout 10"',
+        '',
+        'where curl >nul 2>nul || (echo curl was not found. This installer needs Windows 10 or 11.& goto failed)',
+        'if not exist "%WORK%" mkdir "%WORK%"',
+        '',
+        'echo Downloading ParadiseGTA.sprx...',
+        'curl --fail --silent --show-error --location -o "%WORK%\\ParadiseGTA.sprx" "%SPRX_URL%" || goto failed',
+        `echo Downloading the ${EBOOTS[f.eboot]}...`,
+        'curl --fail --silent --show-error --location -o "%WORK%\\EBOOT.BIN" "%EBOOT_URL%" || goto failed',
+        '<nul set /p "=%KEY%" > "%WORK%\\Key.txt"',
+        '',
+        'echo Connecting to the PS3 at %PS3%...',
+        '%FTP% --list-only "ftp://%PS3%/dev_hdd0/" >nul || (echo Could not connect. Check the IP address and that the FTP server is running on the PS3.& goto failed)',
+        '',
+        'echo Backing up your current EBOOT.BIN (skipped if a backup already exists)...',
+        '%FTP% --list-only "ftp://%PS3%%GAME_DIR%/" > "%WORK%\\listing.txt" 2>nul',
+        'findstr /i /e /c:"EBOOT.BIN.bak" "%WORK%\\listing.txt" >nul 2>nul',
+        'if errorlevel 1 %FTP% --list-only -Q "*RNFR %GAME_DIR%/EBOOT.BIN" -Q "*RNTO %GAME_DIR%/EBOOT.BIN.bak" "ftp://%PS3%/dev_hdd0/" >nul 2>nul',
+        '',
+        'echo Copying Key.txt...',
+        '%FTP% -T "%WORK%\\Key.txt" "ftp://%PS3%/dev_hdd0/tmp/Key.txt" || goto failed',
+        'echo Copying ParadiseGTA.sprx...',
+        '%FTP% -T "%WORK%\\ParadiseGTA.sprx" "ftp://%PS3%/dev_hdd0/tmp/ParadiseGTA.sprx" || goto failed',
+        'echo Copying EBOOT.BIN to %GAME_DIR%...',
+        '%FTP% --ftp-create-dirs -T "%WORK%\\EBOOT.BIN" "ftp://%PS3%%GAME_DIR%/EBOOT.BIN" || goto failed',
+        '',
+        'echo.',
+        'echo Done! Start GTA V on your PS3 and wait for "Welcome to Paradise!".',
+        'pause',
+        'exit /b 0',
+        '',
+        ':failed',
+        'echo.',
+        'echo The install did not finish. Fix the problem above and run this again.',
+        'pause',
+        'exit /b 1',
+      ];
+      return lines.join('\r\n') + '\r\n';
+    }
+
+    function shScript(f) {
+      return `#!/bin/sh
+# Generated by the Paradise SPRX install wizard. Copies Key.txt, ParadiseGTA.sprx and EBOOT.BIN
+# to your PS3 over FTP (user anonymous, no password) using curl.
+PS3='${f.ip}'
+KEY='${f.key}'
+EBOOT_URL='${SITE_FILES}/eboot/${f.eboot}/EBOOT.BIN'
+SPRX_URL='${SITE_FILES}/ParadiseGTA.sprx'
+GAME_DIR='${f.dir}'
+WORK="\${TMPDIR:-/tmp}/paradise-install"
+
+ftp() { curl --silent --show-error --disable-epsv --connect-timeout 10 "$@"; }
+fail() { echo; echo "$1"; echo "The install did not finish. Fix the problem above and run this again."; exit 1; }
+
+command -v curl >/dev/null 2>&1 || fail "curl was not found. Install curl and run this again."
+mkdir -p "$WORK" || fail "Could not create $WORK"
+
+echo "Downloading ParadiseGTA.sprx..."
+curl --fail --silent --show-error --location -o "$WORK/ParadiseGTA.sprx" "$SPRX_URL" || fail "Download failed."
+echo "Downloading the ${EBOOTS[f.eboot]}..."
+curl --fail --silent --show-error --location -o "$WORK/EBOOT.BIN" "$EBOOT_URL" || fail "Download failed."
+printf '%s' "$KEY" > "$WORK/Key.txt"
+
+echo "Connecting to the PS3 at $PS3..."
+ftp --list-only "ftp://$PS3/dev_hdd0/" >/dev/null || fail "Could not connect. Check the IP address and that the FTP server is running on the PS3."
+
+echo "Backing up your current EBOOT.BIN (skipped if a backup already exists)..."
+if ! ftp --list-only "ftp://$PS3$GAME_DIR/" 2>/dev/null | tr -d '\\r' | grep -qi 'EBOOT\\.BIN\\.bak$'; then
+  ftp --list-only -Q "*RNFR $GAME_DIR/EBOOT.BIN" -Q "*RNTO $GAME_DIR/EBOOT.BIN.bak" "ftp://$PS3/dev_hdd0/" >/dev/null 2>&1
+fi
+
+echo "Copying Key.txt..."
+ftp -T "$WORK/Key.txt" "ftp://$PS3/dev_hdd0/tmp/Key.txt" || fail "Copy failed."
+echo "Copying ParadiseGTA.sprx..."
+ftp -T "$WORK/ParadiseGTA.sprx" "ftp://$PS3/dev_hdd0/tmp/ParadiseGTA.sprx" || fail "Copy failed."
+echo "Copying EBOOT.BIN to $GAME_DIR..."
+ftp --ftp-create-dirs -T "$WORK/EBOOT.BIN" "ftp://$PS3$GAME_DIR/EBOOT.BIN" || fail "Copy failed."
+
+echo
+echo 'Done! Start GTA V on your PS3 and wait for "Welcome to Paradise!".'
+`;
+    }
+
+    function saveFile(name, text) {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([text], { type: 'application/octet-stream' }));
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    }
+
+    async function downloadInstaller(kind) {
+      const f = readForm();
+      if (f.error) return setMsg(f.error, 'error');
+      if (!(await keyExists(f.key))) return setMsg("That key doesn't exist. Check it for typos, or get a new one on the free key page.", 'error');
+      if (kind === 'bat') saveFile('install-paradise.bat', batScript(f));
+      else saveFile('install-paradise.sh', shScript(f));
+      setMsg('Installer downloaded. Run it with the PS3 on and connected.', 'ok');
+    }
+    $('ftp-bat').addEventListener('click', () => downloadInstaller('bat'));
+    $('ftp-sh').addEventListener('click', () => downloadInstaller('sh'));
+
+    // ---- form wiring ----
+    document.querySelectorAll('.tabs button').forEach((b) => b.addEventListener('click', () => {
+      document.querySelectorAll('.tabs button').forEach((x) => x.classList.toggle('active', x === b));
+      document.querySelectorAll('.mode').forEach((m) => m.classList.toggle('active', m.id === 'mode-' + b.dataset.mode));
+    }));
+    document.querySelectorAll('input[name=location]').forEach((r) => r.addEventListener('change', () => {
+      $('custom-location').hidden = document.querySelector('input[name=location]:checked').value !== 'custom';
+      renderWebman();
+    }));
+    document.querySelectorAll('input').forEach((i) => i.addEventListener('input', renderWebman));
+    document.querySelectorAll('input[name=eboot]').forEach((r) => r.addEventListener('change', renderWebman));
+
+    $('key').value = remembered('paradise-key');
+    $('ip').value = remembered('paradise-ps3-ip');
+    renderWebman();
+
+    // for tests
+    window.paradiseInstaller = { readForm, webmanSteps, batScript, shScript };
+  </script>
+  <script src="/js/particles.min.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>

@@ -6,6 +6,10 @@
       "destination": "/key.html"
     },
     {
+      "source": "/install",
+      "destination": "/install.html"
+    },
+    {
       "source": "/connecq.php",
       "destination": "/api/connecq"
     },

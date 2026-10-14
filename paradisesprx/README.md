@@ -7,6 +7,7 @@ Open source replacement for the old paradisesprx.net backend, built to run on Ve
 | Path | Purpose |
 |---|---|
 | `public/index.html`, `public/key.html` | Website: install instructions and the free key generator |
+| `public/install.html` | Install wizard: copies Key.txt, the SPRX and the EBOOT to a PS3 either with webMAN MOD web commands (the PS3 downloads the files over plain HTTP from the Worker) or with a generated FTP installer script (.bat / .sh using curl) |
 | `public/rtm/` | Web RTM page that sends commands to a menu through `gtartm.php` |
 | `public/check.html` | `READYFORCONNECTION`, the SPRX's connectivity check |
 | `public/files/` | Files the menu downloads (settings, textures, RPFs, scripts). Put your compiled `ParadiseGTA.sprx` here as well |
