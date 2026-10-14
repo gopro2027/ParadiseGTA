@@ -1,14 +1,14 @@
 // GET /res/getprop.php?hash=<signed int>   object name for a model hash (forge menu)
 import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import { getQuery, sendText } from '../lib/http.js';
+import { projectPath } from '../lib/paths.js';
 
 let byHash;
 let lines;
 
 function load() {
   if (byHash) return;
-  const text = readFileSync(join(process.cwd(), 'data', 'objects.txt'), 'utf8');
+  const text = readFileSync(projectPath('data', 'objects.txt'), 'utf8');
   byHash = new Map();
   lines = text.split(/\r?\n/);
   for (const line of lines) {

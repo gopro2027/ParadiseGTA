@@ -59,12 +59,7 @@ function serveStatic(req, res, path) {
       st = statSync(file);
     }
   } catch {
-    try {
-      file = file + '.html'; // cleanUrls
-      st = statSync(file);
-    } catch {
-      return notFound(res);
-    }
+    return notFound(res);
   }
   const headers = {
     'Content-Type': TYPES[extname(file)] || 'application/octet-stream',

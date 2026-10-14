@@ -1,33 +1,80 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "cleanUrls": true,
   "rewrites": [
-    { "source": "/connecq.php", "destination": "/api/connecq" },
-    { "source": "/keyStatus.php", "destination": "/api/keyStatus" },
-    { "source": "/beat.php", "destination": "/api/beat" },
-    { "source": "/gtartm.php", "destination": "/api/gtartm" },
-    { "source": "/rtm/gtartm.php", "destination": "/api/gtartm" },
-    { "source": "/chat/chat.php", "destination": "/api/chat" },
-    { "source": "/res/getprop.php", "destination": "/api/getprop" },
-    { "source": "/res/downloadsprx.php", "destination": "/api/downloadsprx" },
-    { "source": "/res/downloadasset2.php", "destination": "/api/downloadasset2" }
+    {
+      "source": "/key",
+      "destination": "/key.html"
+    },
+    {
+      "source": "/connecq.php",
+      "destination": "/api/connecq"
+    },
+    {
+      "source": "/keyStatus.php",
+      "destination": "/api/keyStatus"
+    },
+    {
+      "source": "/beat.php",
+      "destination": "/api/beat"
+    },
+    {
+      "source": "/gtartm.php",
+      "destination": "/api/gtartm"
+    },
+    {
+      "source": "/rtm/gtartm.php",
+      "destination": "/api/gtartm"
+    },
+    {
+      "source": "/chat/chat.php",
+      "destination": "/api/chat"
+    },
+    {
+      "source": "/res/getprop.php",
+      "destination": "/api/getprop"
+    },
+    {
+      "source": "/res/downloadsprx.php",
+      "destination": "/api/downloadsprx"
+    },
+    {
+      "source": "/res/downloadasset2.php",
+      "destination": "/api/downloadasset2"
+    }
   ],
   "headers": [
     {
       "source": "/files/(.*)",
       "headers": [
-        { "key": "Content-Type", "value": "application/octet-stream" },
-        { "key": "Cache-Control", "value": "public, max-age=300, no-transform" }
+        {
+          "key": "Content-Type",
+          "value": "application/octet-stream"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=300, no-transform"
+        }
       ]
     },
     {
       "source": "/check.html",
-      "headers": [{ "key": "Cache-Control", "value": "no-store" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
     }
   ],
   "functions": {
-    "api/getprop.js": { "includeFiles": "data/objects.txt" },
-    "api/downloadasset2.js": { "includeFiles": "public/files/*.dds" },
-    "api/downloadsprx.js": { "includeFiles": "public/files/ParadiseGTA*.sprx" }
+    "api/getprop.js": {
+      "includeFiles": "data/objects.txt"
+    },
+    "api/downloadasset2.js": {
+      "includeFiles": "public/files/*.dds"
+    },
+    "api/downloadsprx.js": {
+      "includeFiles": "public/files/ParadiseGTA*.sprx"
+    }
   }
 }

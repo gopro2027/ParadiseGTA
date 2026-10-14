@@ -1,8 +1,9 @@
 // GET /res/downloadasset2.php?key=<key>&filename=<name>.dds
 // Textures injected straight into game memory: "BEGINDATA\n" followed by the file without its 0x80 byte DDS header.
 import { readFile } from 'node:fs/promises';
-import { join, basename } from 'node:path';
+import { basename } from 'node:path';
 import { getQuery, sendText, sendBinary } from '../lib/http.js';
+import { projectPath } from '../lib/paths.js';
 
 const DDS_HEADER_SIZE = 0x80;
 
@@ -11,7 +12,7 @@ export default async function handler(req, res) {
   if (!/^[A-Za-z0-9_.-]+\.dds$/.test(name)) return sendText(res, 'PARADISE_ERROR');
   let file;
   try {
-    file = await readFile(join(process.cwd(), 'public', 'files', name));
+    file = await readFile(projectPath('public', 'files', name));
   } catch {
     return sendText(res, 'PARADISE_ERROR');
   }
