@@ -6,7 +6,7 @@ Open source replacement for the old paradisesprx.net backend, built to run on Ve
 
 | Path | Purpose |
 |---|---|
-| `public/index.html`, `public/key.html` | Website: install instructions and the free key generator (with key status and console reset) |
+| `public/index.html`, `public/key.html` | Website: install instructions and the free key generator |
 | `public/rtm/` | Web RTM page that sends commands to a menu through `gtartm.php` |
 | `public/check.html` | `READYFORCONNECTION`, the SPRX's connectivity check |
 | `public/files/` | Files the menu downloads (settings, textures, RPFs, scripts). Put your compiled `ParadiseGTA.sprx` here as well |
@@ -20,7 +20,7 @@ Open source replacement for the old paradisesprx.net backend, built to run on Ve
 | Request | Response |
 |---|---|
 | `GET /check.html` | `READYFORCONNECTION` |
-| `GET /connecq.php?sesh=<key>&data=<mac>&ver=5` | `BEGINDATA\n` then 60 plain decimal values, each padded with spaces to 20 characters (game addresses, see `lib/offsets.js`). The first console to use a key is registered to it. Unknown keys and other consoles get zeros |
+| `GET /connecq.php?sesh=<key>&data=<mac>&ver=5` | `BEGINDATA\n` then 60 plain decimal values, each padded with spaces to 20 characters (game addresses, see `lib/offsets.js`). Any console can use any valid key. Unknown keys get zeros |
 | `GET /keyStatus.php?key=<key>&id=<mac>` | `VALIDVALIDVALID`, or a `LOGIN FAILED` message the menu shows |
 | `GET /beat.php?k=<key>&psn=<name>` | `NONE`, or `PRINT:<message>` if `BEAT_MESSAGE` is set |
 | `GET /gtartm.php?...` | Web RTM relay (`generateRTMKey`, `retreiveData`, `setData`) |
@@ -92,10 +92,9 @@ Build `ParadiseGTA.sprx` from `../ParadiseGTA_optimized_2020` (Visual Studio 201
 
 ## Managing keys
 
-Keys are Redis hashes named `key:<KEY>` with these fields: `mac` (`0` = no console yet), `dev`, `customName` (chat name), `psn`, `beatTime`, `rtmKey`, `rtmData`. Use the Upstash data browser to manage them:
+Keys are Redis hashes named `key:<KEY>` with these fields: `dev`, `customName` (chat name), `psn`, `beatTime`, `rtmKey`, `rtmData`. Use the Upstash data browser to manage them:
 
 - Dev mode (unlocks the dev-only menu features and FCW values): set `dev` to `1`.
-- Free a key's console: set `mac` to `0`. Users can also do this themselves once a day on the key page.
 
 ## Local development
 

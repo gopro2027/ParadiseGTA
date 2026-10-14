@@ -48,23 +48,21 @@
     </div>
 
     <section class="panel" id="panel-key">
-      <p>Check your key, download its <code>Key.txt</code> again, or move it to a new console.</p>
+      <p>Check your key or download its <code>Key.txt</code> again.</p>
       <label for="key-input">Your key</label>
       <input type="text" id="key-input" placeholder="36 characters" maxlength="36" autocomplete="off" spellcheck="false">
       <div>
         <button class="text-button" id="check" type="button">Check Status</button>
         <button class="text-button" id="download-key" type="button">Download Key.txt</button>
-        <button class="text-button" id="reset" type="button">Reset Console</button>
       </div>
       <table class="status" id="status" hidden>
         <tr><td>Status</td><td id="st-status"></td></tr>
-        <tr><td>Console</td><td id="st-console"></td></tr>
         <tr><td>Chat name</td><td id="st-name"></td></tr>
         <tr><td>Created</td><td id="st-created"></td></tr>
         <tr><td>Last online</td><td id="st-seen"></td></tr>
       </table>
       <p class="msg" id="key-msg" role="status"></p>
-      <p class="muted">Keys never expire. A console reset lets the key register to the next console that uses it, once a day.<br>
+      <p class="muted">Keys never expire and work on any console.<br>
       Lost your key? Keys aren't tied to an email, but this browser remembers the last key you used. Otherwise, <a href="/key">generate a new one</a>.</p>
     </section>
 
@@ -203,7 +201,6 @@
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Something went wrong');
         $('st-status').textContent = 'Valid';
-        $('st-console').textContent = data.consoleBound ? 'Registered' : 'Not registered yet';
         $('st-name').textContent = data.chatName || 'PSN name';
         $('st-created').textContent = fmtDate(data.created);
         $('st-seen').textContent = fmtDate(data.lastSeen);
@@ -226,19 +223,6 @@
       a.click();
       a.remove();
       setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-    });
-
-    $('reset').addEventListener('click', async () => {
-      const key = readKey($('key-input'), $('key-msg'));
-      if (!key) return;
-      if (!confirm('Unregister the console from this key? The next console that uses it will be registered.')) return;
-      try {
-        const data = await post({ key, action: 'reset' });
-        setMsg($('key-msg'), data.message, 'ok');
-        $('status').hidden = true;
-      } catch (err) {
-        setMsg($('key-msg'), err.message, 'error');
-      }
     });
 
     async function saveName(name) {

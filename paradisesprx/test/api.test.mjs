@@ -60,7 +60,7 @@ test('generated keys use the original format and are unique', async () => {
   }
 });
 
-test('connecq sends the real addresses and binds the console', async () => {
+test('connecq sends the real addresses', async () => {
   const key = await createKey(store);
   const res = await call(connecq, `/connecq.php?sesh=${key}&data=${MAC}&ver=5&r=123`);
   const values = parseFields(res.text);
@@ -74,7 +74,6 @@ test('connecq sends the real addresses and binds the console', async () => {
   assert.equal(values[20], 0); // FCW only for dev keys
   assert.equal(values[58], 0x9FC1F4); // suggest
   assert.equal(values[59], 0x132AE30);
-  assert.equal((await getKey(store, key)).mac, MAC);
 });
 
 test('connecq dev keys get devmode and FCW values', async () => {
@@ -86,21 +85,22 @@ test('connecq dev keys get devmode and FCW values', async () => {
   assert.equal(values[24], 0xD04);
 });
 
-test('connecq rejects wrong versions and sends zeros for bad keys or other consoles', async () => {
+test('connecq rejects wrong versions, sends zeros for unknown keys and serves any console', async () => {
   const key = await createKey(store);
   assert.equal((await call(connecq, `/connecq.php?sesh=${key}&data=${MAC}&ver=4`)).text, '000');
   assert.ok(parseFields((await call(connecq, `/connecq.php?sesh=nope&data=${MAC}&ver=5`)).text).every((v) => v === 0));
-  await call(connecq, `/connecq.php?sesh=${key}&data=${MAC}&ver=5`);
-  assert.ok(parseFields((await call(connecq, `/connecq.php?sesh=${key}&data=-5&ver=5`)).text).every((v) => v === 0));
+  for (const mac of [MAC, '-5', '777']) {
+    assert.equal(parseFields((await call(connecq, `/connecq.php?sesh=${key}&data=${mac}&ver=5`)).text)[0], 0x1E6FF38);
+  }
 });
 
-test('keyStatus responses', async () => {
+test('keyStatus accepts any console with a valid key', async () => {
   const key = await createKey(store);
-  await call(connecq, `/connecq.php?sesh=${key}&data=${MAC}&ver=5`);
   assert.equal((await call(keyStatus, `/keyStatus.php?key=${key}&id=${MAC}`)).text, 'VALIDVALIDVALID');
-  assert.match((await call(keyStatus, `/keyStatus.php?key=${key}&id=1`)).text, /^LOGIN FAILED\nThis console is not registered on the server!/);
+  assert.equal((await call(keyStatus, `/keyStatus.php?key=${key}&id=1`)).text, 'VALIDVALIDVALID');
+  assert.equal((await call(keyStatus, `/keyStatus.php?key=${key}`)).text, 'VALIDVALIDVALID');
   assert.match((await call(keyStatus, `/keyStatus.php?key=abc&id=1`)).text, /^LOGIN FAILED\nInvalid key!/);
-  assert.equal((await call(keyStatus, `/keyStatus.php?key=${key}`)).text, 'LOGIN FAILED\nNo info');
+  assert.equal((await call(keyStatus, `/keyStatus.php?id=1`)).text, 'LOGIN FAILED\nNo info');
 });
 
 test('beat stores the psn name and answers NONE', async () => {
@@ -226,22 +226,14 @@ test('generate refuses to run deployed without Turnstile keys', async () => {
   }
 });
 
-test('key-info status and console reset', async () => {
+test('key-info returns key details', async () => {
   const key = await createKey(store);
-  await call(connecq, `/connecq.php?sesh=${key}&data=${MAC}&ver=5`);
   const info = JSON.parse((await call(keyInfo, `/api/key-info?key=${key}`)).text);
   assert.equal(info.chatName, null);
-  assert.equal(info.consoleBound, true);
+  assert.equal(info.lastSeen, null);
+  assert.ok(info.created > 0);
   assert.equal((await call(keyInfo, '/api/key-info?key=nope')).statusCode, 404);
-
-  const reset = await call(keyInfo, '/api/key-info', { method: 'POST', body: { key, action: 'reset' } });
-  assert.equal(reset.statusCode, 200);
-  assert.equal((await getKey(store, key)).mac, '0');
-  // a new console can now register
-  await call(connecq, `/connecq.php?sesh=${key}&data=777&ver=5`);
-  assert.equal((await call(keyStatus, `/keyStatus.php?key=${key}&id=777`)).text, 'VALIDVALIDVALID');
-  // only once per day
-  assert.equal((await call(keyInfo, '/api/key-info', { method: 'POST', body: { key, action: 'reset' } })).statusCode, 429);
+  assert.equal((await call(keyInfo, '/api/key-info', { method: 'POST', body: { key, action: 'reset' } })).statusCode, 400);
 });
 
 test('chat name can be set from the user panel and shows up in chat', async () => {

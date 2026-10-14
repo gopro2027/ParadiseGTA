@@ -111,10 +111,9 @@ async function main() {
   }
 
   check('keyStatus.php accepts this console', (await requestURL(`keyStatus.php?key=${key}&id=${mac}`)) === 'VALIDVALIDVALID');
-  const other = await requestURL(`keyStatus.php?key=${key}&id=12345`);
-  check('keyStatus.php rejects another console', other.includes('not registered'), JSON.stringify(other.slice(0, 60)));
+  check('keyStatus.php accepts another console', (await requestURL(`keyStatus.php?key=${key}&id=12345`)) === 'VALIDVALIDVALID');
   const otherFields = await afterBeginData(`connecq.php?sesh=${key}&data=12345&ver=5`, 60 * 20);
-  check('connecq.php sends zeros to another console', otherFields && StoUI(otherFields.subarray(0, 20).toString()) === 0);
+  check('connecq.php serves another console', otherFields && StoUI(otherFields.subarray(0, 20).toString()) === 0x1E6FF38);
   const invalid = await requestURL('keyStatus.php?key=000000000000000000000000000000000000&id=1');
   check('keyStatus.php rejects an unknown key', invalid.startsWith('LOGIN FAILED\nInvalid key!'));
 
