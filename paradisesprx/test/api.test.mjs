@@ -27,8 +27,8 @@ beforeEach(() => {
 });
 
 // minimal Node req/res stand-ins
-async function call(handler, url, { method = 'GET', body, ip = '1.2.3.4' } = {}) {
-  const req = { url, method, headers: { 'x-forwarded-for': ip }, body };
+async function call(handler, url, { method = 'GET', body, ip = '1.2.3.4', cookie } = {}) {
+  const req = { url, method, headers: { 'x-forwarded-for': ip, ...(cookie ? { cookie } : {}) }, body };
   const res = {
     statusCode: 200,
     headers: {},
@@ -160,15 +160,72 @@ test('downloadasset2 sends BEGINDATA and the texture without its header', async 
   assert.equal((await call(downloadasset2, '/res/downloadasset2.php?filename=../../package.json')).text, 'PARADISE_ERROR');
 });
 
-test('generate endpoint and rate limit', async () => {
-  const first = await call(generate, '/api/generate', { method: 'POST' });
-  assert.equal(first.statusCode, 200);
-  const { key } = JSON.parse(first.text);
-  assert.ok(await getKey(store, key));
-  for (let i = 0; i < 4; i++) assert.equal((await call(generate, '/api/generate', { method: 'POST' })).statusCode, 200);
-  assert.equal((await call(generate, '/api/generate', { method: 'POST' })).statusCode, 429);
-  assert.equal((await call(generate, '/api/generate', { method: 'POST', ip: '5.6.7.8' })).statusCode, 200);
-  assert.equal((await call(generate, '/api/generate')).statusCode, 405);
+// Turnstile siteverify stub: only the token "good" passes
+function stubTurnstile() {
+  const realFetch = globalThis.fetch;
+  const calls = [];
+  globalThis.fetch = async (url, opts) => {
+    assert.equal(url, 'https://challenges.cloudflare.com/turnstile/v0/siteverify');
+    const params = new URLSearchParams(opts.body);
+    calls.push(Object.fromEntries(params));
+    return { json: async () => ({ success: params.get('response') === 'good' }) };
+  };
+  return { calls, restore: () => { globalThis.fetch = realFetch; } };
+}
+
+const cookieFrom = (res) => res.headers['set-cookie'].split(';')[0];
+
+test('generate requires the captcha and gives one key per session', async () => {
+  const stub = stubTurnstile();
+  try {
+    const info = JSON.parse((await call(generate, '/api/generate')).text);
+    assert.equal(info.siteKey, '1x00000000000000000000AA'); // Cloudflare test key when not configured
+    assert.equal(info.key, null);
+
+    assert.equal((await call(generate, '/api/generate', { method: 'POST', body: {} })).statusCode, 403);
+    assert.equal((await call(generate, '/api/generate', { method: 'POST', body: { token: 'bad' } })).statusCode, 403);
+
+    const first = await call(generate, '/api/generate', { method: 'POST', body: { token: 'good' } });
+    assert.equal(first.statusCode, 200);
+    const { key } = JSON.parse(first.text);
+    assert.ok(await getKey(store, key));
+    assert.equal(stub.calls.at(-1).remoteip, '1.2.3.4');
+    const cookie = cookieFrom(first);
+    assert.match(first.headers['set-cookie'], /HttpOnly; Secure; SameSite=Strict$/);
+
+    // same session: the same key comes back, no captcha needed, nothing new is created
+    const again = JSON.parse((await call(generate, '/api/generate', { method: 'POST', body: {}, cookie })).text);
+    assert.deepEqual(again, { key, existing: true });
+    assert.equal(JSON.parse((await call(generate, '/api/generate', { cookie })).text).key, key);
+
+    // a cookie with a key that doesn't exist is ignored
+    const fake = await call(generate, '/api/generate', { method: 'POST', body: {}, cookie: 'paradise_key=' + 'a'.repeat(36) });
+    assert.equal(fake.statusCode, 403);
+  } finally {
+    stub.restore();
+  }
+});
+
+test('generate rate limit per IP', async () => {
+  const stub = stubTurnstile();
+  try {
+    for (let i = 0; i < 5; i++) assert.equal((await call(generate, '/api/generate', { method: 'POST', body: { token: 'good' } })).statusCode, 200);
+    assert.equal((await call(generate, '/api/generate', { method: 'POST', body: { token: 'good' } })).statusCode, 429);
+    assert.equal((await call(generate, '/api/generate', { method: 'POST', body: { token: 'good' }, ip: '5.6.7.8' })).statusCode, 200);
+    assert.equal((await call(generate, '/api/generate', { method: 'PUT' })).statusCode, 405);
+  } finally {
+    stub.restore();
+  }
+});
+
+test('generate refuses to run deployed without Turnstile keys', async () => {
+  process.env.VERCEL_ENV = 'production';
+  try {
+    assert.equal((await call(generate, '/api/generate', { method: 'POST', body: { token: 'good' } })).statusCode, 503);
+    assert.equal(JSON.parse((await call(generate, '/api/generate')).text).siteKey, null);
+  } finally {
+    delete process.env.VERCEL_ENV;
+  }
 });
 
 test('key-info status and console reset', async () => {

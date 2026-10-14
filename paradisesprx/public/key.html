@@ -26,7 +26,11 @@
     <div class="grid">
       <section class="card">
         <h2>Generate a key</h2>
-        <button class="btn" id="generate" type="button">Generate free key</button>
+        <div id="generator">
+          <p class="muted">One key per visit. Complete the check below, then generate your key.</p>
+          <div id="captcha" style="min-height:65px;margin-bottom:12px"></div>
+          <button class="btn" id="generate" type="button" disabled>Generate free key</button>
+        </div>
         <div id="result" hidden>
           <span class="key" id="key"></span>
           <div class="row">
@@ -71,24 +75,61 @@
       try { localStorage.setItem('paradise-key', key); } catch (e) {}
     }
 
+    let captchaToken = '';
+    let widgetId = null;
+
+    function showKey(key, message) {
+      currentKey = key;
+      $('key').textContent = key;
+      $('result').hidden = false;
+      $('generator').hidden = true;
+      $('lookup-key').value = key;
+      rememberKey(key);
+      setMsg($('generate-msg'), message, 'ok');
+    }
+
+    function resetCaptcha() {
+      captchaToken = '';
+      $('generate').disabled = true;
+      if (widgetId !== null && window.turnstile) window.turnstile.reset(widgetId);
+    }
+
+    // called by the Turnstile script once it has loaded
+    window.onTurnstileLoad = async () => {
+      try {
+        const res = await fetch('/api/generate', { credentials: 'same-origin' });
+        const data = await res.json();
+        if (data.key) return showKey(data.key, 'You already generated a key this visit. Here it is again.');
+        if (!data.siteKey) return setMsg($('generate-msg'), 'Key generation is not available right now.', 'error');
+        widgetId = window.turnstile.render('#captcha', {
+          sitekey: data.siteKey,
+          theme: 'dark',
+          callback: (token) => { captchaToken = token; $('generate').disabled = false; },
+          'expired-callback': resetCaptcha,
+          'error-callback': () => { resetCaptcha(); setMsg($('generate-msg'), 'The captcha could not load. Refresh the page and try again.', 'error'); },
+        });
+      } catch (err) {
+        setMsg($('generate-msg'), 'Could not reach the server. Refresh the page and try again.', 'error');
+      }
+    };
+
     $('generate').addEventListener('click', async () => {
-      const btn = $('generate');
-      btn.disabled = true;
+      if (!captchaToken) return;
+      $('generate').disabled = true;
       setMsg($('generate-msg'), 'Generating...');
       try {
-        const res = await fetch('/api/generate', { method: 'POST' });
+        const res = await fetch('/api/generate', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: captchaToken }),
+        });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Something went wrong');
-        currentKey = data.key;
-        $('key').textContent = currentKey;
-        $('result').hidden = false;
-        $('lookup-key').value = currentKey;
-        rememberKey(currentKey);
-        setMsg($('generate-msg'), 'Key generated.', 'ok');
+        showKey(data.key, data.existing ? 'You already generated a key this visit. Here it is again.' : 'Key generated.');
       } catch (err) {
         setMsg($('generate-msg'), err.message, 'error');
-      } finally {
-        btn.disabled = false;
+        resetCaptcha();
       }
     });
 
@@ -161,5 +202,6 @@
       if (saved) $('lookup-key').value = saved;
     } catch (e) {}
   </script>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=onTurnstileLoad" async defer></script>
 </body>
 </html>

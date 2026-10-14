@@ -72,9 +72,16 @@ async function afterBeginData(path, size) {
 
 async function getKey() {
   if (args.key) return String(args.key);
-  const res = await fetch(`http://${hostHeader}/api/generate`, { method: 'POST' });
+  // Only works against a local dev server, which uses Cloudflare's always-pass Turnstile test keys.
+  // Against a real deployment, generate a key on the website and pass it with --key.
+  const res = await fetch(`http://${hostHeader}/api/generate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token: 'XXXX.DUMMY.TOKEN.XXXX' }),
+  });
   const json = await res.json();
-  check('generate free key', res.ok && typeof json.key === 'string' && json.key.length === 36, json.key || json.error);
+  check('generate free key', res.ok && typeof json.key === 'string' && json.key.length === 36,
+    json.key || `${json.error} (generate a key on the website and pass it with --key)`);
   return json.key;
 }
 

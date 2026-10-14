@@ -30,7 +30,7 @@ Open source replacement for the old paradisesprx.net backend, built to run on Ve
 | `GET /res/downloadsprx.php?filesize` | `<size> F` for `files/ParadiseGTA.sprx` (only used when `AUTO_UPDATE` is enabled in `prx.cpp`) |
 | `GET /files/<name>` | Static download; the SPRX reads `Content-Length` |
 
-The website uses `POST /api/generate` and `GET/POST /api/key-info`.
+The website uses `GET/POST /api/generate` (captcha protected, one key per session) and `GET/POST /api/key-info`.
 
 ## Deploying
 
@@ -43,12 +43,21 @@ The website uses `POST /api/generate` and `GET/POST /api/key-info`.
 5. Under *Settings → Environments → Production*, set branch tracking to `offline-version` so pushes to that branch deploy to production.
 6. Under *Settings → Deployment Protection*, limit Vercel Authentication to preview deployments. Otherwise `paradisesprx.vercel.app` asks visitors to log in to Vercel.
 
+Required environment variables for the free key page (Cloudflare Turnstile captcha). Create a Turnstile widget for your site's hostname in the Cloudflare dashboard (or API) and set:
+
+| Variable | |
+|---|---|
+| `TURNSTILE_SITE_KEY` | Public site key of the widget |
+| `TURNSTILE_SECRET_KEY` | Secret key (store as a sensitive variable) |
+
+Without them, deployed key generation is disabled. Local development falls back to Cloudflare's always-pass test keys. Each browser session gets one key: the key is remembered in a session cookie, and asking again returns the same key.
+
 Optional environment variables:
 
 | Variable | Default | |
 |---|---|---|
 | `PARADISE_WEBSITE` | `paradisesprx.vercel.app` | Site name shown in login error messages |
-| `KEYS_PER_HOUR` | `5` | Free keys per IP per hour |
+| `KEYS_PER_HOUR` | `5` | Free keys per IP per hour, on top of the captcha and one key per session |
 | `BEAT_MESSAGE` | none | Message shown in game to everyone online |
 
 ### 2. Plain HTTP in front of Vercel (required for the PS3)
