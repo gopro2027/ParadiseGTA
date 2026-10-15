@@ -39,6 +39,10 @@ All protection layers from the paid era are gone: server-data XOR (`dataDecrypto
   - The load-into-freemode sequence finished, then the game hung in state 32 / sub-state 18 (`func_2428`) on "Loading GTA Online".
   - 1.27 added `func_893` there: it calls `ON_ENTER_MP` (0xC65586A9), then waits for `HAVE_ALL_STREAMING_REQUESTS_COMPLETED(player ped)` (0xF9FB4B71) and for `ARE_ANY_CCS_PENDING` (0x0AF83036, the MP content changesets) to be false.
   - `TempCharacter.h` OPD-hooks `ARE_ANY_CCS_PENDING` to report idle to scripts after 10 s busy, only for a temp character in sub-state 18. This is untested.
+- **Second hardware test:**
+  - The CCS wait finished on its own.
+  - Sub-state 18 then retries `func_2407`'s session native every frame and never gets a session.
+  - The fallback switches session type `Global_1315323` from 0 (matchmake, `NETWORK_SESSION_ENTER`) to 1 (host, `NETWORK_SESSION_HOST`) after 15 s. This is untested.
 - **Script locals:** `Local_152.imm_N` is not local index 152+N (it always read 0), so use globals for diagnostics.
 - **Research:** `research/temp-character-mode.md` has the script research and the open questions.
 

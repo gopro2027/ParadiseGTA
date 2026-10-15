@@ -147,6 +147,24 @@ Implemented in `ParadiseGTA_optimized_2020/TempCharacter.h`, untested on hardwar
   - OPD-hooks `ARE_ANY_CCS_PENDING` so scripts see 0, but only for a temp character in sub-state 18, after 10 s busy, and once the ped has streamed.
 - **Script locals:** reading `Local_152.imm_1357` as local index 1509 always gave 0. So locals can't be addressed as `152 + imm` this way; use globals.
 
+### Second hardware test
+
+- **The CCS wait wasn't the blocker.** `ON_ENTER_MP` ran during state 5, `ARE_ANY_CCS_PENDING` was briefly 1, then the changesets finished on their own (`done 1`). The hook never had to force it.
+- **Sub-state 18 still hung,** with every `func_893` input satisfied: `newchar` slot 0 = 1, streamed, nothing pending. No session was active, starting or busy.
+- **Once its waits pass, sub-state 18 calls `func_2407` (1.27 `maintransition.c:159695`).** That function starts the session. It moves on to sub-state 21 only when the session native returns true; otherwise it retries every frame. Which native depends on the session type `Global_1315323`:
+  - 0 (default): `NETWORK_SESSION_ENTER` (matchmake)
+  - 1 / 11: `NETWORK_SESSION_HOST(gamemode, 18, 0/1)`
+  - 10: `NETWORK_SESSION_HOST(gamemode, 1, 1)`
+  - 6: `NETWORK_SESSION_HOST_FRIENDS_ONLY`
+  - 2–5 and 8: `NETWORK_SESSION_HOST_CLOSED` (`0x8AC9EA19`)
+  - 9: `NETWORK_SESSION_FRIEND_MATCHMAKING` (`0x4E53202A`)
+  - 12: `NETWORK_SESSION_CREW_MATCHMAKING` (`0xD7624E6B`)
+  - `Global_1312316` set: `NETWORK_SESSION_ACTIVITY_QUICKMATCH` (`0x3F75CC38`)
+- **This code is unchanged since 1.12** (1.12 `func_2066`, `maintransition.csc.c:135012`). If the native keeps failing, the block is in the 1.27 executable, not the scripts.
+- **Next build:**
+  - Debug only: OPD-hooks all seven session natives and logs the results of maintransition's calls, plus session type, gamemode and invite flags.
+  - Fallback for a temp character, always on: after 15 s in sub-state 18 with session type 0 and no session, set the type to 1 so the script hosts its own public session.
+
 ## How to re-enable it from the SPRX (recommended: drive the state machine)
 
 No script edits: replay the deleted `func_186`/`func_189` from the menu thread, using the global helpers the SPRX already has (`Read_Global`/`Write_Global` in `GlobalStuff.h`, against 1.27 numbering).

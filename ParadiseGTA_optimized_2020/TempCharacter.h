@@ -156,18 +156,114 @@ namespace TempCharacter {
 		}
 	}
 
+	//Second test: ON_ENTER_MP and the changesets finished on their own, but the join still sat in sub-state 18 with no
+	//session. Once its waits pass, sub-state 18 calls func_2407 (1.27 maintransition.c:159695), which starts the session and
+	//only moves on to sub-state 21 when the session native returns true; otherwise it retries every frame. The native depends
+	//on the session type (Global_1315323): the default 0 matchmakes into a public session (NETWORK_SESSION_ENTER), 1 hosts a
+	//public session (NETWORK_SESSION_HOST(gamemode, 18, 0)). This part of the script is unchanged since 1.12, so if the native
+	//keeps failing it's the 1.27 game code refusing without Rockstar's servers. Fallback: if a temporary character has been in
+	//sub-state 18 for HOST_FALLBACK_AFTER_MS with session type 0 and no session, switch to hosting.
+	const int G_SESSION_TYPE = 1315323;//func_307
+	const int G_GAMEMODE = 19940;//func_2713 / func_51, 0 = freemode
+	const int SESSION_TYPE_MATCHMAKE = 0;
+	const int SESSION_TYPE_HOST_PUBLIC = 1;
+	const int HOST_FALLBACK_AFTER_MS = 15000;
+
+	int substateEnterMpSince = 0;
+
+	void updateSessionFallback() {
+		bool waiting = Read_Global(G_TEMP_CHARACTER) == 1 && Read_Global(G_TRANSITION_SUBSTATE) == SUBSTATE_ENTER_MP && Read_Global(G_ENTER_MP_DONE) != 0;
+		if (!waiting) {
+			substateEnterMpSince = 0;
+			return;
+		}
+		if (NETWORK::NETWORK_IS_SESSION_STARTED() || NETWORK::NETWORK_IS_SESSION_ACTIVE() || NETWORK::NETWORK_IS_SESSION_BUSY())
+			return;
+		int now = GAMEPLAY::GET_GAME_TIMER();
+		if (substateEnterMpSince == 0)
+			substateEnterMpSince = now;
+		if (Read_Global(G_SESSION_TYPE) == SESSION_TYPE_MATCHMAKE && now - substateEnterMpSince >= HOST_FALLBACK_AFTER_MS) {
+			Write_Global(G_SESSION_TYPE, SESSION_TYPE_HOST_PUBLIC);
 #if TEMPCHAR_DEBUG == 1
+			debugLog("[tempchar] no session after %ims in sub-state 18, switching session type 0 -> 1 (host)\n", now - substateEnterMpSince);
+#endif
+		}
+	}
+
+#if TEMPCHAR_DEBUG == 1
+	//logs the result of every session native func_2407 can call, when maintransition calls it: the first call, every change
+	//of result, and every 600th call (func_2407 retries every frame)
+	struct LoggedNative {
+		unsigned int hash;
+		const char* name;
+		unsigned int func;
+		unsigned int toc;
+		int lastResult;
+		int calls;
+	};
+	LoggedNative sessionNatives[] = {
+		{0x543CD2BE, "NETWORK_SESSION_ENTER", 0, 0, -1, 0},
+		{0x4E53202A, "NETWORK_SESSION_FRIEND_MATCHMAKING", 0, 0, -1, 0},
+		{0xD7624E6B, "NETWORK_SESSION_CREW_MATCHMAKING", 0, 0, -1, 0},
+		{0x3F75CC38, "NETWORK_SESSION_ACTIVITY_QUICKMATCH", 0, 0, -1, 0},
+		{0x6716460F, "NETWORK_SESSION_HOST", 0, 0, -1, 0},
+		{0x8AC9EA19, "NETWORK_SESSION_HOST_CLOSED", 0, 0, -1, 0},
+		{0x26864403, "NETWORK_SESSION_HOST_FRIENDS_ONLY", 0, 0, -1, 0},
+	};
+	const int SESSION_NATIVE_COUNT = sizeof(sessionNatives) / sizeof(sessionNatives[0]);
+
+	void callLoggedSessionNative(int i, NativeArg_s* args) {
+		LoggedNative* n = &sessionNatives[i];
+		call<int>(n->func, n->toc)(args);
+		if (args == NativeArg || getCurrentGtaThread()->nameHash != MAINTRANSITION_HASH)
+			return;
+		int result = *args->ReturnValue;
+		n->calls++;
+		if (n->calls == 1 || result != n->lastResult || n->calls % 600 == 0)
+			debugLog("[tempchar] %s(%i, ...) = %i, call %i, session type %i\n", n->name, args->ArgValues[0].i, result, n->calls, Read_Global(G_SESSION_TYPE));
+		n->lastResult = result;
+	}
+
+	#define SESSION_NATIVE_HOOK(i) void sessionNativeHook##i(NativeArg_s* args) { callLoggedSessionNative(i, args); }
+	SESSION_NATIVE_HOOK(0)
+	SESSION_NATIVE_HOOK(1)
+	SESSION_NATIVE_HOOK(2)
+	SESSION_NATIVE_HOOK(3)
+	SESSION_NATIVE_HOOK(4)
+	SESSION_NATIVE_HOOK(5)
+	SESSION_NATIVE_HOOK(6)
+	void (*sessionNativeHooks[])(NativeArg_s*) = {
+		sessionNativeHook0, sessionNativeHook1, sessionNativeHook2, sessionNativeHook3,
+		sessionNativeHook4, sessionNativeHook5, sessionNativeHook6,
+	};
+
+	int hookSessionNatives() {
+		int hooked = 0;
+		for (int i = 0; i < SESSION_NATIVE_COUNT; i++) {
+			int opd = getOPDOfNative(sessionNatives[i].hash);
+			if (opd == -1)
+				continue;
+			sessionNatives[i].func = *(unsigned int*)opd;
+			sessionNatives[i].toc = *(unsigned int*)(opd + 4);
+			*(uint64_t*)opd = *(uint64_t*)((int)sessionNativeHooks[i]);
+			hooked++;
+		}
+		return hooked;
+	}
+
 	const int G_CHAR_CHANGE_STEP = 1325170 + 600;//func_2445 step, the last step of the load-into-freemode sequence (func_2440)
 
 	//logs every change of the transition state, plus a heartbeat every 5 seconds outside state 0, so a hang shows what
 	//the transition is waiting on
 	void logState() {
 		static bool loggedStart = false;
-		static int lastState = -1, lastSubstate = -1, lastReason = -1, lastCharStep = -1, lastSetup = -1, lastForce = -1;
+		static int lastState = -1, lastSubstate = -1, lastReason = -1, lastCharStep = -1, lastSetup = -1, lastForce = -1, lastSessionType = -1;
 		static int nextHeartbeat = 0;
 		if (!loggedStart) {
 			loggedStart = true;
-			debugLog("[tempchar] --- maintransition hook running, ARE_ANY_CCS_PENDING hooked %i ---\n", hookedCcsPending ? 1 : 0);
+			int sessionHooks = hookSessionNatives();
+			debugLog("[tempchar] --- maintransition hook running, ARE_ANY_CCS_PENDING hooked %i, session natives hooked %i/%i ---\n",
+				hookedCcsPending ? 1 : 0, sessionHooks, SESSION_NATIVE_COUNT);
 		}
 		int state = Read_Global(G_TRANSITION_STATE);
 		int substate = Read_Global(G_TRANSITION_SUBSTATE);
@@ -175,8 +271,10 @@ namespace TempCharacter {
 		int charStep = Read_Global(G_CHAR_CHANGE_STEP);
 		int setup = Read_Global(G_ON_ENTER_MP_CALLED);
 		int force = forceCcsIdle ? 1 : 0;
+		int sessionType = Read_Global(G_SESSION_TYPE);
 		int now = GAMEPLAY::GET_GAME_TIMER();
-		bool changed = state != lastState || substate != lastSubstate || reason != lastReason || charStep != lastCharStep || setup != lastSetup || force != lastForce;
+		bool changed = state != lastState || substate != lastSubstate || reason != lastReason || charStep != lastCharStep || setup != lastSetup ||
+			force != lastForce || sessionType != lastSessionType;
 		if (!changed && (state == 0 || now < nextHeartbeat))
 			return;
 		lastState = state;
@@ -185,6 +283,7 @@ namespace TempCharacter {
 		lastCharStep = charStep;
 		lastSetup = setup;
 		lastForce = force;
+		lastSessionType = sessionType;
 		nextHeartbeat = now + 5000;
 		debugLog("[tempchar] %s t %i state %i sub %i reason %i charstep %i cloud %i temp %i\n", changed ? "change" : "beat", now,
 			state, substate, reason, charStep, (int)NETWORK::NETWORK_IS_CLOUD_AVAILABLE(), Read_Global(G_TEMP_CHARACTER));
@@ -194,6 +293,8 @@ namespace TempCharacter {
 		debugLog("[tempchar]   net signed %i canenter %i ingame %i session %i insession %i busy %i\n",
 			(int)NETWORK::NETWORK_IS_SIGNED_ONLINE(), (int)NETWORK::NETWORK_CAN_ENTER_MULTIPLAYER(), (int)NETWORK::NETWORK_IS_GAME_IN_PROGRESS(),
 			(int)NETWORK::NETWORK_IS_SESSION_ACTIVE(), (int)NETWORK::NETWORK_IS_IN_SESSION(), (int)NETWORK::NETWORK_IS_SESSION_BUSY());
+		debugLog("[tempchar]   sessiontype %i gamemode %i started %i invite %i launcher %i 2404086 %i\n", sessionType, Read_Global(G_GAMEMODE),
+			(int)NETWORK::NETWORK_IS_SESSION_STARTED(), Read_Global(1315333), Read_Global(1312316), Read_Global(2404086));
 		debugLog("[tempchar]   ros %i %i %i %i %i %i\n", (int)NETWORK::_0x97287D68(), (int)NETWORK::_0xBDBB5948(),
 			(int)NETWORK::_0xD3BBE42F(), (int)DLC2::_0xF79A97F5(), (int)DLC2::_0xF69B729C(), (int)NETWORK::_0x3FB40673());
 	}
@@ -217,6 +318,7 @@ namespace TempCharacter {
 			create();
 		}
 		updateCcsWorkaround();
+		updateSessionFallback();
 	}
 
 }
