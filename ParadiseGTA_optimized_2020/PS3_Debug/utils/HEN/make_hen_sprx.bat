@@ -18,6 +18,6 @@ ftp -n -s:ftpcmd.dat 192.168.1.183
 del ftpcmd.dat
 
 del ParadiseGTA.prx
-del ../../ParadiseGTA.sprx
+del ..\..\ParadiseGTA.sprx
 
 PAUSE
