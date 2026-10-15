@@ -56,6 +56,11 @@
       <DataStripping>StripFuncsAndData</DataStripping>
       <GenerateSnMapFile>FullMapFile</GenerateSnMapFile>
     </Link>
+    <PostBuildEvent>
+      <Command>cd /d "$(OutDir)utils\HEN"
+call make_hen_sprx.bat</Command>
+      <Message>Converting the SPRX for HEN and sending it to the PS3 (utils\HEN\make_hen_sprx.bat)</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|PS3'">
     <ClCompile>
