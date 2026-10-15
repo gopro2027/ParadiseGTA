@@ -252,6 +252,15 @@ The goal: keep the temporary character between sessions and reboots by saving MP
 
   Not patched: `0x3298A4` (tunables) and the CCloudManager/UGC callers in the savegame module.
 - **Memory:** the first build had a 64 KB static load buffer in the SPRX and the game crashed at boot (empty log). Loads now stream through a 256-byte stack chunk into the game's own grow buffer, and the SPRX allocates nothing.
+- **First hardware test of local saves: nothing saved.**
+  - All 12 cloud checks were patched, and the manager flags were 0x80, not blocked, needs-reload 0.
+  - Every `STAT_SAVE` returned 0, and neither the local GET nor the local POST was ever called.
+  - Cause: the save function `0x32C5B0` also requires the MP profile stats (`rlProfileStats`, object `0x224A968`) to have been read: `0x12E8A70(obj, 2)` checks `obj+0x34`. The read is requested from Rockstar's servers by `0x12E8C5C`.
+  - The manager update `0x32BD3C` keeps trying to start that read. When it can't, it marks the slot being loaded as failed (`+0x64`), which the save function also refuses.
+  - Fix: patch the `bl 0x12E8A70` at `0x32C138` (update), `0x32C68C` (save) and `0x32EFF0` (`0x32EF48`, "ready to save") to `li r3,1`, and clear `+0x64` in `create()`. The callers in the native handlers (`0x433390`, `0x4333F4`, `0x433D2C`) are left alone.
+  - The log now also shows the load-failed mask, the queued-save mask, `+0x180` and `obj+0x34`, plus the `STAT_SAVE` gates before each periodic save.
+- **Also seen in that test:** after loading into freemode (sub-state 66), the transition went 2 → 19 → 18 → 21 … → 66 again, i.e. it joined another session. Not looked into yet.
+
 - **Ghidra setup for this:** project `gta_full` with full auto-analysis, r2 preset by `SetToc.java`, `EBOOT.map` names applied by `ApplyMap.java`. `FixHelpers.java` clears the wrong "no return" flag on the register save helpers (`0x150A000`–`0x150C000`), otherwise every function gets cut short. `XRefs.java` lists references.
 
 ## How to re-enable it from the SPRX (recommended: drive the state machine)

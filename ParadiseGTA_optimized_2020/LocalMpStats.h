@@ -190,17 +190,25 @@ namespace LocalMpStats {
 		return site + offset == target;
 	}
 
-	bool installed = false;
+	//Online profile stats (rlProfileStats, object at 0x224A968, read for MP = type 2): the stats save manager wants the
+	//server-side MP profile stats read before it saves. 0x12E8A70(obj, 2) checks obj+0x34 ("read done"). Without the
+	//Rockstar servers the read never happens, so (first hardware test of the local saves) every STAT_SAVE returned 0:
+	//the save function refuses, and the manager update keeps trying to start the read and, when it can't, marks the
+	//slot being loaded as failed (+0x64), which the save function refuses as well. These calls are patched to "read".
+	const unsigned int PROFILE_STATS_READ = 0x12E8A70;
+	const unsigned int PROFILE_STATS_SITES[] = {
+		0x32C138,//0x32BD3C stats save manager update: request the read / mark the slot failed
+		0x32C68C,//0x32C5B0 save
+		0x32EFF0,//0x32EF48 ready to save
+	};
+	const int PROFILE_STATS_SITE_COUNT = sizeof(PROFILE_STATS_SITES) / sizeof(PROFILE_STATS_SITES[0]);
+	const int PATCH_SITE_COUNT = CLOUD_CHECK_SITE_COUNT + PROFILE_STATS_SITE_COUNT;
 
-	//returns how many cloud checks were patched (CLOUD_CHECK_SITE_COUNT when everything matched)
-	int install() {
-		installed = true;
-		PatchInJump2(CLOUD_GET, (int)localCloudGet, false);
-		PatchInJump2(CLOUD_POST, (int)localCloudPost, false);
+	int patchCallsToLiR3One(const unsigned int *sites, int count, unsigned int target) {
 		int patched = 0;
-		for (int i = 0; i < CLOUD_CHECK_SITE_COUNT; i++) {
-			volatile unsigned int *site = (volatile unsigned int*)CLOUD_CHECK_SITES[i];
-			if (isBlTo(CLOUD_CHECK_SITES[i], IS_CLOUD_AVAILABLE))
+		for (int i = 0; i < count; i++) {
+			volatile unsigned int *site = (volatile unsigned int*)sites[i];
+			if (isBlTo(sites[i], target))
 				*site = LI_R3_1;
 			if (*site == LI_R3_1)
 				patched++;
@@ -208,27 +216,55 @@ namespace LocalMpStats {
 		return patched;
 	}
 
+	bool installed = false;
+
+	//returns how many checks were patched (PATCH_SITE_COUNT when everything matched)
+	int install() {
+		installed = true;
+		PatchInJump2(CLOUD_GET, (int)localCloudGet, false);
+		PatchInJump2(CLOUD_POST, (int)localCloudPost, false);
+		return patchCallsToLiR3One(CLOUD_CHECK_SITES, CLOUD_CHECK_SITE_COUNT, IS_CLOUD_AVAILABLE) +
+			patchCallsToLiR3One(PROFILE_STATS_SITES, PROFILE_STATS_SITE_COUNT, PROFILE_STATS_READ);
+	}
+
 #if TEMPCHAR_DEBUG == 1
 	//stats save manager (0x1DDDAC8) and savegame op state, logged on change
+	const int MANAGER_VALUE_COUNT = 10;
+
 	void logManagerState() {
-		static unsigned int last[6] = {0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF};
-		unsigned int now[6] = {
-			*(volatile unsigned char*)(0x1DDDAC8 + 0x174),//bit 7: MP stats save manager active
+		static unsigned int last[MANAGER_VALUE_COUNT];
+		static bool first = true;
+		unsigned int now[MANAGER_VALUE_COUNT] = {
+			*(volatile unsigned char*)(0x1DDDAC8 + 0x174),//bit 7: MP stats save manager active, bit 6: waiting for profile stats
 			*(volatile unsigned char*)(0x1DDDAC8 + 0x15),//0xCE7A2411: block saves and loads
-			*(volatile unsigned int*)0x1DDDB20,//slots waiting for a load (STAT_CLEAR_SLOT_FOR_RELOAD)
+			*(volatile unsigned int*)(0x1DDDAC8 + 0x58),//slots waiting for a load (STAT_CLEAR_SLOT_FOR_RELOAD)
+			*(volatile unsigned int*)(0x1DDDAC8 + 0x64),//slots whose load failed (save refuses them)
+			*(volatile unsigned int*)(0x1DDDAC8 + 0x0C),//slots with a save queued
+			*(volatile unsigned char*)(0x1DDDAC8 + 0x180),//bits 6/7 set: save refused
+			*(volatile unsigned int*)(0x224A968 + 0x34),//MP profile stats read
 			*(volatile unsigned int*)0x22271A8,//savegame op in progress
 			*(volatile unsigned int*)0x22271AC,//last op result
 			*(volatile unsigned int*)0x22271B0,//last HTTP code
 		};
-		bool changed = false;
-		for (int i = 0; i < 6; i++)
+		bool changed = first;
+		for (int i = 0; i < MANAGER_VALUE_COUNT; i++)
 			if (now[i] != last[i])
 				changed = true;
 		if (!changed)
 			return;
-		for (int i = 0; i < 6; i++)
+		first = false;
+		for (int i = 0; i < MANAGER_VALUE_COUNT; i++)
 			last[i] = now[i];
-		tempcharLog("[mpstats] mgr flags 0x%X block %u notloaded 0x%X op %u result %u http %u\n", now[0], now[1], now[2], now[3], now[4], now[5]);
+		tempcharLog("[mpstats] mgr flags 0x%X block %u notloaded 0x%X failed 0x%X queued 0x%X savebits 0x%X profile %u op %u result %u http %u\n",
+			now[0], now[1], now[2], now[3], now[4], now[5], now[6], now[7], now[8], now[9]);
+	}
+
+	//the STAT_SAVE native (0x433E40) gates, logged before Paradise's periodic save
+	void logSaveGates() {
+		int gamer = *(volatile int*)0x1CF7308;//onlineRockstarPermissions: local gamer index
+		int signedOnline = gamer >= 0 && gamer < 1 ? *(volatile unsigned char*)(0x2242728 + gamer) : -1;//0x12EE394(-1, 1)
+		tempcharLog("[mpstats] save gates: gamer %i signedonline %i notloaded 0x%X failed 0x%X savebits 0x%X\n", gamer, signedOnline,
+			*(volatile unsigned int*)(0x1DDDAC8 + 0x58), *(volatile unsigned int*)(0x1DDDAC8 + 0x64), *(volatile unsigned char*)(0x1DDDAC8 + 0x180));
 	}
 #endif
 

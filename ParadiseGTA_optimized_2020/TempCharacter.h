@@ -108,9 +108,11 @@ namespace TempCharacter {
 			STATS::STAT_DELETE_SLOT(slot);
 		for (int i = 0; i <= 6; i++)
 			STATS::_0xE3247582(i);//local reset of the online character stats, same range 1.27 func_2577 uses
-		//stats save manager (0x1DDDAC8) +0x58: slots waiting for a (re)load. STAT_SAVE refuses a slot with its bit set,
-		//and a wiped slot is loaded (empty), so clear them or the new character never gets saved
+		//stats save manager (0x1DDDAC8) +0x58: slots waiting for a (re)load, +0x64: slots whose load failed. Saving
+		//refuses a slot with either bit set, and a wiped slot is loaded (empty), so clear them or the new character
+		//never gets saved
 		*(volatile unsigned int*)(0x1DDDAC8 + 0x58) &= ~7u;
+		*(volatile unsigned int*)(0x1DDDAC8 + 0x64) &= ~7u;
 		for (int slot = 0; slot < STAT_SLOT_COUNT; slot++)
 			Write_Global(G_SLOT_LOADED + 1 + slot, 1);
 		Write_Global(G_SLOT_EXISTS + 1 + 0, 1);
@@ -225,6 +227,9 @@ namespace TempCharacter {
 		nextSave = now + SAVE_INTERVAL_MS;
 		if (STATS::STAT_SAVE_PENDING())
 			return;
+#if TEMPCHAR_DEBUG == 1
+		LocalMpStats::logSaveGates();
+#endif
 		for (int slot = 0; slot < STAT_SLOT_COUNT; slot++) {
 			if (!STATS::_0x7A299C13(slot))
 				continue;
@@ -262,8 +267,8 @@ namespace TempCharacter {
 		if (!LocalMpStats::installed) {
 			int patched = LocalMpStats::install();
 #if TEMPCHAR_DEBUG == 1
-			tempcharLog("[mpstats] local saves installed, cloud checks patched %i/%i, character saves %i %i\n", patched,
-				LocalMpStats::CLOUD_CHECK_SITE_COUNT, LocalMpStats::hasSlotSave(1) ? 1 : 0, LocalMpStats::hasSlotSave(2) ? 1 : 0);
+			tempcharLog("[mpstats] local saves installed, checks patched %i/%i, character saves %i %i\n", patched,
+				LocalMpStats::PATCH_SITE_COUNT, LocalMpStats::hasSlotSave(1) ? 1 : 0, LocalMpStats::hasSlotSave(2) ? 1 : 0);
 #endif
 		}
 #if TEMPCHAR_DEBUG == 1

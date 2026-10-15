@@ -40,6 +40,7 @@ All protection layers from the paid era are gone: server-data XOR (`dataDecrypto
   - The files hold exactly what the game would upload (already serialized and encrypted).
   - A load streams the file through a 256-byte stack chunk into the game's own response grow buffer (`0xA8AEB8` init, `0xA8B0E4` append, allocator `*0x1CF72D8`), just like a real download.
   - The 12 `isCloudAvailable` (`0x12DB918`) calls on the stats path are patched to `li r3,1`. `NETWORK_IS_CLOUD_AVAILABLE` itself is untouched, since the state-21 trigger depends on it.
+  - So are 3 "MP profile stats read?" checks (`0x12E8A70(0x224A968, 2)`, at `0x32C138`, `0x32C68C`, `0x32EFF0`). The save manager won't save until Rockstar's server-side profile stats are read, which never happens now. The first local-save test failed on exactly this: every `STAT_SAVE` returned 0, and nothing was ever written.
 - **Session access patch:** the 1.27 multiplayer access check in the EBOOT (`0x1389D98`) gates every session native. It added two failure codes that 1.12 lacks:
   - 11: `CTunables` +0x4D, tunables not downloaded
   - 12: `bgScriptData` +0x1019, background script not loaded
