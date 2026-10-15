@@ -189,6 +189,22 @@ Sources: 1.27 `Documents\IDA\PS3\1.27\EBOOT.ELF` with `EBOOT.map` (IDA names), a
 - **Fix in `TempCharacter.h` (`allowSessionsWithoutCloud`, run from `create()`):** the same trick as Paradise's `0x387` bypass. Change the `cmpwi r3,0` at `0x1389F20` (code 11) and `0x1389F48` (code 12) to `cmpwi r3,5` (write byte `+3` = 5), so the `bne` past each failure is always taken. It only patches if the original instruction is there. This also fixes the script-side checks that treat codes 11/12 as a failure: the invite cancel in `main_persistent` and the state-28 watchdog in `func_2605`.
 - **Debug log:** shows `NETWORK_CAN_ACCESS_MULTIPLAYER`'s result and code, and whether both checks are patched.
 
+### Third hardware test (access patch)
+
+- **The access patch worked.** `NETWORK_CAN_ACCESS_MULTIPLAYER` code went 11 → 0 after the patch (2/2 checks). `NETWORK_SESSION_ENTER(1, ...)` returned 1 on its first call, and sub-state 18 → 21.
+- **Sub-state 21 (`func_2417`)** waits for `NETWORK_IS_GAME_IN_PROGRESS` + `func_2366`. During it, `session 1 busy 1` and `canenter 0`. About 12 s later it went to sub-state 23.
+- **Sub-state 23 (`func_2385`)** requests the `freemode` script and launches it (→ 25). The game froze there (picture stuck, needed a hard restart). On PS3 a real crash looks like this too (it doesn't return to the XMB), and the owner thinks it was a crash, i.e. a bad instruction or bad memory access, not a hang. No debugger attached. The log stopped in the middle of a heartbeat, but `appendToFile` didn't fsync, so that doesn't pin the spot.
+- **Background-script references in the 1.27 executable (23 total):** the network ones are
+  - `0x139AEC4`: auto-matchmake guarded by tunables `+0x4C` / bg loaded;
+  - `0x12F57F0` and `0x12E46C4`: write `bgScriptData +0x1028`.
+
+  None is an obvious crash with an unloaded but allocated `bgScriptData`.
+- **Next build:**
+  - fsyncs every log line;
+  - logs the first tick of every script thread once the session is starting;
+  - from sub-state 23 on, the heartbeat only reads globals, so the logging can't be what hangs;
+  - the session-native hook now checks that a current script thread exists.
+
 ## How to re-enable it from the SPRX (recommended: drive the state machine)
 
 No script edits: replay the deleted `func_186`/`func_189` from the menu thread, using the global helpers the SPRX already has (`Read_Global`/`Write_Global` in `GlobalStuff.h`, against 1.27 numbering).

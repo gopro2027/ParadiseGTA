@@ -101,13 +101,20 @@ namespace TempCharacter {
 	//debug log for testing on hardware. Written next to the other Paradise files, a game can't create files in the /dev_hdd0 root
 	#define TEMPCHAR_LOG_FILE "/dev_hdd0/tmp/gopro_2027/tempchar_log.txt"
 
+	//like appendToFile, but fsyncs so the last lines before a freeze or crash are on disk
 	void debugLog(const char *fmt, ...) {
 		char buf[200];
 		va_list args;
 		va_start(args, fmt);
 		vsnprintf(buf, sizeof(buf), fmt, args);
 		va_end(args);
-		appendToFile(TEMPCHAR_LOG_FILE, buf, strlen(buf));
+		int fd;
+		uint64_t written;
+		if (cellFsOpen(TEMPCHAR_LOG_FILE, CELL_FS_O_RDWR | CELL_FS_O_APPEND | CELL_FS_O_CREAT, &fd, NULL, 0) != CELL_FS_SUCCEEDED)
+			return;
+		cellFsWrite(fd, (const void*)buf, (uint64_t)strlen(buf), &written);
+		cellFsFsync(fd);
+		cellFsClose(fd);
 	}
 #endif
 
@@ -242,7 +249,10 @@ namespace TempCharacter {
 	void callLoggedSessionNative(int i, NativeArg_s* args) {
 		LoggedNative* n = &sessionNatives[i];
 		call<int>(n->func, n->toc)(args);
-		if (args == NativeArg || getCurrentGtaThread()->nameHash != MAINTRANSITION_HASH)
+		if (args == NativeArg)
+			return;
+		GtaThread* current = getCurrentGtaThread();
+		if (!VALID_ADDR(current) || current->nameHash != MAINTRANSITION_HASH)
 			return;
 		int result = *args->ReturnValue;
 		n->calls++;
@@ -279,6 +289,26 @@ namespace TempCharacter {
 	}
 
 	const int G_CHAR_CHANGE_STEP = 1325170 + 600;//func_2445 step, the last step of the load-into-freemode sequence (func_2440)
+	const int SUBSTATE_SESSION_STARTING = 21;//func_2417, waits for NETWORK_IS_GAME_IN_PROGRESS
+	const int SUBSTATE_LOAD_FREEMODE = 23;//func_2385, requests and launches the freemode script
+
+	//once a temporary character's session is starting, logs the first tick of every script thread, to see what was running
+	//when the game froze
+	void logScriptStart(GtaThread* thread) {
+		static unsigned int seen[128];
+		static int seenCount = 0;
+		if (Read_Global(G_TEMP_CHARACTER) != 1 || Read_Global(G_TRANSITION_SUBSTATE) < SUBSTATE_SESSION_STARTING)
+			return;
+		for (int i = 0; i < seenCount; i++)
+			if (seen[i] == thread->nameHash)
+				return;
+		if (seenCount < 128)
+			seen[seenCount++] = thread->nameHash;
+		char name[sizeof(thread->threadName) + 1];
+		memcpy(name, thread->threadName, sizeof(thread->threadName));
+		name[sizeof(thread->threadName)] = 0;
+		debugLog("[tempchar] script running: %s (0x%08X), sub-state %i\n", name, thread->nameHash, Read_Global(G_TRANSITION_SUBSTATE));
+	}
 
 	//logs every change of the transition state, plus a heartbeat every 5 seconds outside state 0, so a hang shows what
 	//the transition is waiting on
@@ -312,6 +342,13 @@ namespace TempCharacter {
 		lastForce = force;
 		lastSessionType = sessionType;
 		nextHeartbeat = now + 5000;
+		//third test froze in sub-state 23 (session started, freemode loading). From there on log globals only, so the log
+		//itself can't be what hangs
+		if (Read_Global(G_TEMP_CHARACTER) == 1 && substate >= SUBSTATE_LOAD_FREEMODE) {
+			debugLog("[tempchar] %s t %i state %i sub %i reason %i (globals only from sub-state 23)\n", changed ? "change" : "beat", now,
+				state, substate, reason);
+			return;
+		}
 		debugLog("[tempchar] %s t %i state %i sub %i reason %i charstep %i cloud %i temp %i\n", changed ? "change" : "beat", now,
 			state, substate, reason, charStep, (int)NETWORK::NETWORK_IS_CLOUD_AVAILABLE(), Read_Global(G_TEMP_CHARACTER));
 		debugLog("[tempchar]   setup %i done %i newchar %i %i streamed %i ccspending %i force %i\n", setup, Read_Global(G_ENTER_MP_DONE),
@@ -332,10 +369,13 @@ namespace TempCharacter {
 
 	//called from runGtaThread_hook after every script thread tick
 	void onThreadTick(GtaThread* thread) {
-		if (thread->nameHash != MAINTRANSITION_HASH)
-			return;
 		if (addrstruct().nativeTable == 0)
 			return;//natives are resolved through the table the server sends, not available before auth
+#if TEMPCHAR_DEBUG == 1
+		logScriptStart(thread);
+#endif
+		if (thread->nameHash != MAINTRANSITION_HASH)
+			return;
 		if (!triedHookCcsPending)
 			hookAreAnyCcsPending();
 #if TEMPCHAR_DEBUG == 1
