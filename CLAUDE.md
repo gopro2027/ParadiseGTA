@@ -28,6 +28,14 @@ The SDK isn't installed on the dev machine, so the SPRX can't be compiled here; 
 
 All protection layers from the paid era are gone: server-data XOR (`dataDecryptor`, keyhash, malloc-pointer XOR, per-field constant XORs), runtime code self-encryption (`encryptFunctionStart/End`, `findAndDecrypt`, `security.h`, `crypto.h`, the Java `encryptit.bat` post-build step), XOR-encoded strings and pointers, and anti-debug/tamper (FakeThread, checkTampering's debugger check, antiBreakpoint, MAC-function restore). `addrstruct()` is now just the plain global `socketConnectionStuff::addresses`. The worker thread (`WorkerThread`/`workerThreadTick`) remains for the quit combo, spooner loading and webMAN shutdown. Switches at the top of prx.cpp: `DEV_BUILD 0` (build watermark/script-host info), `AUTO_UPDATE 0` (self-update from `files/ParadiseGTA.sprx`).
 
+## Temporary character mode
+
+`ParadiseGTA_optimized_2020/TempCharacter.h`, always on (no menu option). It restores the 1.12 behaviour that 1.13+ removed: when the Rockstar cloud is down, GTA Online can be played with a temporary character over PSN only.
+
+- **How it works:** `runGtaThread_hook` calls `TempCharacter::onThreadTick` after every script tick. When `maintransition` (`0x5FF2841F`) enters transition state 21 (`Global_1315298`) because of the cloud, it replays the deleted 1.12 setup. That setup blocks saves, deletes the 3 stat slots, and sets the temp/cloud-down/skip-tutorial/slot flags (`Global_1315352`, `1315354`, `1312399`, `1312341[]`, `1315392[]`, `1315353`). It then continues the join (state 3, substate 4) with no prompt.
+- **Debug logging:** `TEMPCHAR_DEBUG 1` in prx.cpp logs every transition state change to `/dev_hdd0/debug_log.txt`.
+- **Research:** `research/temp-character-mode.md` has the script research and the open questions.
+
 ## Server rules (product decisions)
 
 - Keys: 36 chars from `23456789abcdefghjkmnopqrstuvwxyzABCDEFGHJKLMNOPQRSTUVWXYZ`, never expire, **no bans and no console binding** (any console can use any key; the MAC the SPRX sends is ignored).

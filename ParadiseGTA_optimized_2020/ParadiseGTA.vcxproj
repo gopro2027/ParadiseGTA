@@ -95,6 +95,7 @@
     <ClInclude Include="RTMTool.h" />
     <ClInclude Include="Scaleforms.h" />
     <ClInclude Include="Stats.h" />
+    <ClInclude Include="TempCharacter.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="STDLib.h" />
     <ClInclude Include="types.h" />

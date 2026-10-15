@@ -86,6 +86,9 @@
     <ClInclude Include="GlobalStuff.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="TempCharacter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">

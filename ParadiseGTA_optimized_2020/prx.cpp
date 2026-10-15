@@ -15,6 +15,9 @@ __attribute__ ((naked)) int obfStart() {//size = 6*0x4
 
 //shows the build date watermark and script host lobby info (development builds)
 #define DEV_BUILD 0
+
+//logs every maintransition state change to /dev_hdd0/debug_log.txt (temporary character mode, TempCharacter.h)
+#define TEMPCHAR_DEBUG 1
   
 #define PAUSE_ON_LOAD 0  
 
@@ -632,6 +635,7 @@ int submenu = 0;
 
 #include "Networking.h"
 #include "RTMTool.h"
+#include "TempCharacter.h"
 #pragma endregion
 #pragma region ps3 sms
 
@@ -6934,6 +6938,7 @@ ui64 runGtaThread_hook(GtaThread* thread, ui64 r4) {
 		inFreemodeScriptFirstPass = true;
 		//printf("Here!\n");
 	}
+	TempCharacter::onThreadTick(thread);
 	return ret;
 }
 
