@@ -1,5 +1,4 @@
 @echo OFF
-del ParadiseGTA.prx
 del ParadiseGTA.sprx
 unfself ../../ParadiseGTA.sprx ParadiseGTA.prx
 rem C:
@@ -18,6 +17,7 @@ echo quit>> ftpcmd.dat
 ftp -n -s:ftpcmd.dat 192.168.1.183
 del ftpcmd.dat
 
+del ParadiseGTA.prx
 del ../../ParadiseGTA.sprx
 
 PAUSE
