@@ -99,6 +99,32 @@ namespace TempCharacter {
 		Write_Global(G_TRANSITION_STATE, 3);
 	}
 
+	//Character select (maintransition func_1077, state 4) quits to story mode when the cloud is down and an MP stats save
+	//is pending (0xA3407CA3, any slot queued). Once saves work, the join itself queues one: in the second local-save test
+	//the transition went to state 22 / sub-state 58 right after the setup. So the stats save manager is blocked
+	//(0xCE7A2411, as 1.12 did for the whole session) from the setup until the session is running, then unblocked, and
+	//saves go to the local files from there.
+	bool savesBlockedForJoin = false;
+
+	void blockSavesForJoin() {
+		STATS::_0x395D18B1(-1);//STAT_CLEAR_PENDING_SAVES
+		STATS::_0xCE7A2411(1);
+		savesBlockedForJoin = true;
+	}
+
+	void updateSaveBlock() {
+		if (!savesBlockedForJoin)
+			return;
+		bool backInStoryMode = Read_Global(G_TEMP_CHARACTER) != 1;
+		if (!backInStoryMode && !NETWORK::NETWORK_IS_GAME_IN_PROGRESS())
+			return;
+		STATS::_0xCE7A2411(0);
+		savesBlockedForJoin = false;
+#if TEMPCHAR_DEBUG == 1
+		tempcharLog("[tempchar] MP stats saves unblocked (%s)\n", backInStoryMode ? "back in story mode" : "session running");
+#endif
+	}
+
 	//no saved character: 1.12 maintransition func_186 (cloud branch) + func_189(1), a new character in empty slots.
 	//The game then saves it through the local MP stats files
 	void create() {
@@ -116,6 +142,7 @@ namespace TempCharacter {
 		for (int slot = 0; slot < STAT_SLOT_COUNT; slot++)
 			Write_Global(G_SLOT_LOADED + 1 + slot, 1);
 		Write_Global(G_SLOT_EXISTS + 1 + 0, 1);
+		blockSavesForJoin();
 		continueJoin();
 		print2("~b~Rockstar cloud unavailable: creating a new character, saved on this console", 8000);
 	}
@@ -163,6 +190,7 @@ namespace TempCharacter {
 			Write_Global(G_SLOT_LOADED + 1 + slot, 1);//empty slots count as loaded too, like create()
 			Write_Global(G_SLOT_EXISTS + 1 + slot, slot == 0 || slotLoaded[slot] ? 1 : 0);
 		}
+		blockSavesForJoin();
 		continueJoin();
 	}
 
@@ -290,6 +318,7 @@ namespace TempCharacter {
 #endif
 			}
 		}
+		updateSaveBlock();
 		updatePeriodicSave();
 	}
 
