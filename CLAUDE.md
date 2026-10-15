@@ -33,7 +33,8 @@ All protection layers from the paid era are gone: server-data XOR (`dataDecrypto
 `ParadiseGTA_optimized_2020/TempCharacter.h`, always on (no menu option). It restores the 1.12 behaviour that 1.13+ removed: when the Rockstar cloud is down, GTA Online can be played with a temporary character over PSN only.
 
 - **How it works:** `runGtaThread_hook` calls `TempCharacter::onThreadTick` after every script tick. When `maintransition` (`0x5FF2841F`) enters transition state 21 (`Global_1315298`) because of the cloud, it replays the deleted 1.12 setup. That setup blocks saves, deletes the 3 stat slots, and sets the temp/cloud-down/skip-tutorial/slot flags (`Global_1315352`, `1315354`, `1312399`, `1312341[]`, `1315392[]`, `1315353`). It then continues the join (state 3, substate 4) with no prompt.
-- **Debug logging:** `TEMPCHAR_DEBUG 1` in prx.cpp logs every transition state change to `/dev_hdd0/debug_log.txt`.
+- **Debug logging:** `TEMPCHAR_DEBUG 1` in prx.cpp logs to `/dev_hdd0/tmp/gopro_2027/tempchar_log.txt`. It records every change of the transition state and the load step, plus a 5-second heartbeat. It can't log to the `/dev_hdd0` root: the old `printfFile` path there never got created.
+- **First hardware test:** the temp character was created (char select showed `HUD_TEMP`), the tutorial-skip prompt (`HUD_NOTUT`) appeared, then the game hung on "Loading GTA Online".
 - **Research:** `research/temp-character-mode.md` has the script research and the open questions.
 
 ## Server rules (product decisions)

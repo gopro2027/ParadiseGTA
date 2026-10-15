@@ -71,20 +71,59 @@ namespace TempCharacter {
 	}
 
 #if TEMPCHAR_DEBUG == 1
-	//logs every maintransition state change to /dev_hdd0/debug_log.txt, to see where the PS3 lands
-	void logStateChange() {
-		static int lastState = -1, lastSubstate = -1, lastReason = -1;
+	//debug log for testing on hardware. Written next to the other Paradise files, a game can't create files in the /dev_hdd0 root
+	#define TEMPCHAR_LOG_FILE "/dev_hdd0/tmp/gopro_2027/tempchar_log.txt"
+
+	//maintransition locals (Local_152 is the transition struct, imm_N is word offset N)
+	const int L_LOAD_STEP = 152 + 1357;//step of the load-into-freemode sequence, func_2440 (1.27 maintransition.c:160973)
+	const int G_CHAR_CHANGE_STEP = 1325170 + 600;//func_2445 step
+
+	void debugLog(const char *fmt, ...) {
+		char buf[200];
+		va_list args;
+		va_start(args, fmt);
+		vsnprintf(buf, sizeof(buf), fmt, args);
+		va_end(args);
+		appendToFile(TEMPCHAR_LOG_FILE, buf, strlen(buf));
+	}
+
+	int getLocal(GtaThread* thread, int local) {
+		if (!VALID_ADDR(thread->localDataPointer))
+			return -1;
+		return *(int*)((int)thread->localDataPointer + (local * 4));
+	}
+
+	//logs every change of the transition state (and the load step), plus a heartbeat every 5 seconds outside state 0,
+	//so a hang shows what the transition is waiting on
+	void logState(GtaThread* thread) {
+		static bool loggedStart = false;
+		static int lastState = -1, lastSubstate = -1, lastReason = -1, lastStep = -1, lastCharStep = -1;
+		static int nextHeartbeat = 0;
+		if (!loggedStart) {
+			loggedStart = true;
+			debugLog("[tempchar] --- maintransition hook running ---\n");
+		}
 		int state = Read_Global(G_TRANSITION_STATE);
 		int substate = Read_Global(G_TRANSITION_SUBSTATE);
 		int reason = Read_Global(G_TRANSITION_REASON);
-		if (state == lastState && substate == lastSubstate && reason == lastReason)
+		int step = getLocal(thread, L_LOAD_STEP);
+		int charStep = Read_Global(G_CHAR_CHANGE_STEP);
+		int now = GAMEPLAY::GET_GAME_TIMER();
+		bool changed = state != lastState || substate != lastSubstate || reason != lastReason || step != lastStep || charStep != lastCharStep;
+		if (!changed && (state == 0 || now < nextHeartbeat))
 			return;
 		lastState = state;
 		lastSubstate = substate;
 		lastReason = reason;
-		printfFile("[tempchar] state %i sub %i reason %i cloud %i temp %i\n", state, substate, reason,
-			(int)NETWORK::NETWORK_IS_CLOUD_AVAILABLE(), Read_Global(G_TEMP_CHARACTER));
-		printfFile("[tempchar] ros %i %i %i %i %i %i\n", (int)NETWORK::_0x97287D68(), (int)NETWORK::_0xBDBB5948(),
+		lastStep = step;
+		lastCharStep = charStep;
+		nextHeartbeat = now + 5000;
+		debugLog("[tempchar] %s t %i state %i sub %i reason %i step %i charstep %i cloud %i temp %i\n", changed ? "change" : "beat", now,
+			state, substate, reason, step, charStep, (int)NETWORK::NETWORK_IS_CLOUD_AVAILABLE(), Read_Global(G_TEMP_CHARACTER));
+		debugLog("[tempchar]   net signed %i canenter %i ingame %i session %i insession %i busy %i\n",
+			(int)NETWORK::NETWORK_IS_SIGNED_ONLINE(), (int)NETWORK::NETWORK_CAN_ENTER_MULTIPLAYER(), (int)NETWORK::NETWORK_IS_GAME_IN_PROGRESS(),
+			(int)NETWORK::NETWORK_IS_SESSION_ACTIVE(), (int)NETWORK::NETWORK_IS_IN_SESSION(), (int)NETWORK::NETWORK_IS_SESSION_BUSY());
+		debugLog("[tempchar]   ros %i %i %i %i %i %i\n", (int)NETWORK::_0x97287D68(), (int)NETWORK::_0xBDBB5948(),
 			(int)NETWORK::_0xD3BBE42F(), (int)DLC2::_0xF79A97F5(), (int)DLC2::_0xF69B729C(), (int)NETWORK::_0x3FB40673());
 	}
 #endif
@@ -96,11 +135,11 @@ namespace TempCharacter {
 		if (addrstruct().nativeTable == 0)
 			return;//natives are resolved through the table the server sends, not available before auth
 #if TEMPCHAR_DEBUG == 1
-		logStateChange();
+		logState(thread);
 #endif
 		if (Read_Global(G_TRANSITION_STATE) == STATE_CONNECTION_PROBLEM && isCloudFailure()) {
 #if TEMPCHAR_DEBUG == 1
-			printfFile("[tempchar] creating temporary character\n");
+			debugLog("[tempchar] creating temporary character\n");
 #endif
 			create();
 		}
