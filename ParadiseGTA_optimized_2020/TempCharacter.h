@@ -104,14 +104,17 @@ namespace TempCharacter {
 		return PED::_0xF9FB4B71(ped) != 0;
 	}
 
-	opd_s originalAreAnyCcsPending;
+	//the original native's OPD, kept as plain words and called through call<> (which builds the OPD on the stack).
+	//Calling through the address of a global opd_s makes the compiler emit a direct call to a code symbol that doesn't exist.
+	unsigned int originalAreAnyCcsPendingFunc = 0;
+	unsigned int originalAreAnyCcsPendingToc = 0;
 	bool triedHookCcsPending = false;
 	bool hookedCcsPending = false;
 	bool forceCcsIdle = false;
 	int ccsPendingSince = 0;
 
 	void ARE_ANY_CCS_PENDING_hook(NativeArg_s* args) {
-		((void(*)(NativeArg_s*))&originalAreAnyCcsPending)(args);
+		call<int>(originalAreAnyCcsPendingFunc, originalAreAnyCcsPendingToc)(args);
 		if (forceCcsIdle && args != NativeArg)//only for script calls; Paradise's own invoke (NativeArg) still gets the real value
 			*args->ReturnValue = 0;
 	}
@@ -122,7 +125,8 @@ namespace TempCharacter {
 		int opd = getOPDOfNative(NATIVE_ARE_ANY_CCS_PENDING);
 		if (opd == -1)
 			return;
-		*(uint64_t*)&originalAreAnyCcsPending = *(uint64_t*)opd;
+		originalAreAnyCcsPendingFunc = *(unsigned int*)opd;
+		originalAreAnyCcsPendingToc = *(unsigned int*)(opd + 4);
 		*(uint64_t*)opd = *(uint64_t*)((int)ARE_ANY_CCS_PENDING_hook);
 		hookedCcsPending = true;
 	}
