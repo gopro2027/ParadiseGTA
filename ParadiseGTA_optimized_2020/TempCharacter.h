@@ -5,6 +5,9 @@
 //and removed the setup function (1.12 maintransition func_186 / func_189), but 1.27 still honours every flag it
 //set. Since the PS3 cloud is gone for good, this always does what 1.12 did: as soon as maintransition enters
 //state 21 because of the cloud, set up the temporary character and continue the join (state 3, substate 4).
+//1.27 also refuses every session without cloud tunables and the cloud background script, so the access check in
+//the game code is patched too (allowSessionsWithoutCloud). Tested on a PS3: matchmakes into GTA Online. The
+//character isn't saved, so every join makes a new one, same as 1.12.
 //Global numbers are 1.27. Arrays have a size header, so element i of Global_X[] is X + 1 + i.
 //Research notes: research/temp-character-mode.md
 
@@ -98,10 +101,10 @@ namespace TempCharacter {
 	}
 
 #if TEMPCHAR_DEBUG == 1
-	//debug log for testing on hardware. Written next to the other Paradise files, a game can't create files in the /dev_hdd0 root
+	//debug log for testing on hardware. Written next to the other Paradise files, since a game can't create files in
+	//the root of dev_hdd0. Fsynced so the last lines before a crash are on disk
 	#define TEMPCHAR_LOG_FILE "/dev_hdd0/tmp/gopro_2027/tempchar_log.txt"
 
-	//like appendToFile, but fsyncs so the last lines before a freeze or crash are on disk
 	void debugLog(const char *fmt, ...) {
 		char buf[200];
 		va_list args;
@@ -116,282 +119,38 @@ namespace TempCharacter {
 		cellFsFsync(fd);
 		cellFsClose(fd);
 	}
-#endif
 
-	//Transition sub-state 18 (1.27 maintransition func_2428, maintransition.c:160394). First test: the temp character got this
-	//far, then hung on "Loading GTA Online" in state 32 / sub-state 18. Once the player is set up, 1.27 added a wait that 1.12
-	//doesn't have (func_893): it calls ON_ENTER_MP (0xC65586A9) once (func_894, Global_2403951 = 1), which starts applying the
-	//multiplayer content changesets, then waits until HAVE_ALL_STREAMING_REQUESTS_COMPLETED(PLAYER_PED_ID()) (0xF9FB4B71) is true
-	//and ARE_ANY_CCS_PENDING (0x0AF83036) is false. ON_ENTER_MP / ON_ENTER_SP (0x8BF60FC3) and ARE_ANY_CCS_PENDING appear nowhere
-	//else in the 1.27 scripts and not at all in 1.12. If the changesets never finish for a temporary character, the join never
-	//continues. This hooks ARE_ANY_CCS_PENDING through its OPD and makes it report "nothing pending" to scripts in exactly that
-	//case, after it has been pending for FORCE_IDLE_AFTER_MS. The game then continues while the changesets may still be applying.
-	const int SUBSTATE_ENTER_MP = 18;
-	const int G_ON_ENTER_MP_CALLED = 2403951;//func_894
-	const int G_ENTER_MP_DONE = 2403952;//func_893
-	const int G_NEW_CHARACTER = 1312437 + 6;//Global_1312437.imm_6[slot], array of 2, skips the player setup call when set
-	const unsigned int NATIVE_ARE_ANY_CCS_PENDING = 0x0AF83036;
-	const int FORCE_IDLE_AFTER_MS = 10000;
-
-	//PED::_0xF9FB4B71 in Natives.h
-	bool haveAllStreamingRequestsCompleted(int ped) {
-		return PED::_0xF9FB4B71(ped) != 0;
-	}
-
-	//the original native's OPD, kept as plain words and called through call<> (which builds the OPD on the stack).
-	//Calling through the address of a global opd_s makes the compiler emit a direct call to a code symbol that doesn't exist.
-	unsigned int originalAreAnyCcsPendingFunc = 0;
-	unsigned int originalAreAnyCcsPendingToc = 0;
-	bool triedHookCcsPending = false;
-	bool hookedCcsPending = false;
-	bool forceCcsIdle = false;
-	int ccsPendingSince = 0;
-
-	void ARE_ANY_CCS_PENDING_hook(NativeArg_s* args) {
-		call<int>(originalAreAnyCcsPendingFunc, originalAreAnyCcsPendingToc)(args);
-		if (forceCcsIdle && args != NativeArg)//only for script calls; Paradise's own invoke (NativeArg) still gets the real value
-			*args->ReturnValue = 0;
-	}
-
-	//swaps the native's OPD contents, so scripts that already resolved the native go through the hook too
-	void hookAreAnyCcsPending() {
-		triedHookCcsPending = true;
-		int opd = getOPDOfNative(NATIVE_ARE_ANY_CCS_PENDING);
-		if (opd == -1)
-			return;
-		originalAreAnyCcsPendingFunc = *(unsigned int*)opd;
-		originalAreAnyCcsPendingToc = *(unsigned int*)(opd + 4);
-		*(uint64_t*)opd = *(uint64_t*)((int)ARE_ANY_CCS_PENDING_hook);
-		hookedCcsPending = true;
-	}
-
-	//runs after each maintransition tick; the hook uses the decision on the next tick
-	void updateCcsWorkaround() {
-		bool waiting = Read_Global(G_TEMP_CHARACTER) == 1 && Read_Global(G_TRANSITION_SUBSTATE) == SUBSTATE_ENTER_MP && Read_Global(G_ON_ENTER_MP_CALLED) != 0;
-		if (!waiting) {
-			forceCcsIdle = false;
-			ccsPendingSince = 0;
-			return;
-		}
-		int busy = invoke<int>(NATIVE_ARE_ANY_CCS_PENDING);//real value, the hook passes Paradise's calls through
-		if (busy == 0) {
-			forceCcsIdle = false;
-			ccsPendingSince = 0;
-			return;
-		}
-		int now = GAMEPLAY::GET_GAME_TIMER();
-		if (ccsPendingSince == 0)
-			ccsPendingSince = now;
-		if (!forceCcsIdle && now - ccsPendingSince >= FORCE_IDLE_AFTER_MS && haveAllStreamingRequestsCompleted(PLAYER::PLAYER_PED_ID())) {
-			forceCcsIdle = true;
-#if TEMPCHAR_DEBUG == 1
-			debugLog("[tempchar] ARE_ANY_CCS_PENDING busy for %ims, forcing idle\n", now - ccsPendingSince);
-#endif
-		}
-	}
-
-	//Second test: ON_ENTER_MP and the changesets finished on their own, but the join still sat in sub-state 18 with no
-	//session. Once its waits pass, sub-state 18 calls func_2407 (1.27 maintransition.c:159695), which starts the session and
-	//only moves on to sub-state 21 when the session native returns true; otherwise it retries every frame. The native depends
-	//on the session type (Global_1315323): the default 0 matchmakes into a public session (NETWORK_SESSION_ENTER), 1 hosts a
-	//public session (NETWORK_SESSION_HOST(gamemode, 18, 0)). This part of the script is unchanged since 1.12, so if the native
-	//keeps failing it's the 1.27 game code refusing without Rockstar's servers. Fallback: if a temporary character has been in
-	//sub-state 18 for HOST_FALLBACK_AFTER_MS with session type 0 and no session, switch to hosting.
-	const int G_SESSION_TYPE = 1315323;//func_307
-	const int G_GAMEMODE = 19940;//func_2713 / func_51, 0 = freemode
-	const int SESSION_TYPE_MATCHMAKE = 0;
-	const int SESSION_TYPE_HOST_PUBLIC = 1;
-	const int HOST_FALLBACK_AFTER_MS = 15000;
-
-	int substateEnterMpSince = 0;
-
-	void updateSessionFallback() {
-		bool waiting = Read_Global(G_TEMP_CHARACTER) == 1 && Read_Global(G_TRANSITION_SUBSTATE) == SUBSTATE_ENTER_MP && Read_Global(G_ENTER_MP_DONE) != 0;
-		if (!waiting) {
-			substateEnterMpSince = 0;
-			return;
-		}
-		if (NETWORK::NETWORK_IS_SESSION_STARTED() || NETWORK::NETWORK_IS_SESSION_ACTIVE() || NETWORK::NETWORK_IS_SESSION_BUSY())
-			return;
-		int now = GAMEPLAY::GET_GAME_TIMER();
-		if (substateEnterMpSince == 0)
-			substateEnterMpSince = now;
-		if (Read_Global(G_SESSION_TYPE) == SESSION_TYPE_MATCHMAKE && now - substateEnterMpSince >= HOST_FALLBACK_AFTER_MS) {
-			Write_Global(G_SESSION_TYPE, SESSION_TYPE_HOST_PUBLIC);
-#if TEMPCHAR_DEBUG == 1
-			debugLog("[tempchar] no session after %ims in sub-state 18, switching session type 0 -> 1 (host)\n", now - substateEnterMpSince);
-#endif
-		}
-	}
-
-#if TEMPCHAR_DEBUG == 1
-	//logs the result of every session native func_2407 can call, when maintransition calls it: the first call, every change
-	//of result, and every 600th call (func_2407 retries every frame)
-	struct LoggedNative {
-		unsigned int hash;
-		const char* name;
-		unsigned int func;
-		unsigned int toc;
-		int lastResult;
-		int calls;
-	};
-	LoggedNative sessionNatives[] = {
-		{0x543CD2BE, "NETWORK_SESSION_ENTER", 0, 0, -1, 0},
-		{0x4E53202A, "NETWORK_SESSION_FRIEND_MATCHMAKING", 0, 0, -1, 0},
-		{0xD7624E6B, "NETWORK_SESSION_CREW_MATCHMAKING", 0, 0, -1, 0},
-		{0x3F75CC38, "NETWORK_SESSION_ACTIVITY_QUICKMATCH", 0, 0, -1, 0},
-		{0x6716460F, "NETWORK_SESSION_HOST", 0, 0, -1, 0},
-		{0x8AC9EA19, "NETWORK_SESSION_HOST_CLOSED", 0, 0, -1, 0},
-		{0x26864403, "NETWORK_SESSION_HOST_FRIENDS_ONLY", 0, 0, -1, 0},
-	};
-	const int SESSION_NATIVE_COUNT = sizeof(sessionNatives) / sizeof(sessionNatives[0]);
-
-	void callLoggedSessionNative(int i, NativeArg_s* args) {
-		LoggedNative* n = &sessionNatives[i];
-		call<int>(n->func, n->toc)(args);
-		if (args == NativeArg)
-			return;
-		GtaThread* current = getCurrentGtaThread();
-		if (!VALID_ADDR(current) || current->nameHash != MAINTRANSITION_HASH)
-			return;
-		int result = *args->ReturnValue;
-		n->calls++;
-		if (n->calls == 1 || result != n->lastResult || n->calls % 600 == 0)
-			debugLog("[tempchar] %s(%i, ...) = %i, call %i, session type %i\n", n->name, args->ArgValues[0].i, result, n->calls, Read_Global(G_SESSION_TYPE));
-		n->lastResult = result;
-	}
-
-	#define SESSION_NATIVE_HOOK(i) void sessionNativeHook##i(NativeArg_s* args) { callLoggedSessionNative(i, args); }
-	SESSION_NATIVE_HOOK(0)
-	SESSION_NATIVE_HOOK(1)
-	SESSION_NATIVE_HOOK(2)
-	SESSION_NATIVE_HOOK(3)
-	SESSION_NATIVE_HOOK(4)
-	SESSION_NATIVE_HOOK(5)
-	SESSION_NATIVE_HOOK(6)
-	void (*sessionNativeHooks[])(NativeArg_s*) = {
-		sessionNativeHook0, sessionNativeHook1, sessionNativeHook2, sessionNativeHook3,
-		sessionNativeHook4, sessionNativeHook5, sessionNativeHook6,
-	};
-
-	int hookSessionNatives() {
-		int hooked = 0;
-		for (int i = 0; i < SESSION_NATIVE_COUNT; i++) {
-			int opd = getOPDOfNative(sessionNatives[i].hash);
-			if (opd == -1)
-				continue;
-			sessionNatives[i].func = *(unsigned int*)opd;
-			sessionNatives[i].toc = *(unsigned int*)(opd + 4);
-			*(uint64_t*)opd = *(uint64_t*)((int)sessionNativeHooks[i]);
-			hooked++;
-		}
-		return hooked;
-	}
-
-	const int G_CHAR_CHANGE_STEP = 1325170 + 600;//func_2445 step, the last step of the load-into-freemode sequence (func_2440)
-	const int SUBSTATE_SESSION_STARTING = 21;//func_2417, waits for NETWORK_IS_GAME_IN_PROGRESS
-	const int SUBSTATE_LOAD_FREEMODE = 23;//func_2385, requests and launches the freemode script
-
-	//once a temporary character's session is starting, logs the first tick of every script thread, to see what was running
-	//when the game froze
-	void logScriptStart(GtaThread* thread) {
-		static unsigned int seen[128];
-		static int seenCount = 0;
-		if (Read_Global(G_TEMP_CHARACTER) != 1 || Read_Global(G_TRANSITION_SUBSTATE) < SUBSTATE_SESSION_STARTING)
-			return;
-		for (int i = 0; i < seenCount; i++)
-			if (seen[i] == thread->nameHash)
-				return;
-		if (seenCount < 128)
-			seen[seenCount++] = thread->nameHash;
-		char name[sizeof(thread->threadName) + 1];
-		memcpy(name, thread->threadName, sizeof(thread->threadName));
-		name[sizeof(thread->threadName)] = 0;
-		debugLog("[tempchar] script running: %s (0x%08X), sub-state %i\n", name, thread->nameHash, Read_Global(G_TRANSITION_SUBSTATE));
-	}
-
-	//logs every change of the transition state, plus a heartbeat every 5 seconds outside state 0, so a hang shows what
-	//the transition is waiting on
+	//logs every change of the transition state. Only reads globals: a test build that also called network natives
+	//here froze once while freemode was loading
 	void logState() {
-		static bool loggedStart = false;
-		static int lastState = -1, lastSubstate = -1, lastReason = -1, lastCharStep = -1, lastSetup = -1, lastForce = -1, lastSessionType = -1;
-		static int nextHeartbeat = 0;
-		if (!loggedStart) {
-			loggedStart = true;
-			int sessionHooks = hookSessionNatives();
-			debugLog("[tempchar] --- maintransition hook running, ARE_ANY_CCS_PENDING hooked %i, session natives hooked %i/%i ---\n",
-				hookedCcsPending ? 1 : 0, sessionHooks, SESSION_NATIVE_COUNT);
-		}
+		static int lastState = -1, lastSubstate = -1, lastReason = -1;
 		int state = Read_Global(G_TRANSITION_STATE);
 		int substate = Read_Global(G_TRANSITION_SUBSTATE);
 		int reason = Read_Global(G_TRANSITION_REASON);
-		int charStep = Read_Global(G_CHAR_CHANGE_STEP);
-		int setup = Read_Global(G_ON_ENTER_MP_CALLED);
-		int force = forceCcsIdle ? 1 : 0;
-		int sessionType = Read_Global(G_SESSION_TYPE);
-		int now = GAMEPLAY::GET_GAME_TIMER();
-		bool changed = state != lastState || substate != lastSubstate || reason != lastReason || charStep != lastCharStep || setup != lastSetup ||
-			force != lastForce || sessionType != lastSessionType;
-		if (!changed && (state == 0 || now < nextHeartbeat))
+		if (state == lastState && substate == lastSubstate && reason == lastReason)
 			return;
 		lastState = state;
 		lastSubstate = substate;
 		lastReason = reason;
-		lastCharStep = charStep;
-		lastSetup = setup;
-		lastForce = force;
-		lastSessionType = sessionType;
-		nextHeartbeat = now + 5000;
-		//third test froze in sub-state 23 (session started, freemode loading). From there on log globals only, so the log
-		//itself can't be what hangs
-		if (Read_Global(G_TEMP_CHARACTER) == 1 && substate >= SUBSTATE_LOAD_FREEMODE) {
-			debugLog("[tempchar] %s t %i state %i sub %i reason %i (globals only from sub-state 23)\n", changed ? "change" : "beat", now,
-				state, substate, reason);
-			return;
-		}
-		debugLog("[tempchar] %s t %i state %i sub %i reason %i charstep %i cloud %i temp %i\n", changed ? "change" : "beat", now,
-			state, substate, reason, charStep, (int)NETWORK::NETWORK_IS_CLOUD_AVAILABLE(), Read_Global(G_TEMP_CHARACTER));
-		debugLog("[tempchar]   setup %i done %i newchar %i %i streamed %i ccspending %i force %i\n", setup, Read_Global(G_ENTER_MP_DONE),
-			Read_Global(G_NEW_CHARACTER + 1 + 0), Read_Global(G_NEW_CHARACTER + 1 + 1), (int)haveAllStreamingRequestsCompleted(PLAYER::PLAYER_PED_ID()),
-			invoke<int>(NATIVE_ARE_ANY_CCS_PENDING), force);
-		debugLog("[tempchar]   net signed %i canenter %i ingame %i session %i insession %i busy %i\n",
-			(int)NETWORK::NETWORK_IS_SIGNED_ONLINE(), (int)NETWORK::NETWORK_CAN_ENTER_MULTIPLAYER(), (int)NETWORK::NETWORK_IS_GAME_IN_PROGRESS(),
-			(int)NETWORK::NETWORK_IS_SESSION_ACTIVE(), (int)NETWORK::NETWORK_IS_IN_SESSION(), (int)NETWORK::NETWORK_IS_SESSION_BUSY());
-		int accessCode = -1;
-		int canAccess = NETWORK::_0xA520B982((int)&accessCode);//NETWORK_CAN_ACCESS_MULTIPLAYER, code 11/12 = no cloud tunables/bg script
-		debugLog("[tempchar]   sessiontype %i gamemode %i started %i invite %i launcher %i 2404086 %i access %i code %i patched %i\n", sessionType,
-			Read_Global(G_GAMEMODE), (int)NETWORK::NETWORK_IS_SESSION_STARTED(), Read_Global(1315333), Read_Global(1312316), Read_Global(2404086),
-			canAccess, accessCode, (*(volatile unsigned int*)ACCESS_CHECK_TUNABLES == CMPWI_R3_5 ? 1 : 0) + (*(volatile unsigned int*)ACCESS_CHECK_BG_SCRIPT == CMPWI_R3_5 ? 1 : 0));
-		debugLog("[tempchar]   ros %i %i %i %i %i %i\n", (int)NETWORK::_0x97287D68(), (int)NETWORK::_0xBDBB5948(),
-			(int)NETWORK::_0xD3BBE42F(), (int)DLC2::_0xF79A97F5(), (int)DLC2::_0xF69B729C(), (int)NETWORK::_0x3FB40673());
+		debugLog("[tempchar] state %i sub %i reason %i temp %i\n", state, substate, reason, Read_Global(G_TEMP_CHARACTER));
 	}
 #endif
 
 	//called from runGtaThread_hook after every script thread tick
 	void onThreadTick(GtaThread* thread) {
-		if (addrstruct().nativeTable == 0)
-			return;//natives are resolved through the table the server sends, not available before auth
-#if TEMPCHAR_DEBUG == 1
-		logScriptStart(thread);
-#endif
 		if (thread->nameHash != MAINTRANSITION_HASH)
 			return;
-		if (!triedHookCcsPending)
-			hookAreAnyCcsPending();
+		if (addrstruct().nativeTable == 0)
+			return;//natives are resolved through the table the server sends, not available before auth
 #if TEMPCHAR_DEBUG == 1
 		logState();
 #endif
 		if (Read_Global(G_TRANSITION_STATE) == STATE_CONNECTION_PROBLEM && isCloudFailure()) {
-#if TEMPCHAR_DEBUG == 1
-			debugLog("[tempchar] creating temporary character\n");
-#endif
 			create();
 #if TEMPCHAR_DEBUG == 1
-			debugLog("[tempchar] access checks 11/12 patched %i/2\n", allowSessionsWithoutCloud());
+			debugLog("[tempchar] created temporary character, access checks patched %i/2\n", allowSessionsWithoutCloud());
 #endif
 		}
-		updateCcsWorkaround();
-		updateSessionFallback();
 	}
 
 }

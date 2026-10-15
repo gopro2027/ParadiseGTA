@@ -30,26 +30,22 @@ All protection layers from the paid era are gone: server-data XOR (`dataDecrypto
 
 ## Temporary character mode
 
-`ParadiseGTA_optimized_2020/TempCharacter.h`, always on (no menu option). It restores the 1.12 behaviour that 1.13+ removed: when the Rockstar cloud is down, GTA Online can be played with a temporary character over PSN only.
+`ParadiseGTA_optimized_2020/TempCharacter.h`, always on (no menu option). It restores the 1.12 behaviour that 1.13+ removed: when the Rockstar cloud is down, GTA Online is played with a temporary character over PSN only. Tested on a PS3: it matchmakes into a public session and loads into freemode. The character isn't saved, so every join makes a new one (same as 1.12).
 
-- **How it works:** `runGtaThread_hook` calls `TempCharacter::onThreadTick` after every script tick. When `maintransition` (`0x5FF2841F`) enters transition state 21 (`Global_1315298`) because of the cloud, it replays the deleted 1.12 setup. That setup blocks saves, deletes the 3 stat slots, and sets the temp/cloud-down/skip-tutorial/slot flags (`Global_1315352`, `1315354`, `1312399`, `1312341[]`, `1315392[]`, `1315353`). It then continues the join (state 3, substate 4) with no prompt.
-- **Debug logging:** `TEMPCHAR_DEBUG 1` in prx.cpp logs to `/dev_hdd0/tmp/gopro_2027/tempchar_log.txt`. It records every change of the transition state and the load step, plus a 5-second heartbeat. It can't log to the `/dev_hdd0` root: the old `printfFile` path there never got created.
-- **First hardware test:**
-  - The log showed states 3 → 21 → (create) → 3 → 4 (character select, `HUD_TEMP` slots) → 5 → 6 → 32.
-  - The load-into-freemode sequence finished, then the game hung in state 32 / sub-state 18 (`func_2428`) on "Loading GTA Online".
-  - 1.27 added `func_893` there: it calls `ON_ENTER_MP` (0xC65586A9), then waits for `HAVE_ALL_STREAMING_REQUESTS_COMPLETED(player ped)` (0xF9FB4B71) and for `ARE_ANY_CCS_PENDING` (0x0AF83036, the MP content changesets) to be false.
-  - `TempCharacter.h` OPD-hooks `ARE_ANY_CCS_PENDING` to report idle to scripts after 10 s busy, only for a temp character in sub-state 18. This is untested.
-- **Second hardware test:**
-  - The CCS wait finished on its own.
-  - Sub-state 18 then retries `func_2407`'s session native every frame and never gets a session.
-  - The fallback switches session type `Global_1315323` from 0 (matchmake, `NETWORK_SESSION_ENTER`) to 1 (host, `NETWORK_SESSION_HOST`) after 15 s. This is untested.
-- **Root cause (from the EBOOTs):** the 1.27 multiplayer access check `0x1389D98` gates every session native, and it added two failure codes that 1.12 lacks:
+- **Temp character setup:** `runGtaThread_hook` calls `TempCharacter::onThreadTick` after every script tick. When `maintransition` (`0x5FF2841F`) enters transition state 21 (`Global_1315298`) because of the cloud, it replays the deleted 1.12 setup:
+  - blocks saves and deletes the 3 stat slots;
+  - sets the temp, cloud-down, skip-tutorial and slot flags (`Global_1315352`, `1315354`, `1312399`, `1312341[]`, `1315392[]`, `1315353`);
+  - continues the join (state 3, substate 4) with no prompt.
+- **Session access patch:** the 1.27 multiplayer access check in the EBOOT (`0x1389D98`) gates every session native. It added two failure codes that 1.12 lacks:
   - 11: `CTunables` +0x4D, tunables not downloaded
   - 12: `bgScriptData` +0x1019, background script not loaded
 
-  `allowSessionsWithoutCloud()` patches both compares (`0x1389F20`, `0x1389F48`) to `cmpwi r3,5`, like the existing `0x387` bypass. Full write-up is in `research/temp-character-mode.md`; the RE setup is Ghidra headless on the 1.27 ELF + `EBOOT.map` and the 1.12 ELF.
-- **Script locals:** `Local_152.imm_N` is not local index 152+N (it always read 0), so use globals for diagnostics.
-- **Research:** `research/temp-character-mode.md` has the script research and the open questions.
+  `allowSessionsWithoutCloud()` patches both compares (`0x1389F20`, `0x1389F48`) to `cmpwi r3,5`, like the existing `0x387` bypass. It's applied when the temp character is created.
+- **Debug logging:** `TEMPCHAR_DEBUG 1` in prx.cpp logs every transition state change to `/dev_hdd0/tmp/gopro_2027/tempchar_log.txt`. Keep it to globals: a test build that called network natives from the hook froze once while freemode was loading.
+- **Gotchas:**
+  - A game can't create files in the `/dev_hdd0` root (the old `printfFile` path).
+  - `Local_152.imm_N` in the decompiled scripts is not local index 152+N.
+- **Research:** `research/temp-character-mode.md` covers the script and EBOOT research: the hardware test logs, the access-check reason codes, and the Ghidra headless setup on the 1.27 ELF + `EBOOT.map` and the 1.12 ELF.
 
 ## Server rules (product decisions)
 

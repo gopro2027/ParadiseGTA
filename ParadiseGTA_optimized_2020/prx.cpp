@@ -17,7 +17,7 @@ __attribute__ ((naked)) int obfStart() {//size = 6*0x4
 #define DEV_BUILD 0
 
 //logs maintransition state changes to /dev_hdd0/tmp/gopro_2027/tempchar_log.txt (temporary character mode, TempCharacter.h)
-#define TEMPCHAR_DEBUG 1
+#define TEMPCHAR_DEBUG 0
   
 #define PAUSE_ON_LOAD 0  
 

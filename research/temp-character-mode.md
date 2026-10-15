@@ -128,9 +128,19 @@ These are in the `func_2605` watchdog (:177499) or the pre-join path. A temp cha
 
 ## Implementation status
 
-Implemented in `ParadiseGTA_optimized_2020/TempCharacter.h`, untested on hardware.
+Implemented in `ParadiseGTA_optimized_2020/TempCharacter.h`.
+- **Works on a PS3 (fourth test):** it creates the temp character, matchmakes with `NETWORK_SESSION_ENTER`, and loads into freemode. Returning to story mode and joining again creates a new temp character, as expected: saves are blocked and the stat slots get wiped.
 - **Mode:** fully automatic. There is no prompt: when the cloud is down, state 21 goes straight into the temporary character.
 - **Where it runs:** from `runGtaThread_hook`.
+- **Final code:**
+  - the state-21 setup (`create()`);
+  - the access-check patch (`allowSessionsWithoutCloud()`, see the executable section below);
+  - an optional state-change log (`TEMPCHAR_DEBUG`, off).
+- **Removed after testing, never needed:**
+  - the `ARE_ANY_CCS_PENDING` hook;
+  - the host-session fallback;
+  - the session-native and script-start logging.
+- **The one freeze:** in the third test the game froze while freemode was loading. That build called network natives from the hook at that point. The fourth test only read globals there and loaded fine, so the debug log stays globals-only.
 - **Differences from the sketch below:**
   - `_0xE3247582` is called for 0..6, the range 1.27 uses itself.
   - The `Global_2428598` part of `func_202` is skipped.
