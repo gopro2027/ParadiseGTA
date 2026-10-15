@@ -28,24 +28,29 @@ The SDK isn't installed on the dev machine, so the SPRX can't be compiled here; 
 
 All protection layers from the paid era are gone: server-data XOR (`dataDecryptor`, keyhash, malloc-pointer XOR, per-field constant XORs), runtime code self-encryption (`encryptFunctionStart/End`, `findAndDecrypt`, `security.h`, `crypto.h`, the Java `encryptit.bat` post-build step), XOR-encoded strings and pointers, and anti-debug/tamper (FakeThread, checkTampering's debugger check, antiBreakpoint, MAC-function restore). `addrstruct()` is now just the plain global `socketConnectionStuff::addresses`. The worker thread (`WorkerThread`/`workerThreadTick`) remains for the quit combo, spooner loading and webMAN shutdown. Switches at the top of prx.cpp: `DEV_BUILD 0` (build watermark/script-host info), `AUTO_UPDATE 0` (self-update from `files/ParadiseGTA.sprx`).
 
-## Temporary character mode
+## Temporary character mode and local MP saves
 
-`ParadiseGTA_optimized_2020/TempCharacter.h`, always on (no menu option). It restores the 1.12 behaviour that 1.13+ removed: when the Rockstar cloud is down, GTA Online is played with a temporary character over PSN only. Tested on a PS3: it matchmakes into a public session and loads into freemode. The character isn't saved, so every join makes a new one (same as 1.12).
+`ParadiseGTA_optimized_2020/TempCharacter.h` + `LocalMpStats.h`, always on (no menu option). They restore the 1.12 behaviour that 1.13+ removed: when the Rockstar cloud is down, GTA Online is played over PSN only. Unlike 1.12, the character is saved on the console. Tested on a PS3 so far: temp character creation, matchmaking into a public session and loading freemode. The local saves aren't tested yet.
 
-- **Temp character setup:** `runGtaThread_hook` calls `TempCharacter::onThreadTick` after every script tick. When `maintransition` (`0x5FF2841F`) enters transition state 21 (`Global_1315298`) because of the cloud, it replays the deleted 1.12 setup:
-  - blocks saves and deletes the 3 stat slots;
-  - sets the temp, cloud-down, skip-tutorial and slot flags (`Global_1315352`, `1315354`, `1312399`, `1312341[]`, `1315392[]`, `1315353`);
-  - continues the join (state 3, substate 4) with no prompt.
+- **Join flow:** `runGtaThread_hook` calls `TempCharacter::onThreadTick` after every script tick. When `maintransition` (`0x5FF2841F`) enters transition state 21 (`Global_1315298`) because of the cloud:
+  - **No saved character** (`create()`): replays the deleted 1.12 setup. It deletes the 3 stat slots, clears the "needs reload" bits (`0x1DDDAC8+0x58`) and sets the temp, cloud-down, skip-tutorial and slot flags (`Global_1315352`, `1315354`, `1312399`, `1312341[]`, `1315392[]`, `1315353`). Then it continues the join (state 3, substate 4). It doesn't block saves: `_0xCE7A2411(1)` blocks both loads and saves in the stats save manager.
+  - **Saved character exists:** holds the transition in state 15 (an empty case), loads each saved slot with `STAT_CLEAR_SLOT_FOR_RELOAD` + `STAT_LOAD`, then goes to character select. If nothing loads within 30 s, it falls back to `create()`.
+  - **In a session:** `STAT_SAVE` on every loaded slot 2 minutes in, then every 5 minutes, on top of the game's own saves.
+- **Local MP saves (`LocalMpStats.h`):** the MP stats save and load operations call cloud POST `0x129E5B4` and GET `0x129E478`, and nothing else does. Both are replaced (`PatchInJump2`) with file I/O on `/dev_hdd0/tmp/gopro_2027/mpstats_save_default0000.save` / `mpstats_save_char000N.save`.
+  - The files hold exactly what the game would upload (already serialized and encrypted).
+  - A load streams the file through a 256-byte stack chunk into the game's own response grow buffer (`0xA8AEB8` init, `0xA8B0E4` append, allocator `*0x1CF72D8`), just like a real download.
+  - The 12 `isCloudAvailable` (`0x12DB918`) calls on the stats path are patched to `li r3,1`. `NETWORK_IS_CLOUD_AVAILABLE` itself is untouched, since the state-21 trigger depends on it.
 - **Session access patch:** the 1.27 multiplayer access check in the EBOOT (`0x1389D98`) gates every session native. It added two failure codes that 1.12 lacks:
   - 11: `CTunables` +0x4D, tunables not downloaded
   - 12: `bgScriptData` +0x1019, background script not loaded
 
-  `allowSessionsWithoutCloud()` patches both compares (`0x1389F20`, `0x1389F48`) to `cmpwi r3,5`, like the existing `0x387` bypass. It's applied when the temp character is created.
-- **Debug logging:** `TEMPCHAR_DEBUG 1` in prx.cpp logs every transition state change to `/dev_hdd0/tmp/gopro_2027/tempchar_log.txt`. Keep it to globals: a test build that called network natives from the hook froze once while freemode was loading.
+  `allowSessionsWithoutCloud()` patches both compares (`0x1389F20`, `0x1389F48`) to `cmpwi r3,5`, like the existing `0x387` bypass.
+- **Memory:** the SPRX must not allocate. A 64 KB static buffer made the game crash at boot before the menu even ran. Keep new static data and stack buffers tiny (≤1 KB total), and prefer memory the game already owns.
+- **Debug logging:** `TEMPCHAR_DEBUG 1` in prx.cpp logs transition state changes, every MP stats load/save and the stats save manager state to `/dev_hdd0/tmp/gopro_2027/tempchar_log.txt`. Keep the per-tick logging to globals: a test build that called network natives from the hook froze once while freemode was loading.
 - **Gotchas:**
   - A game can't create files in the `/dev_hdd0` root (the old `printfFile` path).
   - `Local_152.imm_N` in the decompiled scripts is not local index 152+N.
-- **Research:** `research/temp-character-mode.md` covers the script and EBOOT research: the hardware test logs, the access-check reason codes, and the Ghidra headless setup on the 1.27 ELF + `EBOOT.map` and the 1.12 ELF.
+- **Research:** `research/temp-character-mode.md` covers the script and EBOOT research: the hardware test logs, the access-check reason codes, the MP stats save path, and the Ghidra headless setup on the 1.27 ELF + `EBOOT.map` and the 1.12 ELF.
 
 ## Server rules (product decisions)
 

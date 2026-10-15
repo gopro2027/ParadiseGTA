@@ -13,7 +13,12 @@
 //  0x12A7574 MP stats save op: serialize, encrypt -> isCloudAvailable -> 0x129E5B4 (POST, request at op+0x20) -> wait
 //  0x129E478 / 0x129E5B4 have no other callers, so they are replaced outright (PatchInJump2).
 //  Request: [0] status (1 pending, 2 failed, 3 succeeded), [1] HTTP code, [2] type (1 GET, 2 POST), +0xC response
-//  buffer (GET): [0] data, [2] length, [3] flags (bit 2: not owned, never freed), [6] heap handle (-1 none).
+//  buffer (GET), a rage grow buffer: [0] data, [1] capacity, [2] length, [3] flags, [4] allocator, [6] device handle.
+//  The real GET sets it up with 0xA8AEB8(buffer, network allocator *0x1CF72D8, 4, 0x100) and the download is written
+//  into it through fiDeviceGrowBuffer, whose Write (vtable +0x28) is 0xA8B0E4(buffer, src, len): append, growing with
+//  the buffer's allocator. The local GET does exactly that, so a load uses the game's own memory, the same amount a
+//  real cloud load would, and the game frees it after parsing. The SPRX itself allocates nothing (PS3 memory is too
+//  tight: a 64 KB static buffer here made the game crash at boot).
 //  isCloudAvailable (0x12DB918) gates the stats save manager (0x1DDDAC8) and both ops. It also backs the
 //  NETWORK_IS_CLOUD_AVAILABLE native the scripts use, so only the call sites on the MP stats path are patched to
 //  "li r3,1".
@@ -66,11 +71,14 @@ namespace LocalMpStats {
 
 	const int REQUEST_STATUS_FAILED = 2;
 	const int REQUEST_STATUS_SUCCEEDED = 3;
-	const int RESPONSE_BUFFER_NOT_OWNED = 2;
 	const unsigned int MAX_SAVE_SIZE = 0x10000;//the POST refuses anything bigger
 
-	//only one MP stats load runs at a time; the game parses (and decrypts in place) straight out of this buffer
-	char loadBuffer[MAX_SAVE_SIZE];
+	const unsigned int GROW_BUFFER_INIT = 0xA8AEB8;//(buffer, allocator, flags, grow step)
+	const unsigned int GROW_BUFFER_APPEND = 0xA8B0E4;//(buffer, src, len), returns bytes appended
+	const unsigned int CLOUD_ALLOCATOR = 0x1CF72D8;//allocator the real GET hands its response buffer (0x12D87D8)
+	const int GROW_BUFFER_FLAGS = 4;//keep a terminating 0 byte, as the real GET
+	const int GROW_BUFFER_STEP = 0x100;
+	const int LOAD_CHUNK_SIZE = 256;//stack chunk the file is streamed through
 
 	//"GTA5/saves/mpstats/save_char0001.save" -> "/dev_hdd0/tmp/gopro_2027/mpstats_save_char0001.save"
 	void localPath(char *out, int outSize, const char *cloudPath) {
@@ -101,26 +109,38 @@ namespace LocalMpStats {
 		int *response = (int*)((int)request + 0xC);
 		request[1] = 0;
 		request[2] = 1;
-		int size = -1;
+		//same setup as the real GET; this also releases whatever the buffer held from the last load
+		call<int>(GROW_BUFFER_INIT)(response, *(volatile int*)CLOUD_ALLOCATOR, GROW_BUFFER_FLAGS, GROW_BUFFER_STEP);
+		int size = 0;
+		int failCode = 404;//no file (or an empty one): what the cloud answers for a player that never saved
 		int fd;
 		if (cellFsOpen(path, CELL_FS_O_RDONLY, &fd, NULL, 0) == CELL_FS_SUCCEEDED) {
-			uint64_t read = 0;
-			if (cellFsRead(fd, loadBuffer, MAX_SAVE_SIZE, &read) == CELL_FS_SUCCEEDED)
-				size = (int)read;
+			char chunk[LOAD_CHUNK_SIZE];
+			while (true) {
+				uint64_t read = 0;
+				if (cellFsRead(fd, chunk, LOAD_CHUNK_SIZE, &read) != CELL_FS_SUCCEEDED) {
+					failCode = 500;
+					size = -1;
+					break;
+				}
+				if (read == 0)
+					break;
+				if (size + (int)read > (int)MAX_SAVE_SIZE ||
+					call<int>(GROW_BUFFER_APPEND)(response, chunk, (unsigned int)read) != (int)read) {
+					failCode = 500;//too big, or the game's allocator couldn't grow the buffer
+					size = -1;
+					break;
+				}
+				size += (int)read;
+			}
 			cellFsClose(fd);
 		}
+		//the load op frees the buffer in its cleanup either way
 		if (size > 0) {
-			response[0] = (int)loadBuffer;
-			response[1] = size;
-			response[2] = size;
-			response[3] |= RESPONSE_BUFFER_NOT_OWNED;
-			response[6] = -1;
 			request[1] = 200;
 			request[0] = REQUEST_STATUS_SUCCEEDED;
 		} else {
-			//what the cloud answers for a player that never saved
-			response[2] = 0;
-			request[1] = 404;
+			request[1] = failCode;
 			request[0] = REQUEST_STATUS_FAILED;
 		}
 #if TEMPCHAR_DEBUG == 1

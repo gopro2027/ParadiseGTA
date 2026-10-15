@@ -215,6 +215,45 @@ Sources: 1.27 `Documents\IDA\PS3\1.27\EBOOT.ELF` with `EBOOT.map` (IDA names), a
   - from sub-state 23 on, the heartbeat only reads globals, so the logging can't be what hangs;
   - the session-native hook now checks that a current script thread exists.
 
+## Local MP saves (1.27 EBOOT)
+
+The goal: keep the temporary character between sessions and reboots by saving MP stats on the console. Implemented in `LocalMpStats.h` + `TempCharacter.h`, untested on hardware.
+
+**1.12 attempt (`GTA112SPRX`):**
+- It pointed `commoncrc:/data/default` at `/dev_hdd0/tmp/default`, which loaded edited stat setup XMLs with every stat `online="false"`, so MP stats lived in the SP savegame.
+- It got stuck loading after a save and a reboot.
+- Not used for 1.27:
+  - it needs every MP DLC pack's stats setup too;
+  - it grows the SP savegame;
+  - it would mean saving SP world state from MP;
+  - the reboot problem was never solved.
+
+**How 1.27 saves MP stats:**
+- **Natives:** `STAT_LOAD` (`0x433A28`) / `STAT_SAVE` (`0x433E40`) go to the stats save manager at `0x1DDDAC8`, through load `0x32C9B8` and save `0x32C5B0`. Save only queues a request; the manager update `0x32BD3C` processes it.
+- **Manager fields:**
+
+  | Field | Meaning |
+  |---|---|
+  | `+0x15` | `0xCE7A2411`: blocks loads and saves |
+  | `+0x58` | slots needing a (re)load, set by `STAT_CLEAR_SLOT_FOR_RELOAD` `0x84BDD475` |
+  | `+0x64` | slots whose load failed |
+  | `+0x174` bit 7 | must be set for loads and saves |
+
+  `STAT_SLOT_IS_LOADED` (`0x7A299C13`) is `!(+0x58 & bit)`; `STAT_CLOUD_SLOT_LOAD_FAILED` is `0x0BF0F4B2`.
+- **The savegame operations:**
+  - The load op `0x12A60B0` and save op `0x12A7574` build the cloud path with `0x129ECBC(slot)`: `GTA5/saves/mpstats/save_default0000.save` for slot 0, `save_char000N.save` for the characters.
+  - The load op calls `0x129E478` (GET); the save op calls `0x129E5B4` (POST, max 0x10000 bytes). Those two functions have no other callers.
+  - The save op serializes (`0x12A7224`) and encrypts (`0x12A660C(slot, IS_PS3)`) before the POST. The load op applies the data with `0x12A5FEC` (`0x12A5BCC` sets the slot data, `0x12A5E08` decrypts and parses).
+- **Request object:** `[0]` status (1 pending, 2 failed, 3 succeeded), `[1]` HTTP code (404 → result 5), `[2]` type. The GET response at `+0xC` is a rage grow buffer, set up with `0xA8AEB8(buf, *0x1CF72D8, 4, 0x100)` and written through `fiDeviceGrowBuffer` (vtable `0x18FDBC0`; Write +0x28 = `0xA8B0E4(buf, src, len)`, append).
+- **`isCloudAvailable` (`0x12DB918`, 40 callers)** also backs `NETWORK_IS_CLOUD_AVAILABLE`, so only the stats-path call sites are patched:
+  - `0x32B01C`, `0x32B0D4`, `0x32B2A0`, `0x32B340`, `0x32B728`, `0x32B7E4`, `0x32BD54`, `0x32CA24`, `0x32CABC`;
+  - `0x433AA0` (`STAT_LOAD`);
+  - `0x12A614C` and `0x12A7880` (the two ops).
+
+  Not patched: `0x3298A4` (tunables) and the CCloudManager/UGC callers in the savegame module.
+- **Memory:** the first build had a 64 KB static load buffer in the SPRX and the game crashed at boot (empty log). Loads now stream through a 256-byte stack chunk into the game's own grow buffer, and the SPRX allocates nothing.
+- **Ghidra setup for this:** project `gta_full` with full auto-analysis, r2 preset by `SetToc.java`, `EBOOT.map` names applied by `ApplyMap.java`. `FixHelpers.java` clears the wrong "no return" flag on the register save helpers (`0x150A000`–`0x150C000`), otherwise every function gets cut short. `XRefs.java` lists references.
+
 ## How to re-enable it from the SPRX (recommended: drive the state machine)
 
 No script edits: replay the deleted `func_186`/`func_189` from the menu thread, using the global helpers the SPRX already has (`Read_Global`/`Write_Global` in `GlobalStuff.h`, against 1.27 numbering).
