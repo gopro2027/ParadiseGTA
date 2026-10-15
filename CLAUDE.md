@@ -43,6 +43,11 @@ All protection layers from the paid era are gone: server-data XOR (`dataDecrypto
   - The CCS wait finished on its own.
   - Sub-state 18 then retries `func_2407`'s session native every frame and never gets a session.
   - The fallback switches session type `Global_1315323` from 0 (matchmake, `NETWORK_SESSION_ENTER`) to 1 (host, `NETWORK_SESSION_HOST`) after 15 s. This is untested.
+- **Root cause (from the EBOOTs):** the 1.27 multiplayer access check `0x1389D98` gates every session native, and it added two failure codes that 1.12 lacks:
+  - 11: `CTunables` +0x4D, tunables not downloaded
+  - 12: `bgScriptData` +0x1019, background script not loaded
+
+  `allowSessionsWithoutCloud()` patches both compares (`0x1389F20`, `0x1389F48`) to `cmpwi r3,5`, like the existing `0x387` bypass. Full write-up is in `research/temp-character-mode.md`; the RE setup is Ghidra headless on the 1.27 ELF + `EBOOT.map` and the 1.12 ELF.
 - **Script locals:** `Local_152.imm_N` is not local index 152+N (it always read 0), so use globals for diagnostics.
 - **Research:** `research/temp-character-mode.md` has the script research and the open questions.
 

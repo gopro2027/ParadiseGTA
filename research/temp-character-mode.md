@@ -165,6 +165,30 @@ Implemented in `ParadiseGTA_optimized_2020/TempCharacter.h`, untested on hardwar
   - Debug only: OPD-hooks all seven session natives and logs the results of maintransition's calls, plus session type, gamemode and invite flags.
   - Fallback for a temp character, always on: after 15 s in sub-state 18 with session type 0 and no session, set the type to 1 so the script hosts its own public session.
 
+### Executable: why every session native fails (1.27 vs 1.12)
+
+Sources: 1.27 `Documents\IDA\PS3\1.27\EBOOT.ELF` with `EBOOT.map` (IDA names), and 1.12 `gta1.12\dev\EBOOT.elf`. Decompiled with Ghidra 12 headless (`PowerPC:BE:64:64-32addr`, no auto-analysis, r2 set to the TOC: 1.27 `0x1C85330`, 1.12 `0x1BC3088`).
+
+- **Both natives share a gate.** `NETWORK_SESSION_ENTER` (`0x3E3E08`) and `NETWORK_SESSION_HOST` (`0x3E3FBC`) both return 0 unless `0x3E3D04` passes. That gate is `0x1389D98(netSession, &code)` && `0x139C8F4` (the internals of `NETWORK_CAN_ENTER_MULTIPLAYER`). The session methods themselves call `0x1389D98` again: host `0x1389F84`, matchmake `importantFindLobbyFunc` `0x138ADD4` → `0x138A770`.
+- **`0x1389D98` is the multiplayer access check.** It's the function behind `NETWORK_CAN_ACCESS_MULTIPLAYER` (script `0xA520B982`), and it writes a reason code:
+
+  | Code | Check |
+  |---|---|
+  | 6 | `0x12F699C` |
+  | 7 | `amISignedIn(1)` |
+  | 8 | `NETWORK_HAVE_ONLINE_PRIVILEGES` |
+  | 9 | `onlineRockstarPermissions` / `getPrivilege(…, 3)` / `getCertificateData(3)` |
+  | 4 | profile not loaded |
+  | 5 | stat `0x387` (prologue; Paradise already patches `0x1389EA4`) |
+  | 10 | a tunable bool `0x0B5EE873` / `0x3C0AF527` is set (only checked if tunables are loaded) |
+  | **11** | **`CTunables` (`0x1CFB0B8`) `+0x4D == 0`: tunables not downloaded** |
+  | **12** | **`bgScriptData` (`0x1CFB100`) `+0x1019 == 0`: background script not loaded** |
+  | 0 | OK |
+
+- **1.12's version (`0x1304110`)** has 6/7/8/9/4/5 and a different 10, and no 11 or 12. So 1.12 could start sessions without the cloud and 1.27 can't. The scripts' own `HUD_NOTUNE` / `HUD_NOBACKGRN` screens are skipped for a temp character, but the executable added the same requirement inside the session gate.
+- **Fix in `TempCharacter.h` (`allowSessionsWithoutCloud`, run from `create()`):** the same trick as Paradise's `0x387` bypass. Change the `cmpwi r3,0` at `0x1389F20` (code 11) and `0x1389F48` (code 12) to `cmpwi r3,5` (write byte `+3` = 5), so the `bne` past each failure is always taken. It only patches if the original instruction is there. This also fixes the script-side checks that treat codes 11/12 as a failure: the invite cancel in `main_persistent` and the state-28 watchdog in `func_2605`.
+- **Debug log:** shows `NETWORK_CAN_ACCESS_MULTIPLAYER`'s result and code, and whether both checks are patched.
+
 ## How to re-enable it from the SPRX (recommended: drive the state machine)
 
 No script edits: replay the deleted `func_186`/`func_189` from the menu thread, using the global helpers the SPRX already has (`Read_Global`/`Write_Global` in `GlobalStuff.h`, against 1.27 numbering).

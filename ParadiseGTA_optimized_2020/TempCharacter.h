@@ -48,8 +48,35 @@ namespace TempCharacter {
 		}
 	}
 
+	//The multiplayer access check in the game code (EBOOT 0x1389D98, behind NETWORK_CAN_ACCESS_MULTIPLAYER and the gate that
+	//NETWORK_SESSION_ENTER / NETWORK_SESSION_HOST go through, 0x3E3D04) returns a reason code. 1.27 added two that 1.12
+	//(0x1304110) doesn't have:
+	//  11: CTunables (atSingleton at 0x1CFB0B8) +0x4D == 0, the cloud tunables were never downloaded (check at 0x1389F1C)
+	//  12: bgScriptData (0x1CFB100) +0x1019 == 0, the cloud background script was never loaded (check at 0x1389F3C)
+	//Without the cloud both always fail, so every session native returns false and the join waits in transition sub-state 18
+	//forever. Same trick as the 0x387 bypass in prologueBypass (0x1389EA4): change "cmpwi r3,0" to "cmpwi r3,5" so the
+	//following bne (skip the failure) is always taken. Returns how many of the two checks are patched.
+	const unsigned int ACCESS_CHECK_TUNABLES = 0x1389F20;//cmpwi r3,0 / bne 0x1389F3C
+	const unsigned int ACCESS_CHECK_BG_SCRIPT = 0x1389F48;//cmpwi r3,0 / bne 0x1389F68
+	const unsigned int CMPWI_R3_0 = 0x2C030000;
+	const unsigned int CMPWI_R3_5 = 0x2C030005;
+
+	int allowSessionsWithoutCloud() {
+		int patched = 0;
+		const unsigned int checks[] = {ACCESS_CHECK_TUNABLES, ACCESS_CHECK_BG_SCRIPT};
+		for (int i = 0; i < 2; i++) {
+			volatile unsigned int* ins = (volatile unsigned int*)checks[i];
+			if (*ins == CMPWI_R3_0)
+				*(volatile char*)(checks[i] + 3) = 5;
+			if (*ins == CMPWI_R3_5)
+				patched++;
+		}
+		return patched;
+	}
+
 	//1.12 maintransition func_186 (cloud branch) + func_189(1)
 	void create() {
+		allowSessionsWithoutCloud();
 		resetConnectionWarnings();
 		Write_Global(G_WARNING_ACCEPTED, 1);
 		STATS::_0xCE7A2411(1);//block saves ("autosave disabled")
@@ -293,8 +320,11 @@ namespace TempCharacter {
 		debugLog("[tempchar]   net signed %i canenter %i ingame %i session %i insession %i busy %i\n",
 			(int)NETWORK::NETWORK_IS_SIGNED_ONLINE(), (int)NETWORK::NETWORK_CAN_ENTER_MULTIPLAYER(), (int)NETWORK::NETWORK_IS_GAME_IN_PROGRESS(),
 			(int)NETWORK::NETWORK_IS_SESSION_ACTIVE(), (int)NETWORK::NETWORK_IS_IN_SESSION(), (int)NETWORK::NETWORK_IS_SESSION_BUSY());
-		debugLog("[tempchar]   sessiontype %i gamemode %i started %i invite %i launcher %i 2404086 %i\n", sessionType, Read_Global(G_GAMEMODE),
-			(int)NETWORK::NETWORK_IS_SESSION_STARTED(), Read_Global(1315333), Read_Global(1312316), Read_Global(2404086));
+		int accessCode = -1;
+		int canAccess = NETWORK::_0xA520B982((int)&accessCode);//NETWORK_CAN_ACCESS_MULTIPLAYER, code 11/12 = no cloud tunables/bg script
+		debugLog("[tempchar]   sessiontype %i gamemode %i started %i invite %i launcher %i 2404086 %i access %i code %i patched %i\n", sessionType,
+			Read_Global(G_GAMEMODE), (int)NETWORK::NETWORK_IS_SESSION_STARTED(), Read_Global(1315333), Read_Global(1312316), Read_Global(2404086),
+			canAccess, accessCode, (*(volatile unsigned int*)ACCESS_CHECK_TUNABLES == CMPWI_R3_5 ? 1 : 0) + (*(volatile unsigned int*)ACCESS_CHECK_BG_SCRIPT == CMPWI_R3_5 ? 1 : 0));
 		debugLog("[tempchar]   ros %i %i %i %i %i %i\n", (int)NETWORK::_0x97287D68(), (int)NETWORK::_0xBDBB5948(),
 			(int)NETWORK::_0xD3BBE42F(), (int)DLC2::_0xF79A97F5(), (int)DLC2::_0xF69B729C(), (int)NETWORK::_0x3FB40673());
 	}
@@ -316,6 +346,9 @@ namespace TempCharacter {
 			debugLog("[tempchar] creating temporary character\n");
 #endif
 			create();
+#if TEMPCHAR_DEBUG == 1
+			debugLog("[tempchar] access checks 11/12 patched %i/2\n", allowSessionsWithoutCloud());
+#endif
 		}
 		updateCcsWorkaround();
 		updateSessionFallback();
