@@ -136,6 +136,17 @@ Implemented in `ParadiseGTA_optimized_2020/TempCharacter.h`, untested on hardwar
   - The `Global_2428598` part of `func_202` is skipped.
   - The continue path ends with a native the decompilers call `get_broadcast_finished_los_sound(0)`. It isn't called, because its hash is unknown.
 
+### First hardware test
+
+- **Reaching state 21 worked.** The join goes 0 → 3/4 → **21/5** (cloud down; ROS checks `1 1 0 1 0 0`, so no ban screen) → create → 3/4 → 4/5 (character select: slots labelled `HUD_TEMP`) → 5 → 6 → 32/17 → **32/18**. It then hung there for over a minute with the "Loading GTA Online" spinner.
+- **Network flags during the hang:** `NETWORK_CAN_ENTER_MULTIPLAYER` was 1, and no session existed yet.
+- **The tutorial-skip prompt** (`HUD_NOTUT`, step 3 of `func_2440`) is the same in 1.12. That load sequence finished: `Global_1325170.imm_600` went to 99.
+- **Sub-state 18 is `func_2428` (1.27 `maintransition.c:160394`).** It waits for `Global_1312437.imm_6[slot] || func_1(...)`. Then, new in 1.27, it waits for `func_893`: that calls `ON_ENTER_MP` (`0xC65586A9`) once (`Global_2403951 = 1`), then waits for `HAVE_ALL_STREAMING_REQUESTS_COMPLETED(PLAYER_PED_ID())` (`0xF9FB4B71`) and `ARE_ANY_CCS_PENDING` (`0x0AF83036`) to be false. 1.12 calls `func_2407`/`func_2066(-1)` straight away. Neither native appears in 1.12 or anywhere else in 1.27.
+- **Next build:**
+  - logs those values on every heartbeat;
+  - OPD-hooks `ARE_ANY_CCS_PENDING` so scripts see 0, but only for a temp character in sub-state 18, after 10 s busy, and once the ped has streamed.
+- **Script locals:** reading `Local_152.imm_1357` as local index 1509 always gave 0. So locals can't be addressed as `152 + imm` this way; use globals.
+
 ## How to re-enable it from the SPRX (recommended: drive the state machine)
 
 No script edits: replay the deleted `func_186`/`func_189` from the menu thread, using the global helpers the SPRX already has (`Read_Global`/`Write_Global` in `GlobalStuff.h`, against 1.27 numbering).

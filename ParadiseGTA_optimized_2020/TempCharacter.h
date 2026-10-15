@@ -74,10 +74,6 @@ namespace TempCharacter {
 	//debug log for testing on hardware. Written next to the other Paradise files, a game can't create files in the /dev_hdd0 root
 	#define TEMPCHAR_LOG_FILE "/dev_hdd0/tmp/gopro_2027/tempchar_log.txt"
 
-	//maintransition locals (Local_152 is the transition struct, imm_N is word offset N)
-	const int L_LOAD_STEP = 152 + 1357;//step of the load-into-freemode sequence, func_2440 (1.27 maintransition.c:160973)
-	const int G_CHAR_CHANGE_STEP = 1325170 + 600;//func_2445 step
-
 	void debugLog(const char *fmt, ...) {
 		char buf[200];
 		va_list args;
@@ -86,40 +82,111 @@ namespace TempCharacter {
 		va_end(args);
 		appendToFile(TEMPCHAR_LOG_FILE, buf, strlen(buf));
 	}
+#endif
 
-	int getLocal(GtaThread* thread, int local) {
-		if (!VALID_ADDR(thread->localDataPointer))
-			return -1;
-		return *(int*)((int)thread->localDataPointer + (local * 4));
+	//Transition sub-state 18 (1.27 maintransition func_2428, maintransition.c:160394). First test: the temp character got this
+	//far, then hung on "Loading GTA Online" in state 32 / sub-state 18. Once the player is set up, 1.27 added a wait that 1.12
+	//doesn't have (func_893): it calls ON_ENTER_MP (0xC65586A9) once (func_894, Global_2403951 = 1), which starts applying the
+	//multiplayer content changesets, then waits until HAVE_ALL_STREAMING_REQUESTS_COMPLETED(PLAYER_PED_ID()) (0xF9FB4B71) is true
+	//and ARE_ANY_CCS_PENDING (0x0AF83036) is false. ON_ENTER_MP / ON_ENTER_SP (0x8BF60FC3) and ARE_ANY_CCS_PENDING appear nowhere
+	//else in the 1.27 scripts and not at all in 1.12. If the changesets never finish for a temporary character, the join never
+	//continues. This hooks ARE_ANY_CCS_PENDING through its OPD and makes it report "nothing pending" to scripts in exactly that
+	//case, after it has been pending for FORCE_IDLE_AFTER_MS. The game then continues while the changesets may still be applying.
+	const int SUBSTATE_ENTER_MP = 18;
+	const int G_ON_ENTER_MP_CALLED = 2403951;//func_894
+	const int G_ENTER_MP_DONE = 2403952;//func_893
+	const int G_NEW_CHARACTER = 1312437 + 6;//Global_1312437.imm_6[slot], array of 2, skips the player setup call when set
+	const unsigned int NATIVE_ARE_ANY_CCS_PENDING = 0x0AF83036;
+	const int FORCE_IDLE_AFTER_MS = 10000;
+
+	//PED::_0xF9FB4B71 in Natives.h
+	bool haveAllStreamingRequestsCompleted(int ped) {
+		return PED::_0xF9FB4B71(ped) != 0;
 	}
 
-	//logs every change of the transition state (and the load step), plus a heartbeat every 5 seconds outside state 0,
-	//so a hang shows what the transition is waiting on
-	void logState(GtaThread* thread) {
+	opd_s originalAreAnyCcsPending;
+	bool triedHookCcsPending = false;
+	bool hookedCcsPending = false;
+	bool forceCcsIdle = false;
+	int ccsPendingSince = 0;
+
+	void ARE_ANY_CCS_PENDING_hook(NativeArg_s* args) {
+		((void(*)(NativeArg_s*))&originalAreAnyCcsPending)(args);
+		if (forceCcsIdle && args != NativeArg)//only for script calls; Paradise's own invoke (NativeArg) still gets the real value
+			*args->ReturnValue = 0;
+	}
+
+	//swaps the native's OPD contents, so scripts that already resolved the native go through the hook too
+	void hookAreAnyCcsPending() {
+		triedHookCcsPending = true;
+		int opd = getOPDOfNative(NATIVE_ARE_ANY_CCS_PENDING);
+		if (opd == -1)
+			return;
+		*(uint64_t*)&originalAreAnyCcsPending = *(uint64_t*)opd;
+		*(uint64_t*)opd = *(uint64_t*)((int)ARE_ANY_CCS_PENDING_hook);
+		hookedCcsPending = true;
+	}
+
+	//runs after each maintransition tick; the hook uses the decision on the next tick
+	void updateCcsWorkaround() {
+		bool waiting = Read_Global(G_TEMP_CHARACTER) == 1 && Read_Global(G_TRANSITION_SUBSTATE) == SUBSTATE_ENTER_MP && Read_Global(G_ON_ENTER_MP_CALLED) != 0;
+		if (!waiting) {
+			forceCcsIdle = false;
+			ccsPendingSince = 0;
+			return;
+		}
+		int busy = invoke<int>(NATIVE_ARE_ANY_CCS_PENDING);//real value, the hook passes Paradise's calls through
+		if (busy == 0) {
+			forceCcsIdle = false;
+			ccsPendingSince = 0;
+			return;
+		}
+		int now = GAMEPLAY::GET_GAME_TIMER();
+		if (ccsPendingSince == 0)
+			ccsPendingSince = now;
+		if (!forceCcsIdle && now - ccsPendingSince >= FORCE_IDLE_AFTER_MS && haveAllStreamingRequestsCompleted(PLAYER::PLAYER_PED_ID())) {
+			forceCcsIdle = true;
+#if TEMPCHAR_DEBUG == 1
+			debugLog("[tempchar] ARE_ANY_CCS_PENDING busy for %ims, forcing idle\n", now - ccsPendingSince);
+#endif
+		}
+	}
+
+#if TEMPCHAR_DEBUG == 1
+	const int G_CHAR_CHANGE_STEP = 1325170 + 600;//func_2445 step, the last step of the load-into-freemode sequence (func_2440)
+
+	//logs every change of the transition state, plus a heartbeat every 5 seconds outside state 0, so a hang shows what
+	//the transition is waiting on
+	void logState() {
 		static bool loggedStart = false;
-		static int lastState = -1, lastSubstate = -1, lastReason = -1, lastStep = -1, lastCharStep = -1;
+		static int lastState = -1, lastSubstate = -1, lastReason = -1, lastCharStep = -1, lastSetup = -1, lastForce = -1;
 		static int nextHeartbeat = 0;
 		if (!loggedStart) {
 			loggedStart = true;
-			debugLog("[tempchar] --- maintransition hook running ---\n");
+			debugLog("[tempchar] --- maintransition hook running, ARE_ANY_CCS_PENDING hooked %i ---\n", hookedCcsPending ? 1 : 0);
 		}
 		int state = Read_Global(G_TRANSITION_STATE);
 		int substate = Read_Global(G_TRANSITION_SUBSTATE);
 		int reason = Read_Global(G_TRANSITION_REASON);
-		int step = getLocal(thread, L_LOAD_STEP);
 		int charStep = Read_Global(G_CHAR_CHANGE_STEP);
+		int setup = Read_Global(G_ON_ENTER_MP_CALLED);
+		int force = forceCcsIdle ? 1 : 0;
 		int now = GAMEPLAY::GET_GAME_TIMER();
-		bool changed = state != lastState || substate != lastSubstate || reason != lastReason || step != lastStep || charStep != lastCharStep;
+		bool changed = state != lastState || substate != lastSubstate || reason != lastReason || charStep != lastCharStep || setup != lastSetup || force != lastForce;
 		if (!changed && (state == 0 || now < nextHeartbeat))
 			return;
 		lastState = state;
 		lastSubstate = substate;
 		lastReason = reason;
-		lastStep = step;
 		lastCharStep = charStep;
+		lastSetup = setup;
+		lastForce = force;
 		nextHeartbeat = now + 5000;
-		debugLog("[tempchar] %s t %i state %i sub %i reason %i step %i charstep %i cloud %i temp %i\n", changed ? "change" : "beat", now,
-			state, substate, reason, step, charStep, (int)NETWORK::NETWORK_IS_CLOUD_AVAILABLE(), Read_Global(G_TEMP_CHARACTER));
+		debugLog("[tempchar] %s t %i state %i sub %i reason %i charstep %i cloud %i temp %i\n", changed ? "change" : "beat", now,
+			state, substate, reason, charStep, (int)NETWORK::NETWORK_IS_CLOUD_AVAILABLE(), Read_Global(G_TEMP_CHARACTER));
+		debugLog("[tempchar]   setup %i done %i newchar %i %i streamed %i ccspending %i force %i\n", setup, Read_Global(G_ENTER_MP_DONE),
+			Read_Global(G_NEW_CHARACTER + 1 + 0), Read_Global(G_NEW_CHARACTER + 1 + 1), (int)haveAllStreamingRequestsCompleted(PLAYER::PLAYER_PED_ID()),
+			invoke<int>(NATIVE_ARE_ANY_CCS_PENDING), force);
 		debugLog("[tempchar]   net signed %i canenter %i ingame %i session %i insession %i busy %i\n",
 			(int)NETWORK::NETWORK_IS_SIGNED_ONLINE(), (int)NETWORK::NETWORK_CAN_ENTER_MULTIPLAYER(), (int)NETWORK::NETWORK_IS_GAME_IN_PROGRESS(),
 			(int)NETWORK::NETWORK_IS_SESSION_ACTIVE(), (int)NETWORK::NETWORK_IS_IN_SESSION(), (int)NETWORK::NETWORK_IS_SESSION_BUSY());
@@ -134,8 +201,10 @@ namespace TempCharacter {
 			return;
 		if (addrstruct().nativeTable == 0)
 			return;//natives are resolved through the table the server sends, not available before auth
+		if (!triedHookCcsPending)
+			hookAreAnyCcsPending();
 #if TEMPCHAR_DEBUG == 1
-		logState(thread);
+		logState();
 #endif
 		if (Read_Global(G_TRANSITION_STATE) == STATE_CONNECTION_PROBLEM && isCloudFailure()) {
 #if TEMPCHAR_DEBUG == 1
@@ -143,6 +212,7 @@ namespace TempCharacter {
 #endif
 			create();
 		}
+		updateCcsWorkaround();
 	}
 
 }

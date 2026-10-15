@@ -34,7 +34,12 @@ All protection layers from the paid era are gone: server-data XOR (`dataDecrypto
 
 - **How it works:** `runGtaThread_hook` calls `TempCharacter::onThreadTick` after every script tick. When `maintransition` (`0x5FF2841F`) enters transition state 21 (`Global_1315298`) because of the cloud, it replays the deleted 1.12 setup. That setup blocks saves, deletes the 3 stat slots, and sets the temp/cloud-down/skip-tutorial/slot flags (`Global_1315352`, `1315354`, `1312399`, `1312341[]`, `1315392[]`, `1315353`). It then continues the join (state 3, substate 4) with no prompt.
 - **Debug logging:** `TEMPCHAR_DEBUG 1` in prx.cpp logs to `/dev_hdd0/tmp/gopro_2027/tempchar_log.txt`. It records every change of the transition state and the load step, plus a 5-second heartbeat. It can't log to the `/dev_hdd0` root: the old `printfFile` path there never got created.
-- **First hardware test:** the temp character was created (char select showed `HUD_TEMP`), the tutorial-skip prompt (`HUD_NOTUT`) appeared, then the game hung on "Loading GTA Online".
+- **First hardware test:**
+  - The log showed states 3 → 21 → (create) → 3 → 4 (character select, `HUD_TEMP` slots) → 5 → 6 → 32.
+  - The load-into-freemode sequence finished, then the game hung in state 32 / sub-state 18 (`func_2428`) on "Loading GTA Online".
+  - 1.27 added `func_893` there: it calls `ON_ENTER_MP` (0xC65586A9), then waits for `HAVE_ALL_STREAMING_REQUESTS_COMPLETED(player ped)` (0xF9FB4B71) and for `ARE_ANY_CCS_PENDING` (0x0AF83036, the MP content changesets) to be false.
+  - `TempCharacter.h` OPD-hooks `ARE_ANY_CCS_PENDING` to report idle to scripts after 10 s busy, only for a temp character in sub-state 18. This is untested.
+- **Script locals:** `Local_152.imm_N` is not local index 152+N (it always read 0), so use globals for diagnostics.
 - **Research:** `research/temp-character-mode.md` has the script research and the open questions.
 
 ## Server rules (product decisions)
