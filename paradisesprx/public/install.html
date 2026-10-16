@@ -118,7 +118,8 @@
     const $ = (id) => document.getElementById(id);
     // files are pulled by the PS3 over plain HTTP, which it can do reliably, through the Cloudflare Worker
     const PS3_FILES = 'http://paradisesprx-proxy.gopro2027.workers.dev/files';
-    const SITE_FILES = location.origin + '/files';
+    // The FTP scripts download with curl, which can't pass the Vercel firewall challenge, so they go through the Worker too.
+    const SITE_FILES = 'https://paradisesprx-proxy.gopro2027.workers.dev/files';
     const STAGING = '/dev_hdd0/tmp/paradise_install';
     const EBOOTS = { 'hen-a': 'HEN/CEX EBOOT A', 'hen-b': 'HEN/CEX EBOOT B', 'hen-c': 'HEN/CEX EBOOT C', dex: 'DEX EBOOT' };
 

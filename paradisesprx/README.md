@@ -71,6 +71,7 @@ The SPRX sends plain HTTP/1.0 on port 80 over raw sockets, with no TLS. Vercel r
 2. The Worker passes requests straight through to `https://paradisesprx.vercel.app`. It only buffers small compressed responses, so the PS3 always gets a `Content-Length`. The RPFs stream through unchanged.
 3. `PARADISE_SERVER_HOST` in `ParadiseGTA_optimized_2020/prx.cpp` is set to the Worker hostname.
 4. The Workers free plan allows 100,000 requests per day.
+5. **Flood protection.** The Worker has a secret binding `PROXY_SECRET` and sends it as the `x-paradise-proxy` header. A Vercel firewall custom rule ("Challenge everything except the PS3 proxy": Request Header `x-paradise-proxy` is not any of `<secret>` → Challenge) gives every other request a JS challenge. Browsers pass it once; HTTP floods (400K requests on `/` on Oct 15 2026) don't, and the PS3 skips it through the Worker. Anything that downloads from the site without a browser (curl, the FTP installer scripts) must go through the Worker. To rotate the secret, change the Worker secret and the rule value together.
 
 **Option B: your own domain proxied by Cloudflare.**
 
