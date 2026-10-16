@@ -102,6 +102,10 @@ namespace LocalMpStats {
 		return cellFsStat(path, &st) == CELL_FS_SUCCEEDED && st.st_size > 0;
 	}
 
+	//loads actually served from a file. STAT_LOAD can report success without loading anything (see TempCharacter.h),
+	//so the character load checks this went up
+	int servedLoads = 0;
+
 	//replaces 0x129E478 (request, path, rockstar permissions, ...). Returns nonzero when the request was started
 	int localCloudGet(int *request, const char *cloudPath, unsigned int r5, unsigned int r6, unsigned int r7) {
 		char path[100];
@@ -137,6 +141,7 @@ namespace LocalMpStats {
 		}
 		//the load op frees the buffer in its cleanup either way
 		if (size > 0) {
+			servedLoads++;
 			request[1] = 200;
 			request[0] = REQUEST_STATUS_SUCCEEDED;
 		} else {

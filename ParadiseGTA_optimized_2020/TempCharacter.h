@@ -154,7 +154,38 @@ namespace TempCharacter {
 	LoadStep loadStep = LOAD_NONE;
 	int loadSlot = 0;
 	int loadStarted = 0;
+	int servedLoadsBefore = 0;
+	int loadWaitTicks = 0;
+	const int LOAD_WAIT_TICKS = 120;//maintransition ticks to wait for a load that hasn't started yet
 	bool slotLoaded[STAT_SLOT_COUNT];
+
+	//Character c (0 or 1, stat slot c + 1) exists when its packed bool stat 76 is set: maintransition func_603(c) =
+	//func_347(76, c), which reads the hash from Global_2427264[76 <3>][c]
+	const int G_PACKED_BOOL_STAT_HASHES = 2427264;
+	const int CHARACTER_EXISTS_STAT = 76;
+
+	//1 exists, 0 doesn't, -1 unknown (hash table not filled in or stat unreadable: then a loaded slot counts as a
+	//character, so a real save is never thrown away)
+	int characterExists(int character) {
+		int hash = Read_Global(G_PACKED_BOOL_STAT_HASHES + 1 + CHARACTER_EXISTS_STAT * 3 + 1 + character);
+		if (hash == 0)
+			return -1;
+		int value = 0;
+		if (!STATS::STAT_GET_BOOL(hash, &value, -1))
+			return -1;
+		return value != 0 ? 1 : 0;
+	}
+
+	//the character the game plays (MPPLY_LAST_MP_CHAR, EBOOT 0x326880, the one STAT_SAVE itself checks)
+	int currentCharacter() {
+		return call<int>(0x326880)();
+	}
+
+	//STAT_LOAD(slot) records the slot to load in the stats save manager's +0x5C, but only for slots 1 and 2: slot 0 loads
+	//whatever +0x5C still holds. It also returns 1 without loading when the slot isn't marked for reload, and loading
+	//slot 0 clears the marks of all slots (third local-save test: the characters "loaded" with no file read). So each
+	//slot is marked right before its own load
+	const unsigned int STATS_SAVE_MANAGER = 0x1DDDAC8;
 
 	bool hasSavedCharacter() {
 		return LocalMpStats::hasSlotSave(1) || LocalMpStats::hasSlotSave(2);
@@ -163,11 +194,8 @@ namespace TempCharacter {
 	void startLoadingSaved() {
 		setCloudDownSessionFlags();
 		Write_Global(G_TRANSITION_STATE, STATE_IDLE);
-		for (int slot = 0; slot < STAT_SLOT_COUNT; slot++) {
+		for (int slot = 0; slot < STAT_SLOT_COUNT; slot++)
 			slotLoaded[slot] = false;
-			if (LocalMpStats::hasSlotSave(slot))
-				STATS::_0x84BDD475(slot);//STAT_CLEAR_SLOT_FOR_RELOAD
-		}
 		loadSlot = 0;
 		loadStarted = GAMEPLAY::GET_GAME_TIMER();
 		loadStep = LOAD_START_SLOT;
@@ -176,9 +204,18 @@ namespace TempCharacter {
 
 	void finishLoadingSaved() {
 		loadStep = LOAD_NONE;
-		bool anyCharacter = slotLoaded[1] || slotLoaded[2];
+		//a loaded slot only holds a character when that character's "exists" stat is set (an empty slot can get saved too)
+		bool exists[STAT_SLOT_COUNT];
+		exists[0] = slotLoaded[0];
+		int existsStat[STAT_SLOT_COUNT] = {1, -1, -1};
+		for (int slot = 1; slot < STAT_SLOT_COUNT; slot++) {
+			existsStat[slot] = characterExists(slot - 1);
+			exists[slot] = slotLoaded[slot] && existsStat[slot] != 0;
+		}
+		bool anyCharacter = slotLoaded[0] && (exists[1] || exists[2]);
 #if TEMPCHAR_DEBUG == 1
-		tempcharLog("[tempchar] slots loaded %i %i %i\n", slotLoaded[0] ? 1 : 0, slotLoaded[1] ? 1 : 0, slotLoaded[2] ? 1 : 0);
+		tempcharLog("[tempchar] slots loaded %i %i %i, character exists stat %i %i\n", slotLoaded[0] ? 1 : 0, slotLoaded[1] ? 1 : 0,
+			slotLoaded[2] ? 1 : 0, existsStat[1], existsStat[2]);
 #endif
 		if (!anyCharacter) {
 			//the saves didn't load, start over with a new character rather than getting stuck
@@ -188,7 +225,7 @@ namespace TempCharacter {
 		}
 		for (int slot = 0; slot < STAT_SLOT_COUNT; slot++) {
 			Write_Global(G_SLOT_LOADED + 1 + slot, 1);//empty slots count as loaded too, like create()
-			Write_Global(G_SLOT_EXISTS + 1 + slot, slot == 0 || slotLoaded[slot] ? 1 : 0);
+			Write_Global(G_SLOT_EXISTS + 1 + slot, exists[slot] ? 1 : 0);
 		}
 		blockSavesForJoin();
 		continueJoin();
@@ -212,10 +249,17 @@ namespace TempCharacter {
 				finishLoadingSaved();
 				return;
 			}
-			if (!STATS::STAT_LOAD_PENDING(-1) && STATS::STAT_LOAD(loadSlot)) {
+			if (STATS::STAT_LOAD_PENDING(-1))
+				return;
+			STATS::_0x84BDD475(loadSlot);//STAT_CLEAR_SLOT_FOR_RELOAD
+			if (loadSlot == 0)
+				*(volatile int*)(STATS_SAVE_MANAGER + 0x5C) = 0;
+			servedLoadsBefore = LocalMpStats::servedLoads;
+			if (STATS::STAT_LOAD(loadSlot)) {
 #if TEMPCHAR_DEBUG == 1
 				tempcharLog("[tempchar] STAT_LOAD(%i) started\n", loadSlot);
 #endif
+				loadWaitTicks = 0;
 				loadStep = LOAD_WAIT_SLOT;
 			}
 			return;
@@ -223,10 +267,14 @@ namespace TempCharacter {
 		if (loadStep == LOAD_WAIT_SLOT) {
 			if (STATS::STAT_LOAD_PENDING(-1))
 				return;
-			slotLoaded[loadSlot] = STATS::_0x7A299C13(loadSlot) && !STATS::_0x0BF0F4B2(loadSlot);//STAT_SLOT_IS_LOADED, !STAT_CLOUD_SLOT_LOAD_FAILED
+			bool served = LocalMpStats::servedLoads > servedLoadsBefore;
+			//the load op runs from the savegame queue, so the load may not be pending yet right after STAT_LOAD
+			if (!served && ++loadWaitTicks < LOAD_WAIT_TICKS)
+				return;
+			slotLoaded[loadSlot] = served && STATS::_0x7A299C13(loadSlot) && !STATS::_0x0BF0F4B2(loadSlot);//STAT_SLOT_IS_LOADED, !STAT_CLOUD_SLOT_LOAD_FAILED
 #if TEMPCHAR_DEBUG == 1
-			tempcharLog("[tempchar] slot %i loaded %i failed %i code %i\n", loadSlot, (int)STATS::_0x7A299C13(loadSlot),
-				(int)STATS::_0x0BF0F4B2(loadSlot), (int)STATS::_0xCE6B62B5(loadSlot));
+			tempcharLog("[tempchar] slot %i served %i loaded %i failed %i code %i\n", loadSlot, served ? 1 : 0,
+				(int)STATS::_0x7A299C13(loadSlot), (int)STATS::_0x0BF0F4B2(loadSlot), (int)STATS::_0xCE6B62B5(loadSlot));
 #endif
 			loadSlot++;
 			loadStep = LOAD_START_SLOT;
@@ -258,8 +306,13 @@ namespace TempCharacter {
 #if TEMPCHAR_DEBUG == 1
 		LocalMpStats::logSaveGates();
 #endif
+		int current = currentCharacter();
 		for (int slot = 0; slot < STAT_SLOT_COUNT; slot++) {
 			if (!STATS::_0x7A299C13(slot))
+				continue;
+			//slot 0 always; a character slot only if it's played or exists, so an empty slot never gets a save file
+			//(it would show up as a second character)
+			if (slot != 0 && slot != current + 1 && characterExists(slot - 1) != 1)
 				continue;
 			int queued = STATS::STAT_SAVE(slot, 0, SAVE_REASON);
 			(void)queued;
