@@ -39,7 +39,11 @@ All protection layers from the paid era are gone: server-data XOR (`dataDecrypto
     - `STAT_LOAD` returns 1 without loading when the slot isn't marked, and loading slot 0 clears every slot's mark. So a slot only counts as loaded if `LocalMpStats::servedLoads` went up.
     - A loaded character slot only counts as a character if its packed bool stat 76 is set (`func_603`, hash at `Global_2427264[76 <3>][c]`). Unreadable counts as yes.
     - The periodic save only saves slot 0, the current character (`0x326880`) and characters that exist. An empty slot never gets a file.
-  - **Saves are blocked during the join:** both paths block the MP stats save manager (`_0xCE7A2411(1)`, after `STAT_CLEAR_PENDING_SAVES`) right before continuing the join. They unblock it once `NETWORK_IS_GAME_IN_PROGRESS`, or when the temp flag is gone (back in story mode). Character select (`func_1077`, state 4) quits to story mode (state 22 / sub 58) if the cloud is down and any MP stats save is pending (`0xA3407CA3`), and the join itself queues one.
+  - **MP stat saves only run while a session is running.** The MP stats save manager is blocked (`_0xCE7A2411(1)`, after `STAT_CLEAR_PENDING_SAVES`) in story mode and around character select, and unblocked once `NETWORK_IS_GAME_IN_PROGRESS` with the temp flag set. `LocalMpStats::localCloudPost` also skips writing unless `savesAllowed` (temp flag 1). Two reasons:
+    - Character select (`func_1077`, state 4) quits to story mode (state 22 / sub 58) if the cloud is down and any MP stats save is pending (`0xA3407CA3`), and the join itself queues one.
+    - Back in story mode the MP stats are reset to defaults, and a save then overwrote the real character (char0001 dropped from 26773 to 26573 bytes; "character exists" stat 76 read 0 afterwards).
+
+    The quit's own saves (sub-states 58–63) still run, because the temp flag is cleared after them.
   - **In a session:** `STAT_SAVE` on every loaded slot 2 minutes in, then every 5 minutes, on top of the game's own saves.
 - **Local MP saves (`LocalMpStats.h`):** the MP stats save and load operations call cloud POST `0x129E5B4` and GET `0x129E478`, and nothing else does. Both are replaced (`PatchInJump2`) with file I/O on `/dev_hdd0/tmp/gopro_2027/mpstats_save_default0000.save` / `mpstats_save_char000N.save`.
   - The files hold exactly what the game would upload (already serialized and encrypted).

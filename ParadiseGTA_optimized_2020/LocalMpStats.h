@@ -102,6 +102,10 @@ namespace LocalMpStats {
 		return cellFsStat(path, &st) == CELL_FS_SUCCEEDED && st.st_size > 0;
 	}
 
+	//Set by TempCharacter.h: true only while a temp-character session is running. Back in story mode the MP stats are
+	//reset to defaults, and a save then would overwrite the real character, so the POST skips writing
+	bool savesAllowed = false;
+
 	//loads actually served from a file. STAT_LOAD can report success without loading anything (see TempCharacter.h),
 	//so the character load checks this went up
 	int servedLoads = 0;
@@ -160,6 +164,15 @@ namespace LocalMpStats {
 		localPath(path, sizeof(path), cloudPath);
 		request[1] = 0;
 		request[2] = 2;
+		if (!savesAllowed) {
+			//outside a session the stats are defaults; tell the game it's saved so it doesn't retry
+			request[1] = 200;
+			request[0] = REQUEST_STATUS_SUCCEEDED;
+#if TEMPCHAR_DEBUG == 1
+			tempcharLog("[mpstats] save %s: %u bytes, skipped (not in a session)\n", path, size);
+#endif
+			return 1;
+		}
 		bool ok = false;
 		if (data != 0 && size != 0 && size <= MAX_SAVE_SIZE) {
 			//write to a temp file first so a crash mid-write never leaves a broken save behind

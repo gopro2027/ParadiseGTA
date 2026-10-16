@@ -99,29 +99,44 @@ namespace TempCharacter {
 		Write_Global(G_TRANSITION_STATE, 3);
 	}
 
-	//Character select (maintransition func_1077, state 4) quits to story mode when the cloud is down and an MP stats save
-	//is pending (0xA3407CA3, any slot queued). Once saves work, the join itself queues one: in the second local-save test
-	//the transition went to state 22 / sub-state 58 right after the setup. So the stats save manager is blocked
-	//(0xCE7A2411, as 1.12 did for the whole session) from the setup until the session is running, then unblocked, and
-	//saves go to the local files from there.
-	bool savesBlockedForJoin = false;
+	//MP stat saves only run while a session is running (0xCE7A2411 blocks the stats save manager otherwise):
+	//- Character select (maintransition func_1077, state 4) quits to story mode when the cloud is down and an MP stats
+	//  save is pending (0xA3407CA3, any slot queued), and the join itself queues one (second local-save test: state 22 /
+	//  sub-state 58 right after the setup). So saves are blocked from the setup until the session runs.
+	//- Back in story mode the transition resets the MP stats to defaults, and the game then saved those over the real
+	//  character (fourth test: char0001 26773 bytes at the quit, 26573 bytes of defaults after it, "character exists"
+	//  stat 0 on the next load). So saves are blocked again as soon as the temp flag is gone.
+	//The quit's own saves (sub-states 58-63) still run: the temp flag is only cleared after them.
+	bool savesBlocked = false;
 
-	void blockSavesForJoin() {
+	void blockSaves() {
 		STATS::_0x395D18B1(-1);//STAT_CLEAR_PENDING_SAVES
 		STATS::_0xCE7A2411(1);
-		savesBlockedForJoin = true;
+		savesBlocked = true;
+	}
+
+	void blockSavesForJoin() {
+		blockSaves();
 	}
 
 	void updateSaveBlock() {
-		if (!savesBlockedForJoin)
+		bool inTempSession = Read_Global(G_TEMP_CHARACTER) == 1;
+		LocalMpStats::savesAllowed = inTempSession;
+		if (!inTempSession) {
+			if (!savesBlocked) {
+				blockSaves();
+#if TEMPCHAR_DEBUG == 1
+				tempcharLog("[tempchar] MP stats saves blocked (not in a session)\n");
+#endif
+			}
 			return;
-		bool backInStoryMode = Read_Global(G_TEMP_CHARACTER) != 1;
-		if (!backInStoryMode && !NETWORK::NETWORK_IS_GAME_IN_PROGRESS())
+		}
+		if (!savesBlocked || !NETWORK::NETWORK_IS_GAME_IN_PROGRESS())
 			return;
 		STATS::_0xCE7A2411(0);
-		savesBlockedForJoin = false;
+		savesBlocked = false;
 #if TEMPCHAR_DEBUG == 1
-		tempcharLog("[tempchar] MP stats saves unblocked (%s)\n", backInStoryMode ? "back in story mode" : "session running");
+		tempcharLog("[tempchar] MP stats saves unblocked (session running)\n");
 #endif
 	}
 
