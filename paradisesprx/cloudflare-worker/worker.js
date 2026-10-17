@@ -1,23 +1,22 @@
 // Plain HTTP front for the PS3. Vercel redirects every http:// request to https://, which the SPRX's raw
-// socket code can't follow, so the SPRX connects to this Worker over plain HTTP instead and the Worker
-// forwards the request to the Vercel deployment over HTTPS.
-// Deployed as "paradisesprx-proxy" with two kinds of routes:
-// - routes on paradisesprx.download for the paths the SPRX and webMAN use (check.html, the .php endpoints,
-//   chat/*, res/*, files/*). The rest of that domain goes through Cloudflare's normal proxy and cache, but
-//   on the Free plan the proxy talks to the origin in the visitor's scheme, so plain HTTP would hit
-//   Vercel's redirect without this Worker.
-// - the workers.dev subdomain, which SPRX builds released before the move to paradisesprx.download use.
+// socket code can't follow, so the SPRX's requests go through this Worker, which forwards them to the
+// Vercel deployment over HTTPS.
+// Deployed as "paradisesprx-proxy" on routes of paradisesprx.download for the paths the SPRX and webMAN use
+// (check.html, the .php endpoints, chat/*, res/*, files/*). The rest of that domain goes through
+// Cloudflare's normal proxy and cache, but on the Free plan the proxy talks to the origin in the visitor's
+// scheme, so plain HTTP would hit Vercel's redirect without this Worker. The workers.dev subdomain is off.
 //
-// The Vercel firewall challenges every request that doesn't carry x-paradise-proxy (a JS challenge stops
-// HTTP floods but the PS3 can't solve one), so the Worker adds it from the PROXY_SECRET secret binding.
+// The Vercel firewall denies every request that doesn't carry x-paradise-proxy, so Vercel is only reachable
+// through Cloudflare. The Worker adds it from the PROXY_SECRET secret binding (the zone's transform rule
+// adds the same value for the normally proxied paths). ORIGIN is just the deployment's address; it serves
+// nothing to anyone without the secret.
 const ORIGIN = 'https://paradisesprx.vercel.app';
 
 // The big downloads live in a GitHub release instead of the Vercel deployment: every deployment stored
 // another copy of them, and release downloads don't use Vercel bandwidth or the Git LFS quota. The
 // Worker fetches them from GitHub (HTTPS + redirects, which the PS3 can't do) and streams them through.
 const RELEASE = 'https://github.com/gopro2027/ParadiseGTA/releases/download/files-v1/';
-// keys are lowercase; the lookup ignores case so a differently-cased URL can't bounce between Vercel's
-// redirect and the Worker
+// keys are lowercase; the lookup ignores case
 const RELEASE_FILES = {
   '/files/paradise.rpf': 'Paradise.rpf',
   '/files/bljm.rpf': 'BLJM.rpf',

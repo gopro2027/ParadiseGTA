@@ -31,6 +31,8 @@ Open source replacement for the old paradisesprx.net backend, built to run on Ve
 | `GET /res/downloadsprx.php?filesize` | `<size> F` for `files/ParadiseGTA.sprx` (only used when `AUTO_UPDATE` is enabled in `prx.cpp`) |
 | `GET /files/<name>` | Static download; the SPRX reads `Content-Length` |
 
+No PHP runs anywhere. The `.php` names are only the URL paths the SPRX was built to request; `vercel.json` rewrites each one to a Node.js function in `api/` (for example `/connecq.php` → `api/connecq.js`).
+
 The website uses `GET/POST /api/generate` (captcha protected, one key per session) and `GET/POST /api/key-info`.
 
 ## Deploying
@@ -40,7 +42,7 @@ The website uses `GET/POST /api/generate` (captcha protected, one key per sessio
 1. Import the repository in Vercel and set **Root Directory** to `paradisesprx`. The framework preset is "Other", with no build command.
 2. Name the project `paradisesprx`.
 3. Add storage: **Storage → Marketplace → Upstash (Redis)** and connect it to the project. This sets `UPSTASH_REDIS_REST_URL`/`UPSTASH_REDIS_REST_TOKEN` (`KV_REST_API_URL`/`KV_REST_API_TOKEN` also work). Without these the API falls back to in-memory storage, and keys won't survive between requests.
-4. The small `.rpf` files left in `public/files/` are stored with **Git LFS**. Turn on *Settings → Git → Git Large File Storage* so Vercel checks them out. The big downloads (`Paradise.rpf`, `BLJM.rpf`, the four EBOOTs) are not in the deployment: they are assets of the GitHub release [`files-v1`](https://github.com/gopro2027/ParadiseGTA/releases/tag/files-v1) (named `EBOOT-<variant>.BIN` there). The Worker serves them at the usual `/files/...` paths (see step 2), and `vercel.json` redirects those paths to `paradisesprx.download` if they ever reach Vercel. Release downloads have no bandwidth limit and don't use Vercel bandwidth, deployment storage or the Git LFS quota. To replace one, upload a new release (e.g. `files-v2`), then update `RELEASE` in the Worker and the hashes in `scripts/download-check.mjs`.
+4. The small `.rpf` files left in `public/files/` are stored with **Git LFS**. Turn on *Settings → Git → Git Large File Storage* so Vercel checks them out. The big downloads (`Paradise.rpf`, `BLJM.rpf`, the four EBOOTs) are not in the deployment: they are assets of the GitHub release [`files-v1`](https://github.com/gopro2027/ParadiseGTA/releases/tag/files-v1) (named `EBOOT-<variant>.BIN` there). The Worker serves them at the usual `/files/...` paths (see step 2). Release downloads have no bandwidth limit and don't use Vercel bandwidth, deployment storage or the Git LFS quota. To replace one, upload a new release (e.g. `files-v2`), then update `RELEASE` in the Worker and the hashes in `scripts/download-check.mjs`.
 5. Under *Settings → Environments → Production*, set branch tracking to `offline-version` so pushes to that branch deploy to production.
 6. Under *Settings → Deployment Protection*, limit Vercel Authentication to preview deployments. Otherwise the production domains ask visitors to log in to Vercel.
 7. `vercel.json` has an `ignoreCommand`: pushes that don't touch `paradisesprx/` (SPRX-only commits) don't create a deployment.
@@ -82,7 +84,7 @@ The SPRX sends plain HTTP/1.0 on port 80 over raw sockets, with no TLS. Vercel r
 - **Content-Length:** it buffers small compressed responses so the PS3 always gets one.
 - **Big downloads:** it serves `Paradise.rpf`, `BLJM.rpf` and the EBOOTs from the GitHub release.
 - **Caching:** it caches `/files/*` for 5 minutes and the release files for a day.
-- **Old builds:** it is also on `paradisesprx-proxy.gopro2027.workers.dev` for SPRX builds made before the move.
+- **workers.dev:** its `workers.dev` subdomain is turned off, so nothing bypasses the zone's rules.
 - **Request limit:** the Workers free plan allows 100,000 Worker requests per day. Only these paths count.
 
 **Rules on the zone:**
@@ -94,12 +96,13 @@ The SPRX sends plain HTTP/1.0 on port 80 over raw sockets, with no TLS. Vercel r
 - **Configuration rule:** on the PS3 paths, Security Level is essentially off and Browser Integrity Check is off, so the console never gets an HTML challenge.
 - **Rate limiting rule:** more than 60 requests per 10 s per IP to `*.php` or `/api/*` gets blocked for 10 s. It runs before the Worker, which also protects the Worker's daily request limit.
 
-**Turnstile:** the widget allows `paradisesprx.download` (and `paradisesprx.vercel.app`).
+**Turnstile:** the widget allows `paradisesprx.download`.
 
 **Vercel firewall:**
 - **Secret binding:** the Worker has a secret binding `PROXY_SECRET` and sends it as `x-paradise-proxy`, the same value the transform rule sets.
-- **Challenge rule:** a custom rule ("Challenge everything except the PS3 proxy": Request Header `x-paradise-proxy` is not any of `<secret>` → Challenge) challenges every request that didn't come through Cloudflare. In practice that means direct hits on `paradisesprx.vercel.app`, such as the HTTP flood of 400K requests on `/` on Oct 15 2026.
-- **Old-domain redirect:** browsers that pass the challenge on the old domain are sent to `paradisesprx.download` by a redirect in `vercel.json`. Vercel serves static pages before that redirect, so `js/app.js` also moves pages opened on the old hostname. The Worker, which carries the header, still gets served there.
+- **Deny rule:** a custom rule ("Deny everything that didn't come through Cloudflare": Request Header `x-paradise-proxy` is not any of `<secret>` → **Deny**) blocks every request that didn't come through Cloudflare, on any hostname. That covers `paradisesprx.vercel.app`, the per-deployment URLs, and requests sent straight to Vercel's IP with `Host: paradisesprx.download`.
+- **Why deny and not challenge:** Vercel doesn't count denied requests as CDN Requests or Fast Data Transfer. A challenge that a bot or browser passes would still count. The flood of 400K requests on `/` on Oct 15 2026 hit `paradisesprx.vercel.app` directly.
+- **The `*.vercel.app` address:** Vercel keeps it for every project and it can't be removed. It is only the origin address the Worker forwards to.
 - **Rotating the secret:** change the Worker secret, the transform rule and the firewall rule value together.
 
 `PARADISE_SERVER_HOST` and `PARADISE_WEBSITE` in `ParadiseGTA_optimized_2020/prx.cpp` are `paradisesprx.download`.

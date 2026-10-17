@@ -1,9 +1,3 @@
-// The site moved to paradisesprx.download. vercel.json redirects the old domain too, but Vercel serves
-// static pages before that redirect runs, so pages opened on the old domain move over here.
-if (location.hostname === 'paradisesprx.vercel.app') {
-  location.replace('https://paradisesprx.download' + location.pathname + location.search + location.hash);
-}
-
 // Same particles.js settings the original paradisesprx.net used
 if (window.particlesJS && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
   particlesJS('particles-js', {
