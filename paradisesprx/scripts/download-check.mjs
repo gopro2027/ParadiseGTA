@@ -1,7 +1,7 @@
 // Downloads every file the menu fetches the same way the SPRX does (raw HTTP/1.0, Content-Length read
 // case-insensitively, body written until Content-Length bytes) and compares it with public/files (or, for
 // the files in the GitHub release, with their SHA-256).
-//   node scripts/download-check.mjs --host paradisesprx-proxy.gopro2027.workers.dev
+//   node scripts/download-check.mjs --host paradisesprx.download
 import net from 'node:net';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';

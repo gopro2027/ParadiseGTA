@@ -49,17 +49,38 @@
   ],
   "redirects": [
     {
-      "source": "/files/:name(Paradise\\.rpf|BLJM\\.rpf)",
-      "destination": "https://paradisesprx-proxy.gopro2027.workers.dev/files/:name",
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "paradisesprx.vercel.app" }],
+      "missing": [{ "type": "header", "key": "x-paradise-proxy" }],
+      "destination": "https://paradisesprx.download/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/files/Paradise.rpf",
+      "destination": "https://paradisesprx.download/files/Paradise.rpf",
+      "permanent": false
+    },
+    {
+      "source": "/files/BLJM.rpf",
+      "destination": "https://paradisesprx.download/files/BLJM.rpf",
       "permanent": false
     },
     {
       "source": "/files/eboot/:variant(dex|hen-a|hen-b|hen-c)/EBOOT.BIN",
-      "destination": "https://paradisesprx-proxy.gopro2027.workers.dev/files/eboot/:variant/EBOOT.BIN",
+      "destination": "https://paradisesprx.download/files/eboot/:variant/EBOOT.BIN",
       "permanent": false
     }
   ],
   "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cloudflare-CDN-Cache-Control",
+          "value": "max-age=300"
+        }
+      ]
+    },
     {
       "source": "/files/(.*)",
       "headers": [

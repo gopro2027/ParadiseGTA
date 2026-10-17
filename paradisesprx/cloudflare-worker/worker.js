@@ -1,7 +1,12 @@
 // Plain HTTP front for the PS3. Vercel redirects every http:// request to https://, which the SPRX's raw
 // socket code can't follow, so the SPRX connects to this Worker over plain HTTP instead and the Worker
 // forwards the request to the Vercel deployment over HTTPS.
-// Deployed as "paradisesprx-proxy" on the account's workers.dev subdomain.
+// Deployed as "paradisesprx-proxy" with two kinds of routes:
+// - routes on paradisesprx.download for the paths the SPRX and webMAN use (check.html, the .php endpoints,
+//   chat/*, res/*, files/*). The rest of that domain goes through Cloudflare's normal proxy and cache, but
+//   on the Free plan the proxy talks to the origin in the visitor's scheme, so plain HTTP would hit
+//   Vercel's redirect without this Worker.
+// - the workers.dev subdomain, which SPRX builds released before the move to paradisesprx.download use.
 //
 // The Vercel firewall challenges every request that doesn't carry x-paradise-proxy (a JS challenge stops
 // HTTP floods but the PS3 can't solve one), so the Worker adds it from the PROXY_SECRET secret binding.
@@ -26,7 +31,13 @@ async function fromRelease(request, asset, ctx) {
   const headers = new Headers();
   const range = request.headers.get('range');
   if (range) headers.set('range', range);
-  const upstream = await fetch(RELEASE + asset, { method: request.method, headers, redirect: 'follow' });
+  // cached at Cloudflare for a day so GitHub (which sometimes answers 429 to shared Cloudflare IPs) is rarely asked
+  const upstream = await fetch(RELEASE + asset, {
+    method: request.method,
+    headers,
+    redirect: 'follow',
+    cf: { cacheEverything: true, cacheTtl: 86400 },
+  });
   const out = new Headers();
   for (const name of ['content-length', 'content-range', 'accept-ranges', 'etag', 'last-modified']) {
     const value = upstream.headers.get(name);
@@ -56,11 +67,14 @@ export default {
     if (ip) headers.set('x-forwarded-for', ip);
     if (env.PROXY_SECRET) headers.set('x-paradise-proxy', env.PROXY_SECRET);
     const hasBody = request.method !== 'GET' && request.method !== 'HEAD';
+    // menu downloads (/files/*) are cached at Cloudflare for 5 minutes, like the site's own Cache-Control
+    const cacheable = request.method === 'GET' && url.pathname.startsWith('/files/');
     const upstream = await fetch(ORIGIN + url.pathname + url.search, {
       method: request.method,
       headers,
       body: hasBody ? request.body : undefined,
       redirect: 'manual',
+      ...(cacheable ? { cf: { cacheEverything: true, cacheTtl: 300 } } : {}),
     });
     if (upstream.headers.has('content-length') || request.method === 'HEAD') return upstream;
     // The runtime decompresses compressed origin responses, which drops Content-Length. The SPRX's file

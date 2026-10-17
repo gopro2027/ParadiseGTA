@@ -5,7 +5,7 @@ import { getStore } from '../lib/store.js';
 import { getKey } from '../lib/keys.js';
 import { getQuery, sendText } from '../lib/http.js';
 
-const WEBSITE = process.env.PARADISE_WEBSITE || 'paradisesprx.vercel.app';
+const WEBSITE = process.env.PARADISE_WEBSITE || 'paradisesprx.download';
 
 export default async function handler(req, res) {
   const q = getQuery(req);

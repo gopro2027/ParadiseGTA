@@ -28,12 +28,13 @@ __attribute__ ((naked)) int obfStart() {//size = 6*0x4
   
 #define netlogfunc 1
 
-//Host the SPRX connects to over plain HTTP (port 80). Vercel itself redirects every plain HTTP request to HTTPS,
-//which the PS3 socket code can't follow, so this is a Cloudflare Worker (paradisesprx/cloudflare-worker) that
-//accepts plain HTTP and forwards to the paradisesprx Vercel deployment. See paradisesprx/README.md
-#define PARADISE_SERVER_HOST "paradisesprx-proxy.gopro2027.workers.dev"
+//Host the SPRX connects to over plain HTTP (port 80). The domain is on Cloudflare: Vercel itself redirects every
+//plain HTTP request to HTTPS, which the PS3 socket code can't follow, so the paths the SPRX uses are routed to a
+//Cloudflare Worker (paradisesprx/cloudflare-worker) that accepts plain HTTP and forwards to the paradisesprx
+//Vercel deployment over HTTPS. See paradisesprx/README.md
+#define PARADISE_SERVER_HOST "paradisesprx.download"
 //Website shown to users in help messages
-#define PARADISE_WEBSITE "paradisesprx.vercel.app"
+#define PARADISE_WEBSITE "paradisesprx.download"
 
 //uncomment this for start and stop
 //#define sJKFghjsadfjkgh_____________32423324sxvsdcc312 just to make sure I don't accidentally have it you know, double step

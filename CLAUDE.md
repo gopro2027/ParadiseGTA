@@ -17,8 +17,8 @@ The SDK isn't installed on the dev machine, so the SPRX can't be compiled here; 
 ## How the SPRX talks to the server
 
 - Raw BSD sockets, plain **HTTP/1.0 on port 80**, uppercase `HOST:` header, UA `paradise_semjases`, `Connection: close`. No TLS.
-- Host: `PARADISE_SERVER_HOST` in `prx.cpp` = `paradisesprx-proxy.gopro2027.workers.dev`. User-facing site name: `PARADISE_WEBSITE` = `paradisesprx.vercel.app`.
-- **Vercel always 308-redirects http to https and the PS3 can't follow it**, so the PS3 talks to the Cloudflare Worker, which proxies to `https://paradisesprx.vercel.app`. The Worker buffers responses without a Content-Length (Cloudflare decompression drops it) because the SPRX downloads need it.
+- Host: `PARADISE_SERVER_HOST` and `PARADISE_WEBSITE` in `prx.cpp` = **`paradisesprx.download`** (Cloudflare zone, Free plan, proxied to the Vercel project). Builds before Oct 2026's domain move use `paradisesprx-proxy.gopro2027.workers.dev`; keep that working.
+- **Vercel always 308-redirects http to https and the PS3 can't follow it.** On the Free plan Cloudflare's proxy talks to the origin in the visitor's scheme (forcing HTTPS is Enterprise-only). So the PS3 paths on paradisesprx.download (`/check.html`, `/connecq.php*`, `/keyStatus.php*`, `/beat.php*`, `/gtartm.php*`, `/chat/*`, `/res/*`, `/files/*`) are Worker routes. The Worker forwards to `https://paradisesprx.vercel.app` with the firewall secret and buffers responses without a Content-Length (the SPRX downloads need it). Everything else (pages, `/api`) uses Cloudflare's normal proxy and cache. Zone rules (transform, redirects, cache, config, rate limit) are listed in `paradisesprx/README.md`. Don't turn on Always Use HTTPS, Bot Fight Mode or Under Attack mode: they break the PS3.
 - Startup (`testSocket()` in Networking.h): `GET check.html` (must contain `READYFORCONNECTION`) → `GET connecq.php?sesh=<key>&data=<mac>&ver=5` → `BEGINDATA\n` + 60 values, each `%u` right-padded with spaces to 20 chars, read in the order of `struct Addresses` (prx.cpp) → `GET keyStatus.php?key=&id=` must return `VALIDVALIDVALID` (any other text is shown to the user). On failure the menu thread exits cleanly.
 - The 60 values (game addresses, PPC hook opcodes, "privk" kick/script addresses) are in `paradisesprx/lib/offsets.js`. Field 19 `devmode` = 1 for keys with `dev=1`; fields 21-25 (FCW) are only sent to dev keys; field 38 is server time (unused).
 - Other endpoints: `beat.php` (60s heartbeat, `NONE` or `PRINT:msg`), `gtartm.php` (web RTM relay), `chat/chat.php` (5-line chat, base64 messages), `res/getprop.php`, `res/downloadasset2.php` (`BEGINDATA\n` + DDS minus 0x80 header), `res/downloadsprx.php?filesize` (`<size> F`, auto-update only).
@@ -74,7 +74,7 @@ Styled after the original paradisesprx.net: blurred menu-screenshot background, 
 
 Install wizard modes: **webMAN** (one click per step: `/write.ps3`, `/xmb.ps3/download.ps3?to=<dir>&url=<http url>`, `/rename.ps3`, `/copy_ps3`; needs webMAN admin mode, toggled on the PS3 with L2+R2+TRIANGLE, or `&pwd=<ftp password>`; downloads only work from the XMB) and **FTP** (generated .bat/.sh using curl, anonymous login, one-time `EBOOT.BIN.bak` backup).
 
-EBOOTs in `public/files/eboot/`: `dex` (debug signed, DEX only), `hen-a` (retail signed, newer keys), `hen-b` (same code, older keys), `hen-c` (original HEN EBOOT, older keys, slightly different patch). Try A, then B, then C.
+EBOOTs at `/files/eboot/<variant>/EBOOT.BIN`: `dex` (debug signed, DEX only), `hen-a` (retail signed, newer keys), `hen-b` (same code, older keys), `hen-c` (original HEN EBOOT, older keys, slightly different patch). Try A, then B, then C.
 
 ## Testing
 
@@ -82,7 +82,7 @@ From `paradisesprx/`:
 - `npm test`: API unit tests (in-memory store, Turnstile stubbed).
 - `npm run dev` (or `node scripts/dev-server.mjs <port>`): local server applying vercel.json, in-memory store, Turnstile test keys (token `XXXX.DUMMY.TOKEN.XXXX` passes).
 - `node scripts/ps3-sim.mjs --host <host[:port]> [--key <key>]`: speaks raw HTTP/1.0 like the SPRX and checks every endpoint. Against production you must pass a real `--key` (the captcha blocks scripted generation).
-- `node scripts/download-check.mjs --host paradisesprx-proxy.gopro2027.workers.dev`: downloads every menu file like the SPRX and compares bytes.
+- `node scripts/download-check.mjs --host paradisesprx.download`: downloads every menu file like the SPRX and compares bytes.
 
 For SPRX source edits without a compiler, compare brace/paren and `#if`/`#endif` balance against HEAD after changes.
 
@@ -91,6 +91,9 @@ For SPRX source edits without a compiler, compare brace/paren and `#if`/`#endif`
 - Source files are UTF-8 with BOM and CRLF; the repo stores LF (`core.autocrlf=true`). Edit with tools that keep CRLF. Git Bash `sed -i` converts files to LF, so avoid it.
 - Shell heredocs and `python -c` in this environment can mangle backslashes; for edits containing `\\`, `\n` or `\r`, write a script file or use the Edit tool.
 - Git Bash rewrites arguments that look like paths (`/dev_usb001/...`) unless `MSYS_NO_PATHCONV=1`.
-- `paradisesprx/.gitattributes`: everything under `public/files/` is binary (`-text`); `*.rpf` and `eboot/**/*.BIN` go through Git LFS. Vercel has Git LFS enabled for the project.
+- `paradisesprx/.gitattributes`: everything under `public/files/` is binary (`-text`); `*.rpf` goes through Git LFS. Vercel has Git LFS enabled for the project.
+- **Big files are not in the deployment.** `Paradise.rpf`, `BLJM.rpf` and the 4 EBOOTs are assets of the GitHub release `files-v1` (EBOOTs named `EBOOT-<variant>.BIN`). The Worker serves them at the old `/files/...` paths, and `vercel.json` redirects those paths to paradisesprx.download if they reach Vercel. Don't add large files to `public/`: every deployment stores a full copy (41 deployments × ~230 MB filled the 10 GB Hobby deployment storage), and each build pulls LFS files against GitHub's 10 GiB/month LFS bandwidth.
+- `vercel.json` `ignoreCommand` skips deployments for pushes that don't touch `paradisesprx/`.
+- The Vercel firewall challenges every request without the secret `x-paradise-proxy` header (anti-flood). The Cloudflare transform rule and the Worker both send it, so only direct hits on `paradisesprx.vercel.app` are challenged. Browsers that pass are redirected to paradisesprx.download by `vercel.json`. Non-browser clients (curl, FTP installer scripts, test scripts) must use paradisesprx.download.
 - Vercel functions must resolve files relative to the code (`lib/paths.js`), not `process.cwd()`, because the project uses a root directory.
 - The old paradisesprx.net backup (outside the repo) contains plaintext credentials. Never copy anything from it into the repo except reviewed assets.
