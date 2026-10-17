@@ -99,7 +99,7 @@ The SPRX sends plain HTTP/1.0 on port 80 over raw sockets, with no TLS. Vercel r
 **Vercel firewall:**
 - **Secret binding:** the Worker has a secret binding `PROXY_SECRET` and sends it as `x-paradise-proxy`, the same value the transform rule sets.
 - **Challenge rule:** a custom rule ("Challenge everything except the PS3 proxy": Request Header `x-paradise-proxy` is not any of `<secret>` → Challenge) challenges every request that didn't come through Cloudflare. In practice that means direct hits on `paradisesprx.vercel.app`, such as the HTTP flood of 400K requests on `/` on Oct 15 2026.
-- **Old-domain redirect:** browsers that pass the challenge on the old domain are sent to `paradisesprx.download` by a redirect in `vercel.json`. The Worker, which carries the header, still gets served there.
+- **Old-domain redirect:** browsers that pass the challenge on the old domain are sent to `paradisesprx.download` by a redirect in `vercel.json`. Vercel serves static pages before that redirect, so `js/app.js` also moves pages opened on the old hostname. The Worker, which carries the header, still gets served there.
 - **Rotating the secret:** change the Worker secret, the transform rule and the firewall rule value together.
 
 `PARADISE_SERVER_HOST` and `PARADISE_WEBSITE` in `ParadiseGTA_optimized_2020/prx.cpp` are `paradisesprx.download`.
