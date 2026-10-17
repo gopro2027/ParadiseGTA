@@ -47,6 +47,18 @@
       "destination": "/api/downloadasset2"
     }
   ],
+  "redirects": [
+    {
+      "source": "/files/:name(Paradise\\.rpf|BLJM\\.rpf)",
+      "destination": "https://paradisesprx-proxy.gopro2027.workers.dev/files/:name",
+      "permanent": false
+    },
+    {
+      "source": "/files/eboot/:variant(dex|hen-a|hen-b|hen-c)/EBOOT.BIN",
+      "destination": "https://paradisesprx-proxy.gopro2027.workers.dev/files/eboot/:variant/EBOOT.BIN",
+      "permanent": false
+    }
+  ],
   "headers": [
     {
       "source": "/files/(.*)",

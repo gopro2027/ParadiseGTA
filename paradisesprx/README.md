@@ -10,7 +10,7 @@ Open source replacement for the old paradisesprx.net backend, built to run on Ve
 | `public/install.html` | Install wizard: copies Key.txt, the SPRX and the EBOOT to a PS3 either with webMAN MOD web commands (the PS3 downloads the files over plain HTTP from the Worker) or with a generated FTP installer script (.bat / .sh using curl) |
 | `public/rtm/` | Web RTM page that sends commands to a menu through `gtartm.php` |
 | `public/check.html` | `READYFORCONNECTION`, the SPRX's connectivity check |
-| `public/files/` | Files the menu downloads (settings, textures, RPFs, scripts). Put your compiled `ParadiseGTA.sprx` here as well |
+| `public/files/` | Files the menu downloads (settings, textures, small RPFs, scripts). Put your compiled `ParadiseGTA.sprx` here as well. `Paradise.rpf`, `BLJM.rpf` and the EBOOTs are in the GitHub release `files-v1` instead (see Vercel step 4) |
 | `api/` | Serverless functions, mapped to the old PHP URLs in `vercel.json` |
 | `data/objects.txt` | Model hash to object name table for `res/getprop.php` |
 | `scripts/dev-server.mjs` | Local server that applies `vercel.json` like Vercel does |
@@ -40,9 +40,10 @@ The website uses `GET/POST /api/generate` (captcha protected, one key per sessio
 1. Import the repository in Vercel and set **Root Directory** to `paradisesprx`. The framework preset is "Other", with no build command.
 2. Name the project `paradisesprx`.
 3. Add storage: **Storage → Marketplace → Upstash (Redis)** and connect it to the project. This sets `UPSTASH_REDIS_REST_URL`/`UPSTASH_REDIS_REST_TOKEN` (`KV_REST_API_URL`/`KV_REST_API_TOKEN` also work). Without these the API falls back to in-memory storage, and keys won't survive between requests.
-4. The `.rpf` files are stored with **Git LFS**. Turn on *Settings → Git → Git Large File Storage* so Vercel checks them out.
+4. The small `.rpf` files left in `public/files/` are stored with **Git LFS**. Turn on *Settings → Git → Git Large File Storage* so Vercel checks them out. The big downloads (`Paradise.rpf`, `BLJM.rpf`, the four EBOOTs) are not in the deployment: they are assets of the GitHub release [`files-v1`](https://github.com/gopro2027/ParadiseGTA/releases/tag/files-v1) (named `EBOOT-<variant>.BIN` there). The Worker serves them at the usual `/files/...` paths, and `vercel.json` redirects those paths on the site to the Worker. Release downloads have no bandwidth limit and don't use Vercel bandwidth, deployment storage or the Git LFS quota. To replace one, upload a new release (e.g. `files-v2`), then update `RELEASE` in the Worker and the hashes in `scripts/download-check.mjs`.
 5. Under *Settings → Environments → Production*, set branch tracking to `offline-version` so pushes to that branch deploy to production.
 6. Under *Settings → Deployment Protection*, limit Vercel Authentication to preview deployments. Otherwise `paradisesprx.vercel.app` asks visitors to log in to Vercel.
+7. `vercel.json` has an `ignoreCommand`: pushes that don't touch `paradisesprx/` (SPRX-only commits) don't create a deployment.
 
 Required environment variables for the free key page (Cloudflare Turnstile captcha). Create a Turnstile widget for your site's hostname in the Cloudflare dashboard (or API) and set:
 
