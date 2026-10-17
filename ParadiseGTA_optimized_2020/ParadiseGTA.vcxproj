@@ -100,7 +100,6 @@ call make_hen_sprx.bat</Command>
     <ClInclude Include="RTMTool.h" />
     <ClInclude Include="Scaleforms.h" />
     <ClInclude Include="Stats.h" />
-    <ClInclude Include="LocalMpStats.h" />
     <ClInclude Include="TempCharacter.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="STDLib.h" />
