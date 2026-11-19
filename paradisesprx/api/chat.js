@@ -5,11 +5,14 @@
 import { createHash } from 'node:crypto';
 import { getStore } from '../lib/store.js';
 import { getKey } from '../lib/keys.js';
-import { getQuery, sendText, sanitize } from '../lib/http.js';
+import { getQuery, sendText } from '../lib/http.js';
 
 const NUM_LINES = 5;
 const MAX_LINE = 99;
-const ALLOWED = /^[A-Za-z0-9_.?', ]*$/;
+// Printable ASCII, except '~' (GTA text codes such as ~r~) and '<' '>' (GTA text tags such as <C>).
+// The lines are only drawn by the SPRX as plain text, so they aren't HTML escaped.
+const ALLOWED = /^[\x20-\x7D]*$/;
+const BLOCKED = /[<>]/;
 
 function repeatLine(text) {
   return (text + '\n').repeat(NUM_LINES);
@@ -41,8 +44,8 @@ export default async function handler(req, res) {
 
   let out = '';
   if (q.function === 'msg' || q.function === 'rw') {
-    const message = sanitize(Buffer.from(q.message || '', 'base64').toString('utf8'));
-    if (!ALLOWED.test(message)) return sendText(res, repeatLine('invalid'));
+    const message = Buffer.from(q.message || '', 'base64').toString('utf8');
+    if (!ALLOWED.test(message) || BLOCKED.test(message)) return sendText(res, repeatLine('invalid'));
     const line = message + ' :' + name;
     if (message.trim() && line.length <= MAX_LINE) {
       await store.rpush('chat', line);

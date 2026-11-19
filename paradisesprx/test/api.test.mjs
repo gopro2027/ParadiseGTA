@@ -139,9 +139,21 @@ test('chat keeps the last 5 messages and handles unescaped base64', async () => 
   assert.equal(b64, 'aGk/');
   const out = (await call(chat, `/chat/chat.php?function=rw&key=${key}&psn=Tester&message=${b64}`)).text;
   assert.deepEqual(out.split('\n').filter(Boolean), ['message 3 :Tester', 'message 4 :Tester', 'message 5 :Tester', 'message 6 :Tester', 'hi? :Tester']);
-  const bad = Buffer.from('<script>').toString('base64');
-  assert.equal((await call(chat, `/chat/chat.php?function=rw&key=${key}&message=${bad}`)).text, 'invalid\n'.repeat(5));
+  for (const text of ['<script>', '~r~red', 'café', 'two\nlines']) {
+    const bad = Buffer.from(text).toString('base64');
+    assert.equal((await call(chat, `/chat/chat.php?function=rw&key=${key}&message=${bad}`)).text, 'invalid\n'.repeat(5), text);
+  }
   assert.equal((await call(chat, `/chat/chat.php?function=get&key=nope`)).text, 'Invalid key');
+});
+
+test('chat accepts punctuation', async () => {
+  const key = await createKey(store);
+  const texts = ['GTA 6!!!', 'lol :)', 'gg - nice', '100% R&D "quote"', 'a/b+c=d [x] {y} #1 @me $5 ^_^ *', 'back\\slash|pipe;semi`tick'];
+  for (const text of texts) {
+    const b64 = Buffer.from(text).toString('base64');
+    const out = (await call(chat, `/chat/chat.php?function=rw&key=${key}&psn=Tester&message=${b64}`)).text;
+    assert.equal(out.split('\n').filter((l) => l.trim()).at(-1), `${text} :Tester`, text);
+  }
 });
 
 test('getprop looks up object names', async () => {
