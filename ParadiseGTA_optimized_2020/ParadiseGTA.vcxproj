@@ -102,6 +102,7 @@ call make_hen_sprx.bat</Command>
     <ClInclude Include="Stats.h" />
     <ClInclude Include="LocalMpStats.h" />
     <ClInclude Include="TempCharacter.h" />
+    <ClInclude Include="SessionBrowser.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="STDLib.h" />
     <ClInclude Include="types.h" />

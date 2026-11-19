@@ -19967,11 +19967,24 @@ void timeoutHandleJoinPlayerWithGSInfoName(int a) {
 	doSpoofNameForJoinFix = false;
 }
 
-void HandleJoinPlayerWithGSInfo(char* foundgsinfo, char *psn = "") {
+//joins the session described by an rlSessionInfo (in GsSession) by inviting ourselves into it. psn: the name the invite
+//is shown as coming from (the host / the player being joined). Also used by the Sessions List (SessionBrowser.h)
+void HandleJoinPlayerWithSessionInfo(GsSession *SessionInfo, char *psn) {
 
 	doSpoofNameForJoinFix = true;
 	strncpy(doSpoofNameForJoinFixName, psn, 20);
 	runlater_time::runlater(60, timeoutHandleJoinPlayerWithGSInfoName);//tell it to use spoofed data for a minute
+
+	uint32_t npid = makeNPIDManual((char*)getMyPSNName());
+	if (IsMallocSafe((void*)npid))
+	{
+		int job[10] = { 0 };
+		memset(job, 0, sizeof(job));
+		JoinPlayerViaSessionInfoFunc(npid, 1, SessionInfo, (void*)job, func_r7, func_r8, func_r9, func_r10);
+	}
+}
+
+void HandleJoinPlayerWithGSInfo(char* foundgsinfo, char *psn = "") {
 
 	GsSession SessionInfo;
 	memset(&SessionInfo, 0, sizeof(SessionInfo));
@@ -19981,14 +19994,7 @@ void HandleJoinPlayerWithGSInfo(char* foundgsinfo, char *psn = "") {
 		return;
 	}
 
-	uint32_t npid = makeNPIDManual((char*)getMyPSNName());
-	if (IsMallocSafe((void*)npid))
-	{
-		int job[10] = { 0 };
-		memset(job, 0, sizeof(job));
-		JoinPlayerViaSessionInfoFunc(npid, 1, &SessionInfo, (void*)job, func_r7, func_r8, func_r9, func_r10);
-		//print2("~g~Joining them!");
-	}
+	HandleJoinPlayerWithSessionInfo(&SessionInfo, psn);
 }
 
 __NO_INLINE void HandleJoinMe()//this works fine now

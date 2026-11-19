@@ -214,6 +214,7 @@ enum Submenus
 	spooner_menu,
 	spooner_map_list_menu,
 	spooner_veh_list_menu,
+	Sessions_List,
 };
 
 enum keyboardTypes {

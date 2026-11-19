@@ -638,6 +638,7 @@ int submenu = 0;
 #include "RTMTool.h"
 #include "LocalMpStats.h"
 #include "TempCharacter.h"
+#include "SessionBrowser.h"
 #pragma endregion
 #pragma region ps3 sms
 
@@ -7404,6 +7405,7 @@ __NO_INLINE int menuIsOpenSwitch()
 		
 		addSubmenuOption(getCachedString("STR840"),ModLoaderMenu);
 		addSubmenuOption("Met Players ~y~*NEW*", RemotePlayers);
+		addSubmenuOption("Sessions List ~y~*NEW*", Sessions_List, "Public sessions found by matchmaking");
 		addSubmenuOption(getCachedString("STR15"), Settings);   //Settings
 		
 		//addOption("test");
@@ -7559,8 +7561,43 @@ __NO_INLINE int menuIsOpenSwitch()
 		case 3:
 			//if (isPlayerMetInPublicLobbyOrSP(PlayersMetCurrentIndex)) {
 			JoinMe(MetPlayers.get(PlayersMetCurrentIndex)->psn);
-			
+
 			break;
+		}
+	}
+		break;
+	case Sessions_List://SessionBrowser.h
+	{
+		addTitle("Sessions List");
+		addOption("Clear List");//1
+		//the rest are the rooms, except our own; option 2 + n is visibleRooms[n]
+		static int visibleRooms[SessionBrowser::MAX_ROOMS];
+		int visibleCount = 0;
+		for (int i = 0; i < SessionBrowser::roomCount; i++) {
+			if (SessionBrowser::isMe(SessionBrowser::rooms[i]))
+				continue;
+			char hostName[17];
+			char playersText[12];
+			SessionBrowser::copyName(hostName, SessionBrowser::rooms[i]);
+			snprintf(playersText, sizeof(playersText), "%i/%i", SessionBrowser::rooms[i].players, SessionBrowser::rooms[i].maxPlayers);
+			addOptionWithRightwardText(hostName, playersText, "Join this session (host and players)");
+			visibleRooms[visibleCount++] = i;
+		}
+		if (visibleCount == 0)
+			addOption("~r~No Sessions Found Yet", "Sessions show up here when the game matchmakes: join GTA Online or use Find New Session");
+
+		int sop = getOption();
+		if (sop == 1) {
+			SessionBrowser::clear();
+			print2("List Cleared");
+		}
+		else if (sop >= 2 && sop - 2 < visibleCount) {
+			char msg[48];
+			char hostName[17];
+			SessionBrowser::copyName(hostName, SessionBrowser::rooms[visibleRooms[sop - 2]]);
+			snprintf(msg, sizeof(msg), "~g~Joining %s's session...", hostName);
+			print2(msg);
+			SessionBrowser::join(visibleRooms[sop - 2]);
 		}
 	}
 		break;
@@ -14446,6 +14483,7 @@ void Thread(uint64_t nothing)
 	for (int i = 0; i < 150; i++)menuRemembrence[i] = 1;
 
 	joinsessionacceptfix();
+	SessionBrowser::install();
 
 	//for (int i = 0; i < 7; i++)
 		//write_process((char*)(0x12D84F8+(i*4)),nop,4);

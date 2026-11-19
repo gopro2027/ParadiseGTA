@@ -62,6 +62,14 @@ All protection layers from the paid era are gone: server-data XOR (`dataDecrypto
   - `Local_152.imm_N` in the decompiled scripts is not local index 152+N.
 - **Research:** `research/temp-character-mode.md` covers the script and EBOOT research: the hardware test logs, the access-check reason codes, the MP stats save path, and the Ghidra headless setup on the 1.27 ELF + `EBOOT.map` and the 1.12 ELF.
 
+## Sessions list
+
+`ParadiseGTA_optimized_2020/SessionBrowser.h`, main menu "Sessions List". Untested on a PS3. Port of the 1.12 session browser, which hooked `sceNpMatching2GetEventData`.
+- **Capture:** on 1.27 there is one `sceNpMatching2SearchRoom` caller, the room search task. Its event handler `0x16BF3F0` is hooked by overwriting its OPD `0x1C5B4D0` (referenced only by vtable slot `0x190978C`). After the original runs, it reads the `SceNpMatching2SearchRoomResponse` at event `+0x1C` (rooms at `+0xC`, linked list) into a 16-room static list (~0.8 KB).
+- **Join:** a 1.27 `rlSessionInfo` is 0x40 bytes: `u64` room id at `+0`, the host's `SceNpId` at `+0x10`, the rest zero. That's what `0xD2B210` builds from a room. The menu builds one and joins through `HandleJoinPlayerWithSessionInfo` (Mods.h), the self-invite path that Met Players > Join Them uses.
+- The list only fills while the game matchmakes, for example when joining GTA Online or using Find New Session.
+- A decryptable 1.27 ELF is in the repo: the DEX EBOOT (LFS object `877f861b…`) is debug-signed and unencrypted, and a short SELF→ELF script extracts it.
+
 ## Server rules (product decisions)
 
 - Keys: 36 chars from `23456789abcdefghjkmnopqrstuvwxyzABCDEFGHJKLMNOPQRSTUVWXYZ`, never expire, **no bans and no console binding** (any console can use any key; the MAC the SPRX sends is ignored).
