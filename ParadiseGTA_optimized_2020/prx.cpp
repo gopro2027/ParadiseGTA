@@ -7583,8 +7583,10 @@ __NO_INLINE int menuIsOpenSwitch()
 			addOption(status, "Room searches seen by the hook (game's and ours). Found counts your own session too");
 			SessionBrowser::findStatusText(status, sizeof(status));
 			addOption(status, "Search button: 0xD597B4 return, its gate, PSN matching state (2 = started), result");
+			SessionBrowser::matchmakingStatusText(status, sizeof(status));//5
+			addOption(status, "What the game checks before matchmaking: state, checks (access code), group [active], filter");
 		}
-		//the rest are the rooms, except our own; option 5 + n is visibleRooms[n]
+		//the rest are the rooms, except our own; option 6 + n is visibleRooms[n]
 		static int visibleRooms[SessionBrowser::MAX_ROOMS];
 		int visibleCount = 0;
 		for (int i = 0; i < SessionBrowser::roomCount; i++) {
@@ -7604,7 +7606,7 @@ __NO_INLINE int menuIsOpenSwitch()
 		if (sop == 1) {
 			switch (SessionBrowser::startSearch()) {
 			case 0: print2("Searching for sessions..."); break;
-			case 1: print2("~r~No matchmaking filter yet: try going online (or Find New Session) once first", 5000); break;
+			case 1: print2("~r~The game hasn't built a matchmaking filter, see the MM line for why", 5000); break;
 			case 2: print2("Already searching"); break;
 			case 3: print2("~r~The game's own session search is running, try again in a moment"); break;
 			case 4: print2("~r~0xD597B4 refused to search, see the status line", 5000); break;
@@ -7615,13 +7617,13 @@ __NO_INLINE int menuIsOpenSwitch()
 			SessionBrowser::clear();
 			print2("List Cleared");
 		}
-		else if (sop >= 5 && sop - 5 < visibleCount) {
+		else if (sop >= 6 && sop - 6 < visibleCount) {
 			char msg[48];
 			char hostName[17];
-			SessionBrowser::copyName(hostName, SessionBrowser::rooms[visibleRooms[sop - 5]]);
+			SessionBrowser::copyName(hostName, SessionBrowser::rooms[visibleRooms[sop - 6]]);
 			snprintf(msg, sizeof(msg), "~g~Joining %s's session...", hostName);
 			print2(msg);
-			SessionBrowser::join(visibleRooms[sop - 5]);
+			SessionBrowser::join(visibleRooms[sop - 6]);
 		}
 	}
 		break;

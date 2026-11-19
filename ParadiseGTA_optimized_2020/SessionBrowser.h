@@ -230,6 +230,32 @@ namespace SessionBrowser {
 		return lastStartError = 0;
 	}
 
+	//One line for the menu with everything DoMatchmakingCommon (0x138A770) checks before it writes the filter. Going online
+	//(NETWORK_SESSION_ENTER -> 0x138ADD4(session, gamemode, 1, 18, ...)) only searches if all of these pass; otherwise it
+	//returns 0 before the filter is written:
+	//  st   session state +0xA098: must not be 1 (and < 5 for 0x138ADD4)
+	//  chk  0x1389540 (signed in / privileges), 0x1389D98 access check (reason code in brackets, see
+	//       research/temp-character-mode.md), 0x1389CD4
+	//  grp  current matchmaking group +0xAA50 (NETWORK_SESSION_SET_MATCHMAKING_GROUP 0x3C3E2AB6), must not be -1 and must
+	//       be in the active list [count +0xAA68: +0xAA6C, +0xAA70] (0x5BE529F7). maintransition func_2410 sets group
+	//       0 or 4 and adds 4 and 0
+	//  f    filter ints 0..3 at +0xA0C8 (0 and 2, 3 must not be -1 for a search)
+	void matchmakingStatusText(char *buf, int size) {
+		unsigned int s = session();
+		if (!VALID_ADDR(s)) {
+			snprintf(buf, size, "~r~No network session object");
+			return;
+		}
+		int code = -1;
+		int checkSignedIn = call<int>(0x1389540)(s, "SessionBrowser", 1) != 0;
+		int checkAccess = call<int>(0x1389D98)(s, &code) != 0;
+		int checkOther = call<int>(0x1389CD4)(s) != 0;
+		int *f = (int*)(s + SESSION_FILTER);
+		snprintf(buf, size, "~c~MM st %i chk %i%i(%i)%i grp %i [%i:%i,%i] f %i,%i,%i,%i", *(int*)(s + 0xA098), checkSignedIn,
+			checkAccess, code, checkOther, *(int*)(s + 0xAA50), *(int*)(s + 0xAA68), *(int*)(s + 0xAA6C), *(int*)(s + 0xAA70),
+			f[0], f[1], f[2], f[3]);
+	}
+
 	//one line for the menu about the last search button press
 	void findStatusText(char *buf, int size) {
 		if (lastFindReturn == -1) {
