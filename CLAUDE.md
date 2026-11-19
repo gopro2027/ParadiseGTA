@@ -57,6 +57,7 @@ All protection layers from the paid era are gone: server-data XOR (`dataDecrypto
 - **Status lines:**
   - room searches the hook saw, rooms in the last one, and search error events with the last SCE error code;
   - the search button's result: `0xD597B4`'s return value, its gate (`0xD2D398(0x2051598+0x30, 3)` or byte `0x184FE97`), the PSN matching context state (`*(0x20314D4)`, 2 = started) and how the find ended.
+- **Log:** `SESSIONS_LOG 1` in prx.cpp writes `/dev_hdd0/tmp/gopro_2027/sessions_log.txt`. It logs room searches, the search button, and every change in the result of `NETWORK_SESSION_ENTER` / `NETWORK_SESSION_HOST`, together with the matchmaking checks before the call. Those two natives are hooked through their native-table OPDs `0x1C28B40` / `0x1C28B60`; handlers take a context with `[0]` = return pointer and `[8]` = args. The owner's PS3 has an FTP server, so the log can be read directly (see memory).
 - **Going online without the cloud:** `0x138ADD4` skips the friends and crew searches when `0x12DB8F8(-1)` (Rockstar online) is 0. The regular search still runs, then the game hosts with flag `0x400`, the same host function `0x1389F84` that invite-only uses.
 - A decryptable 1.27 ELF is in the repo: the DEX EBOOT (LFS object `877f861b…`) is debug-signed and unencrypted, and a short SELF→ELF script extracts it.
 

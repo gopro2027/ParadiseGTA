@@ -18,6 +18,10 @@ __attribute__ ((naked)) int obfStart() {//size = 6*0x4
 
 //logs maintransition state changes to /dev_hdd0/tmp/gopro_2027/tempchar_log.txt (temporary character mode, TempCharacter.h)
 #define TEMPCHAR_DEBUG 0
+
+//logs going online (NETWORK_SESSION_ENTER / NETWORK_SESSION_HOST results and the matchmaking checks), room searches and
+//the Sessions List search button to /dev_hdd0/tmp/gopro_2027/sessions_log.txt (SessionBrowser.h)
+#define SESSIONS_LOG 1
   
 #define PAUSE_ON_LOAD 0  
 

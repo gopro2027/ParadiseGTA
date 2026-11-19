@@ -55,6 +55,32 @@ namespace SessionBrowser {
 	opd_s searchTaskEvent_t = { SEARCH_TASK_EVENT_FUNC, TOC };
 	int(*searchTaskEvent)(unsigned int task, unsigned int evt) = (int(*)(unsigned int, unsigned int))&searchTaskEvent_t;
 
+	//debug log, read over FTP. Fsynced so the last lines before a crash are on disk
+	void logLine(const char *fmt, ...) {
+#if SESSIONS_LOG == 1
+		char buf[200];
+		int len = snprintf(buf, sizeof(buf), "[%u] ", (unsigned int)time(0));
+		va_list args;
+		va_start(args, fmt);
+		vsnprintf(buf + len, sizeof(buf) - len, fmt, args);
+		va_end(args);
+		int fd;
+		uint64_t written;
+		if (cellFsOpen("/dev_hdd0/tmp/gopro_2027/sessions_log.txt", CELL_FS_O_RDWR | CELL_FS_O_APPEND | CELL_FS_O_CREAT, &fd, NULL, 0) != CELL_FS_SUCCEEDED)
+			return;
+		cellFsWrite(fd, (const void*)buf, (uint64_t)strlen(buf), &written);
+		cellFsFsync(fd);
+		cellFsClose(fd);
+#endif
+	}
+
+	unsigned int hashText(const char *s) {//FNV-1a, to log a repeated line only when it changes
+		unsigned int h = 2166136261u;
+		while (*s)
+			h = (h ^ (unsigned char)*s++) * 16777619u;
+		return h;
+	}
+
 	//shown in the menu, to tell an empty search from no search at all
 	int handlerCalls = 0;//every event the room search task got
 	int searchesSeen = 0;//search responses read
@@ -171,9 +197,7 @@ namespace SessionBrowser {
 		}
 		searchesSeen++;
 		lastSearchRooms = count;
-#if TEMPCHAR_DEBUG == 1
-		TempCharacter::debugLog("[sessions] room search: %i rooms, %i listed, %i in list\n", count, added, roomCount);
-#endif
+		logLine("room search: %i rooms, %i listed, %i in list\n", count, added, roomCount);
 	}
 
 	int searchErrors = 0;//search events that came back with an error
@@ -185,6 +209,7 @@ namespace SessionBrowser {
 		if (VALID_ADDR(evt) && *(int*)(evt + 0x28) < 0) {
 			searchErrors++;
 			lastSearchError = *(int*)(evt + 0x28);
+			logLine("room search event error 0x%08X\n", lastSearchError);
 		}
 		int ret = searchTaskEvent(task, evt);
 		if (ret && VALID_ADDR(evt))
@@ -202,7 +227,7 @@ namespace SessionBrowser {
 
 	//0 started, 1 no filter yet (the game hasn't tried to go online), 2 already searching, 3 the game's own search
 	//is running, 4 0xD597B4 refused (see lastGate), 5 no network session
-	int startSearch() {
+	int startSearchImpl() {
 		unsigned int s = session();
 		if (!VALID_ADDR(s))
 			return lastStartError = 5;
@@ -221,13 +246,20 @@ namespace SessionBrowser {
 		findResultCount = 0;
 		lastFindReturn = sessionFind(*(int*)LOCAL_GAMER_INDEX, 1, 7, 1, gameFilter(), s + SESSION_RESULTS, 15,
 			*(int*)(s + SESSION_FIND_ARG), &findResultCount, findStatus);
-#if TEMPCHAR_DEBUG == 1
-		TempCharacter::debugLog("[sessions] 0xD597B4 returned %i, gate %i, matching context %i\n", lastFindReturn, lastGate,
-			matchingContextState());
-#endif
 		if (lastFindReturn == 0)
 			return lastStartError = 4;
 		return lastStartError = 0;
+	}
+
+	void matchmakingStatusText(char *buf, int size);
+
+	int startSearch() {
+		int result = startSearchImpl();
+		char mm[100];
+		matchmakingStatusText(mm, sizeof(mm));
+		logLine("search button: %i (0xD597B4 %i, gate %i, matching context %i) | %s\n", result, lastFindReturn, lastGate,
+			matchingContextState(), mm);
+		return result;
 	}
 
 	//One line for the menu with everything DoMatchmakingCommon (0x138A770) checks before it writes the filter. Going online
@@ -243,7 +275,7 @@ namespace SessionBrowser {
 	void matchmakingStatusText(char *buf, int size) {
 		unsigned int s = session();
 		if (!VALID_ADDR(s)) {
-			snprintf(buf, size, "~r~No network session object");
+			snprintf(buf, size, "No network session object");
 			return;
 		}
 		int code = -1;
@@ -251,7 +283,7 @@ namespace SessionBrowser {
 		int checkAccess = call<int>(0x1389D98)(s, &code) != 0;
 		int checkOther = call<int>(0x1389CD4)(s) != 0;
 		int *f = (int*)(s + SESSION_FILTER);
-		snprintf(buf, size, "~c~MM st %i chk %i%i(%i)%i grp %i [%i:%i,%i] f %i,%i,%i,%i", *(int*)(s + 0xA098), checkSignedIn,
+		snprintf(buf, size, "MM st %i chk %i%i(%i)%i grp %i [%i:%i,%i] f %i,%i,%i,%i", *(int*)(s + 0xA098), checkSignedIn,
 			checkAccess, code, checkOther, *(int*)(s + 0xAA50), *(int*)(s + 0xAA68), *(int*)(s + 0xAA6C), *(int*)(s + 0xAA70),
 			f[0], f[1], f[2], f[3]);
 	}
@@ -273,15 +305,76 @@ namespace SessionBrowser {
 			state, findResultCount);
 	}
 
+	//Logging hooks on the session natives maintransition uses to go online (func_2407). Native handlers take a context:
+	//[0] pointer to the return value, [8] pointer to the arguments (4 bytes each). Handler OPDs are in the native table
+	//registration (0x3F4354 for NETWORK_SESSION_ENTER). The script retries every frame until a call succeeds, so a line is
+	//only written when it differs from the previous one for that native.
+	//  NETWORK_SESSION_ENTER 0x543CD2BE: OPD 0x1C28B40, handler 0x1586B08 -> 0x3E3E08 -> 0x12F6ED8 -> 0x138ADD4
+	//  NETWORK_SESSION_HOST  0x6716460F: OPD 0x1C28B60, handler 0x1586C70 -> 0x3E3FBC -> 0x12F6FEC -> 0x1389F84
+	const unsigned int SESSION_ENTER_OPD = 0x1C28B40;
+	const unsigned int SESSION_ENTER_HANDLER = 0x1586B08;
+	const unsigned int SESSION_HOST_OPD = 0x1C28B60;
+	const unsigned int SESSION_HOST_HANDLER = 0x1586C70;
+
+	opd_s sessionEnterNative_t = { SESSION_ENTER_HANDLER, TOC };
+	void(*sessionEnterNative)(unsigned int ctx) = (void(*)(unsigned int))&sessionEnterNative_t;
+	opd_s sessionHostNative_t = { SESSION_HOST_HANDLER, TOC };
+	void(*sessionHostNative)(unsigned int ctx) = (void(*)(unsigned int))&sessionHostNative_t;
+	int enterCalls = 0;
+	int hostCalls = 0;
+	unsigned int lastEnterHash = 0;
+	unsigned int lastHostHash = 0;
+
+	//mm: the matchmaking checks before the call, what DoMatchmakingCommon sees
+	void logNativeCall(const char *name, unsigned int ctx, int argCount, const char *mm, int calls, unsigned int *lastHash) {
+		int *args = *(int**)(ctx + 8);
+		int ret = **(int**)ctx;
+		char line[180];
+		int len = snprintf(line, sizeof(line), "%s(", name);
+		for (int i = 0; i < argCount && len < (int)sizeof(line); i++)
+			len += snprintf(line + len, sizeof(line) - len, i ? ",%i" : "%i", args[i]);
+		int *f = gameFilter();
+		if (len < (int)sizeof(line))
+			snprintf(line + len, sizeof(line) - len, ") = %i | before: %s | filter after %i,%i,%i,%i\n", ret, mm,
+				f ? f[0] : 0, f ? f[1] : 0, f ? f[2] : 0, f ? f[3] : 0);
+		unsigned int h = hashText(line);
+		if (h != *lastHash) {
+			*lastHash = h;
+			logLine("call %i: %s", calls, line);
+		}
+	}
+
+	void sessionEnterNative_hook(unsigned int ctx) {
+		char mm[100];
+		matchmakingStatusText(mm, sizeof(mm));
+		sessionEnterNative(ctx);
+		logNativeCall("NETWORK_SESSION_ENTER", ctx, 6, mm, ++enterCalls, &lastEnterHash);
+	}
+
+	void sessionHostNative_hook(unsigned int ctx) {
+		char mm[100];
+		matchmakingStatusText(mm, sizeof(mm));
+		sessionHostNative(ctx);
+		logNativeCall("NETWORK_SESSION_HOST", ctx, 3, mm, ++hostCalls, &lastHostHash);
+	}
+
 	//Overwrites the game's OPD for the handler (only the vtable slot points to it), like the GtaThread run hook does with
-	//0x1C2F0E0. The original is still called through searchTaskEvent_t
+	//0x1C2F0E0. The original is still called through searchTaskEvent_t. The native hooks overwrite the native table OPDs
+	//the same way
 	void install() {
 		if (installed)
 			return;
-		if (*(unsigned int*)SEARCH_TASK_EVENT_SLOT != SEARCH_TASK_EVENT_OPD || *(unsigned int*)SEARCH_TASK_EVENT_OPD != SEARCH_TASK_EVENT_FUNC)
-			return;//not the 1.27 EBOOT this was made for
-		*(uint64_t*)SEARCH_TASK_EVENT_OPD = *(uint64_t*)searchTaskEvent_hook;
-		installed = true;
+		bool nativesHooked = false;
+		if (*(unsigned int*)SESSION_ENTER_OPD == SESSION_ENTER_HANDLER && *(unsigned int*)SESSION_HOST_OPD == SESSION_HOST_HANDLER) {
+			*(uint64_t*)SESSION_ENTER_OPD = *(uint64_t*)sessionEnterNative_hook;
+			*(uint64_t*)SESSION_HOST_OPD = *(uint64_t*)sessionHostNative_hook;
+			nativesHooked = true;
+		}
+		if (*(unsigned int*)SEARCH_TASK_EVENT_SLOT == SEARCH_TASK_EVENT_OPD && *(unsigned int*)SEARCH_TASK_EVENT_OPD == SEARCH_TASK_EVENT_FUNC) {
+			*(uint64_t*)SEARCH_TASK_EVENT_OPD = *(uint64_t*)searchTaskEvent_hook;
+			installed = true;
+		}
+		logLine("=== boot: room search hook %i, session native hooks %i\n", installed ? 1 : 0, nativesHooked ? 1 : 0);
 	}
 
 	bool isMe(const Room &room) {
