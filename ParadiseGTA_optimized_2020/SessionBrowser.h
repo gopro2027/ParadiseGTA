@@ -55,6 +55,58 @@ namespace SessionBrowser {
 	opd_s searchTaskEvent_t = { SEARCH_TASK_EVENT_FUNC, TOC };
 	int(*searchTaskEvent)(unsigned int task, unsigned int evt) = (int(*)(unsigned int, unsigned int))&searchTaskEvent_t;
 
+	//shown in the menu, to tell an empty search from no search at all
+	int handlerCalls = 0;//every event the room search task got
+	int searchesSeen = 0;//search responses read
+	int lastSearchRooms = -1;//rooms in the last response
+
+	//Starting a search ourselves: 0xD2A8DC(0x2031490, filter, results, maxResults, &numResults, &status) is what the
+	//rlSessionFindTask (0xD5B004) calls. It copies the 0x238-byte filter into the new task at +0x64, results go to
+	//+0x29C (max +0x2A0, count pointer +0x2A4). The filter is the game's matchmaking filter; we don't build our own,
+	//we keep the one from the game's last search and replay it.
+	//Filter, as ints: [0] != -1, [1] attribute condition count (<= 32), [2] [3] the 2-byte bin attribute 0x54 value,
+	//[4..11] attribute ids read back per room, [12] their count, then per condition i: [13+i] attribute id,
+	//[45+i] operator ('==' 0x3D3D, ...), [77+i] unused by the task, [109+i] value, [141] condition mask
+	const unsigned int MATCHING_CONTEXT = 0x2031490;
+	const unsigned int START_SEARCH_TASK = 0xD2A8DC;
+	const unsigned int MATCHING_READY = 0xD29484;
+	const int TASK_FILTER = 0x64;
+	const int TASK_RESULTS = 0x29C;
+	const int TASK_MAX_RESULTS = 0x2A0;
+	const int FILTER_INTS = 0x8E;//0x238 bytes
+	const int FILTER_HEADER = 13;
+	const int FILTER_MAX_CONDITIONS = 12;//only this many are kept (the full filter would be 568 bytes)
+
+	int savedFilter[FILTER_HEADER + 4 * FILTER_MAX_CONDITIONS + 1];
+	bool haveFilter = false;
+	int ownResultsMarker = 0;//our task's results pointer; never written, see searchTaskEvent_hook
+	int ownResultCount = 0;
+	int searchStatus[2] = { 0, 0 };//rage status: [0] 0 none, 1 pending, 2 failed, 3 succeeded
+
+	void saveFilter(const int *filter) {
+		if (filter[1] < 0 || filter[1] > FILTER_MAX_CONDITIONS)
+			return;
+		int *s = savedFilter;
+		for (int i = 0; i < FILTER_HEADER; i++)
+			*s++ = filter[i];
+		for (int a = 0; a < 4; a++)
+			for (int i = 0; i < FILTER_MAX_CONDITIONS; i++)
+				*s++ = filter[FILTER_HEADER + 32 * a + i];
+		*s = filter[FILTER_HEADER + 32 * 4];
+		haveFilter = true;
+	}
+
+	void loadFilter(int *filter) {//filter: FILTER_INTS
+		memset(filter, 0, FILTER_INTS * 4);
+		const int *s = savedFilter;
+		for (int i = 0; i < FILTER_HEADER; i++)
+			filter[i] = *s++;
+		for (int a = 0; a < 4; a++)
+			for (int i = 0; i < FILTER_MAX_CONDITIONS; i++)
+				filter[FILTER_HEADER + 32 * a + i] = *s++;
+		filter[FILTER_HEADER + 32 * 4] = *s;
+	}
+
 	void clear() {
 		roomCount = 0;
 		nextReplace = 0;
@@ -103,17 +155,59 @@ namespace SessionBrowser {
 			}
 			room = *(unsigned int*)(room + ROOM_NEXT);
 		}
+		searchesSeen++;
+		lastSearchRooms = count;
 #if TEMPCHAR_DEBUG == 1
 		TempCharacter::debugLog("[sessions] room search: %i rooms, %i listed, %i in list\n", count, added, roomCount);
 #endif
 	}
 
 	//replaces the room search task's event handler (0x16BF3F0). It returns 1 when it used a search response
+	//Our own search passes maxResults 20 (it's also the room count asked from the server) but has no 20 * 0x40 byte
+	//results array, so the max is set to 0 while the original runs and it writes no results; the rooms are read from
+	//the response here like for the game's searches.
 	int searchTaskEvent_hook(unsigned int task, unsigned int evt) {
+		handlerCalls++;
+		bool own = VALID_ADDR(task) && *(unsigned int*)(task + TASK_RESULTS) == (unsigned int)&ownResultsMarker;
+		unsigned int maxResults = 0;
+		if (own) {
+			maxResults = *(unsigned int*)(task + TASK_MAX_RESULTS);
+			*(unsigned int*)(task + TASK_MAX_RESULTS) = 0;
+		}
 		int ret = searchTaskEvent(task, evt);
-		if (ret && VALID_ADDR(evt))
+		if (own)
+			*(unsigned int*)(task + TASK_MAX_RESULTS) = maxResults;
+		if (ret && VALID_ADDR(evt)) {
+			if (!own)
+				saveFilter((const int*)(task + TASK_FILTER));
 			readSearchResponse(*(unsigned int*)(evt + 0x1C));
+		}
 		return ret;
+	}
+
+	bool isSearching() {
+		return searchStatus[0] == 1;
+	}
+
+	//0 started, 1 no filter yet (the game hasn't searched since boot), 2 already searching, 3 PSN matching not ready,
+	//4 the game refused
+	int startSearch() {
+		if (!installed)
+			return 4;
+		if (!haveFilter)
+			return 1;
+		if (isSearching())
+			return 2;
+		if (call<int>(MATCHING_READY)(MATCHING_CONTEXT) == 0)
+			return 3;
+		int filter[FILTER_INTS];
+		loadFilter(filter);
+		searchStatus[0] = 0;
+		searchStatus[1] = 0;
+		ownResultCount = 0;
+		if (call<int>(START_SEARCH_TASK)(MATCHING_CONTEXT, filter, &ownResultsMarker, 20, &ownResultCount, searchStatus) == 0)
+			return 4;
+		return 0;
 	}
 
 	//Overwrites the game's OPD for the handler (only the vtable slot points to it), like the GtaThread run hook does with
