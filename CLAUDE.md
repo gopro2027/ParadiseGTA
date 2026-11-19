@@ -53,8 +53,11 @@ All protection layers from the paid era are gone: server-data XOR (`dataDecrypto
 `ParadiseGTA_optimized_2020/SessionBrowser.h`, main menu "Sessions List". Untested on a PS3. Port of the 1.12 session browser, which hooked `sceNpMatching2GetEventData`.
 - **Capture:** on 1.27 there is one `sceNpMatching2SearchRoom` caller, the room search task. Its event handler `0x16BF3F0` is hooked by overwriting its OPD `0x1C5B4D0` (referenced only by vtable slot `0x190978C`). After the original runs, it reads the `SceNpMatching2SearchRoomResponse` at event `+0x1C` (rooms at `+0xC`, linked list) into a 16-room static list (~0.8 KB).
 - **Join:** a 1.27 `rlSessionInfo` is 0x40 bytes: `u64` room id at `+0`, the host's `SceNpId` at `+0x10`, the rest zero. That's what `0xD2B210` builds from a room. The menu builds one and joins through `HandleJoinPlayerWithSessionInfo` (Mods.h), the self-invite path that Met Players > Join Them uses.
-- **Search button:** starts the same room search task the game uses (`0xD2A8DC(0x2031490, filter, …)`). It replays the matchmaking filter saved from the game's last search, so it only works after the game has searched once since boot. The task's result writes are suppressed (max set to 0 while the original handler runs), and the rooms are read from the response.
-- **Status line:** shows whether the hook is installed, how many searches it has seen and how many rooms the last one returned.
+- **Search button:** calls the game's own session find `0xD597B4` with the arguments matchmaking uses (`CNetworkSession` `0x138A184`). The filter is the one the game keeps at `*(0x1CF72C4) + 0xA0C8`, which `DoMatchmakingCommon` (`0x138A770`) builds on every attempt to go online, even when no search follows. Results go into the session's own buffer (`+0xF098`, 15 × 0x240), which is only used while the game's own search isn't running (`+0x112A4`). Find mode 1 is the PSN room search; mode 2 (`0xD5AF54`) is LAN broadcast.
+- **Status lines:**
+  - room searches the hook saw, rooms in the last one, and search error events with the last SCE error code;
+  - the search button's result: `0xD597B4`'s return value, its gate (`0xD2D398(0x2051598+0x30, 3)` or byte `0x184FE97`), the PSN matching context state (`*(0x20314D4)`, 2 = started) and how the find ended.
+- **Going online without the cloud:** `0x138ADD4` skips the friends and crew searches when `0x12DB8F8(-1)` (Rockstar online) is 0. The regular search still runs, then the game hosts with flag `0x400`, the same host function `0x1389F84` that invite-only uses.
 - A decryptable 1.27 ELF is in the repo: the DEX EBOOT (LFS object `877f861b…`) is debug-signed and unencrypted, and a short SELF→ELF script extracts it.
 
 ## Server rules (product decisions)

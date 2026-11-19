@@ -7568,19 +7568,23 @@ __NO_INLINE int menuIsOpenSwitch()
 	case Sessions_List://SessionBrowser.h
 	{
 		addTitle("Sessions List");
-		addOption((char*)(SessionBrowser::isSearching() ? "Searching..." : "Search For Sessions"), "Uses the filter from the game's last matchmaking");//1
+		addOption((char*)(SessionBrowser::isSearching() ? "Searching..." : "Search For Sessions"), "Runs the game's own session search (0xD597B4) with its matchmaking filter");//1
 		addOption("Clear List");//2
-		{//3: status, to tell an empty search from no search at all
-			char status[64];
+		{//3 and 4: status, to tell an empty search from no search at all, and why the search button failed
+			char status[72];
 			if (!SessionBrowser::installed)
 				snprintf(status, sizeof(status), "~r~Hook not installed (0x%08X)", *(unsigned int*)SessionBrowser::SEARCH_TASK_EVENT_SLOT);
 			else if (SessionBrowser::searchesSeen == 0)
-				snprintf(status, sizeof(status), "~c~No searches yet (%i events)", SessionBrowser::handlerCalls);
+				snprintf(status, sizeof(status), "~c~No room searches yet (%i events, %i errors 0x%08X)", SessionBrowser::handlerCalls,
+					SessionBrowser::searchErrors, SessionBrowser::lastSearchError);
 			else
-				snprintf(status, sizeof(status), "~c~%i searches, last found %i", SessionBrowser::searchesSeen, SessionBrowser::lastSearchRooms);
-			addOption(status, "Rooms found counts your own session too");
+				snprintf(status, sizeof(status), "~c~%i room searches, last found %i, %i errors", SessionBrowser::searchesSeen,
+					SessionBrowser::lastSearchRooms, SessionBrowser::searchErrors);
+			addOption(status, "Room searches seen by the hook (game's and ours). Found counts your own session too");
+			SessionBrowser::findStatusText(status, sizeof(status));
+			addOption(status, "Search button: 0xD597B4 return, its gate, PSN matching state (2 = started), result");
 		}
-		//the rest are the rooms, except our own; option 4 + n is visibleRooms[n]
+		//the rest are the rooms, except our own; option 5 + n is visibleRooms[n]
 		static int visibleRooms[SessionBrowser::MAX_ROOMS];
 		int visibleCount = 0;
 		for (int i = 0; i < SessionBrowser::roomCount; i++) {
@@ -7600,23 +7604,24 @@ __NO_INLINE int menuIsOpenSwitch()
 		if (sop == 1) {
 			switch (SessionBrowser::startSearch()) {
 			case 0: print2("Searching for sessions..."); break;
-			case 1: print2("~r~Join GTA Online once first, the search reuses the game's matchmaking filter", 5000); break;
+			case 1: print2("~r~No matchmaking filter yet: try going online (or Find New Session) once first", 5000); break;
 			case 2: print2("Already searching"); break;
-			case 3: print2("~r~PSN matchmaking isn't ready"); break;
-			default: print2("~r~The game refused to search"); break;
+			case 3: print2("~r~The game's own session search is running, try again in a moment"); break;
+			case 4: print2("~r~0xD597B4 refused to search, see the status line", 5000); break;
+			default: print2("~r~No network session object"); break;
 			}
 		}
 		else if (sop == 2) {
 			SessionBrowser::clear();
 			print2("List Cleared");
 		}
-		else if (sop >= 4 && sop - 4 < visibleCount) {
+		else if (sop >= 5 && sop - 5 < visibleCount) {
 			char msg[48];
 			char hostName[17];
-			SessionBrowser::copyName(hostName, SessionBrowser::rooms[visibleRooms[sop - 4]]);
+			SessionBrowser::copyName(hostName, SessionBrowser::rooms[visibleRooms[sop - 5]]);
 			snprintf(msg, sizeof(msg), "~g~Joining %s's session...", hostName);
 			print2(msg);
-			SessionBrowser::join(visibleRooms[sop - 4]);
+			SessionBrowser::join(visibleRooms[sop - 5]);
 		}
 	}
 		break;
