@@ -104,7 +104,7 @@ namespace SessionBrowser {
 			room = *(unsigned int*)(room + ROOM_NEXT);
 		}
 #if TEMPCHAR_DEBUG == 1
-		tempcharLog("[sessions] room search: %i rooms, %i listed, %i in list\n", count, added, roomCount);
+		TempCharacter::debugLog("[sessions] room search: %i rooms, %i listed, %i in list\n", count, added, roomCount);
 #endif
 	}
 
